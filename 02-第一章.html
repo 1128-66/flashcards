@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第一章 · 背诵抽认卡</title>
+<style>
+:root{
+  --bg:#12141a; --surface:#1a1d26; --surface-2:#21252f; --line:#2c313d;
+  --text:#e6e8ee; --muted:#98a0b0; --faint:#6c7488;
+  --accent:#1D9E75; --accent-soft:#5DCAA5; --accent-dim:rgba(93,202,165,.14);
+  --star:#EF9F27; --danger:#E24B4A;
+  --mask:#2b3240; --mask-hover:#394154;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; padding:24px 18px 60px;
+}
+.wrap{max-width:820px;margin:0 auto}
+
+header{margin-bottom:18px}
+h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+.sub{color:var(--faint);font-size:13px;margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  padding:5px 12px; border-radius:99px; font-size:13px; cursor:pointer;
+  transition:.15s; user-select:none;
+}
+.chip:hover{border-color:var(--faint);color:var(--text)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.spacer{flex:1}
+
+.progress{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{
+  margin-top:18px; perspective:2000px;
+}
+.faces{
+  position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.card.flip .faces{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 22px; min-height:360px;
+}
+.faces{display:grid}
+.front{transform:none}
+.back{transform:rotateY(180deg)}
+
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);margin-bottom:14px}
+.tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 9px;border-radius:6px;color:var(--muted)}
+.star{color:var(--star)}
+.q{font-size:19px;font-weight:600;line-height:1.6;margin-bottom:6px}
+.qhint{font-size:12px;color:var(--faint);margin-bottom:18px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--faint);color:var(--text)}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.tip{font-size:12px;color:var(--faint);margin-left:auto}
+
+.answer{font-size:16px;line-height:2.05;letter-spacing:.2px}
+.cloze{
+  background:var(--mask); color:transparent; border-radius:4px; cursor:pointer;
+  padding:1px 3px; transition:background .12s,color .12s;
+  box-decoration-break:clone; -webkit-box-decoration-break:clone;
+}
+.cloze:hover{background:var(--mask-hover)}
+.cloze.on{background:var(--accent-dim);color:var(--text)}
+.cloze.on:hover{background:rgba(93,202,165,.24)}
+
+.sec{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.sec h4{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:1px;margin-bottom:8px}
+.sec p{font-size:15px;line-height:1.9;color:var(--text)}
+.hook{color:var(--accent-soft)}
+.plain{font-size:15.5px;line-height:2.0;color:var(--text)}
+
+nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.btn-lg{padding:9px 18px;font-size:14px}
+.btn-ok{border-color:var(--accent);color:var(--accent-soft)}
+.btn-ok:hover{background:var(--accent-dim)}
+.btn-bad{border-color:#5a3030;color:#e08b8b}
+.btn-bad:hover{background:rgba(226,75,74,.12)}
+
+.keys{margin-top:16px;font-size:12px;color:var(--faint);line-height:2}
+kbd{
+  background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+}
+details{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--faint)}
+details[open] summary:before{content:"▾ "}
+details h5{font-size:13px;color:var(--accent-soft);margin:14px 0 6px;font-weight:500}
+details li{font-size:13px;color:var(--muted);line-height:1.9;list-style:none;padding-left:2px}
+details li:before{content:"· ";color:var(--faint)}
+.due{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+.toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+.toc-mask.on{opacity:1;pointer-events:auto}
+.toc{
+  position:fixed;top:0;left:0;height:100%;width:min(430px,90vw);z-index:50;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,.2,.2,1);
+  overflow-y:auto;padding:22px 20px 50px;
+}
+.toc.on{transform:none}
+.toc-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.toc-head h3{font-size:16px;font-weight:600}
+.toc-x{margin-left:auto;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;padding:2px 7px;border-radius:6px}
+.toc-x:hover{background:var(--surface-2);color:var(--text)}
+.toc-sum{font-size:12px;color:var(--faint);margin-bottom:18px}
+.toc-g{margin-bottom:18px}
+.toc-g h6{
+  font-size:12px;font-weight:500;color:var(--accent-soft);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--line);
+}
+.toc-g h6 .cnt{margin-left:auto;color:var(--faint);font-size:11px}
+.toc-g ul{list-style:none}
+.toc-g li{
+  display:flex;align-items:baseline;gap:9px;padding:6px 9px;border-radius:8px;
+  font-size:13.5px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.toc-g li:hover{background:var(--surface-2);color:var(--text)}
+.toc-g li .tn{flex:none;width:22px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint)}
+.toc-g li .tt{flex:1;line-height:1.5}
+.toc-g li .ts{flex:none;font-size:9px;color:var(--star);letter-spacing:-.5px}
+.toc-g li .td{flex:none;width:14px;text-align:center;font-size:12px;color:var(--faint)}
+.toc-g li.half .td{color:var(--star)}
+.toc-g li.done .td{color:var(--accent)}
+.toc-g li.done .tt{color:var(--faint)}
+.toc-g li.cur{background:var(--accent-dim);color:var(--text)}
+.toc-g li.cur .tn{color:var(--accent-soft)}
+.toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="home-link" href="index.html">← 章节导航</a>
+  <h1>第一章 · 背诵抽认卡</h1>
+  <div class="sub">新时代坚持和发展中国特色社会主义 · 三节九目 · 41 张卡</div>
+  <div class="bar">
+    <span class="chip on" data-f="all">全部</span>
+    <span class="chip" data-f="star">重点 ★★★</span>
+    <span class="chip" data-f="learning">学习中</span>
+    <span class="chip" data-f="mastered">已掌握</span>
+    <span class="spacer"></span>
+    <span class="chip" id="tocBtn">目录</span>
+    <span class="chip" id="shuffle">打乱</span>
+    <span class="chip" id="reset">重置进度</span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</header>
+
+<div class="card" id="card">
+  <div class="faces">
+    <section class="face front">
+      <div class="meta">
+        <span class="tag" id="f-part"></span>
+        <span id="f-no"></span>
+        <span class="star" id="f-star"></span>
+        <span class="spacer"></span>
+        <span class="due" id="f-due"></span>
+      </div>
+      <div class="q" id="f-q"></div>
+      <div class="qhint">先口述或默写，再点色块逐句核对</div>
+      <div class="tools">
+        <button class="btn on" data-m="seg">逐句挖空</button>
+        <button class="btn" data-m="key">只挖关键</button>
+        <button class="btn" id="toggleAll">全部显示</button>
+        <span class="tip">点色块 → 显现；再点 → 盖回去</span>
+      </div>
+      <div class="answer" id="f-a"></div>
+    </section>
+
+    <section class="face back">
+      <div class="meta">
+        <span class="tag" id="b-part"></span>
+        <span id="b-no"></span>
+        <span class="star" id="b-star"></span>
+      </div>
+      <div class="q" id="b-q"></div>
+      <div class="sec">
+        <h4>记忆钩子</h4>
+        <p class="hook" id="b-hook"></p>
+      </div>
+      <div class="sec">
+        <h4>完整答案</h4>
+        <div class="plain" id="b-a"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav>
+  <button class="btn btn-lg" id="tocBtn2">目录</button>
+  <button class="btn btn-lg" id="prev">← 上一张</button>
+  <button class="btn btn-lg" id="flip">翻面</button>
+  <button class="btn btn-lg" id="next">下一张 →</button>
+  <span class="spacer"></span>
+  <button class="btn btn-lg btn-bad" id="again">再看看</button>
+  <button class="btn btn-lg btn-ok" id="got">记住了</button>
+</nav>
+
+<div class="keys">
+  <kbd>←</kbd> <kbd>→</kbd> 切换　<kbd>空格</kbd> 翻面　<kbd>F</kbd> 全部显示/隐藏　<kbd>M</kbd> 切换挖空模式　<kbd>G</kbd> 记住了　<kbd>R</kbd> 再看看　<kbd>T</kbd> 目录　<kbd>Esc</kbd> 关闭　<kbd>S</kbd> 打乱
+</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<aside class="toc" id="toc">
+  <div class="toc-head">
+    <h3>目录</h3>
+    <span class="toc-x" id="tocX">×</span>
+  </div>
+  <div class="toc-sum" id="tocSum"></div>
+  <div id="toc-body"></div>
+  <div class="toc-foot">
+    <span style="color:var(--accent)">✓</span> 已掌握（连续两次记住）<br>
+    <span style="color:var(--star)">◐</span> 记住过一次　·　空白＝还没背<br>
+    点任意一条直接跳过去，<kbd>T</kbd> 开关目录
+  </div>
+</aside>
+
+<details>
+  <summary>附录 · 真题自测清单（17 道）</summary>
+  <h5>名词解释</h5>
+  <ul>
+    <li>2025 广西师范大学；2024 东华大学：坚持道路自信</li>
+    <li>2025 上海理工大学：文化自信</li>
+  </ul>
+  <h5>简答题</h5>
+  <ul>
+    <li>2023 厦门大学：中国特色社会主义是怎样接续发展的</li>
+    <li>2025 山东财经大学、安徽师范大学、宁波大学、中央财经大学；2023 华中农业大学：为什么说中国特色社会主义是社会主义，不是别的什么主义</li>
+    <li>2024 大连海事大学：中国特色社会主义是历史和人民的根本成就</li>
+    <li>2023 贵州大学：四个自信的主要内容及其统一性</li>
+    <li>2024 上海师范大学：中国特色社会主义新时代是我国新的历史方位</li>
+    <li>2025 国防科技大学、新疆农业大学；2023 天津工业大学、西北农林科技大学、山东财经大学；2022 北京交通大学：中国特色社会主义进入新时代的内涵</li>
+    <li>2023 西安电子科技大学、济南大学；2022 中南大学、东南大学、北京化工大学：简述中国特色社会主义进入新时代的历史意义</li>
+    <li>2023 福州大学、2022 延边大学：简述新时代我国社会主要矛盾发生转化的依据</li>
+    <li>2023 深圳大学：简述新时代满足人民日益增长的美好生活需要的主要制约因素</li>
+  </ul>
+  <h5>论述题</h5>
+  <ul>
+    <li>2024 山东大学、东北石油大学：为什么说中国进入了新的历史方位</li>
+    <li>2025 吉林大学：为什么说新时代社会主要矛盾变化是关系全局性的历史性变化</li>
+    <li>2023 深圳大学、河南科技大学；2022 南京理工大学：试述新中国成立以来，中国共产党对社会主要矛盾的变化的认识</li>
+    <li>2025 哈尔滨师范大学；2023 西南财经大学、吉林大学、湖南科技大学：新时代十年伟大变革的历史意义</li>
+    <li>2024 重庆大学：新时代「五位一体」总体布局的内涵和意义</li>
+    <li>2023 贵州大学：「四个全面」战略布局的主要内容和意义</li>
+  </ul>
+</details>
+
+</div>
+
+<script>
+const DECK = [
+{p:'一节·历史与人民的选择',t:'道路问题的定位',star:0,
+ q:'如何理解「道路问题是关系党的事业兴衰成败第一位的问题」？',
+ a:'道路问题是关系党的事业兴衰成败第一位的问题，道路就是党的生命。走自己的路，是党的全部理论和实践立足点，更是党百年奋斗得出的历史结论。历史和实践充分证明，只有社会主义才能救中国，只有社会主义才能发展中国，只有坚持和发展中国特色社会主义才能实现中华民族伟大复兴。',
+ h:'三个「只有」递进：救中国 → 发展中国 → 实现中华民族伟大复兴。定性句必背「道路就是党的生命」。',
+ k:['第一位的问题','道路就是党的生命','走自己的路','救中国','发展中国','实现中华民族伟大复兴']},
+
+{p:'一节·历史与人民的选择',t:'中国特色社会主义是怎样接续发展的',star:1,
+ q:'2023 厦门大学：中国特色社会主义是怎样接续发展的？',
+ a:'以毛泽东同志为主要代表的中国共产党人，把马克思列宁主义基本原理同中国具体实际相结合，提出经过新民主主义革命走向社会主义的正确理论，完成新民主主义革命，建立中华人民共和国，确立社会主义基本制度，实现了中华民族有史以来最为广泛而深刻的社会变革，使中国走上了社会主义这条康庄大道。以邓小平同志为主要代表的中国共产党人，作出把党和国家工作中心转移到经济建设上来、实行改革开放的历史性决策，提出走自己的路、建设中国特色社会主义，成功开创了中国特色社会主义。以江泽民同志为主要代表的中国共产党人，加深了对什么是社会主义、怎样建设社会主义和建设什么样的党、怎样建设党的认识，成功把中国特色社会主义推向21世纪。以胡锦涛同志为主要代表的中国共产党人，深刻认识和回答了新形势下实现什么样的发展、怎样发展等重大问题，成功在新形势下坚持和发展了中国特色社会主义。以习近平同志为主要代表的中国共产党人，开创了中国特色社会主义新时代。',
+ h:'五代领导人一动词：毛泽东→走上康庄大道（奠基）；邓小平→成功开创；江泽民→推向21世纪；胡锦涛→新形势下坚持和发展；习近平→开创新时代。口诀「毛铺路、邓开创、江推进、胡坚持、习新时代」。',
+ k:['康庄大道','成功开创了中国特色社会主义','推向21世纪','新形势下坚持和发展','开创了中国特色社会主义新时代','最为广泛而深刻的社会变革']},
+
+{p:'一节·历史与人民的选择',t:'科学社会主义为什么能在中国扎根',star:0,
+ q:'为什么科学社会主义能在中国大地扎根、开花结果？',
+ a:'马克思主义传入中国后，科学社会主义的主张受到中国人民热烈欢迎，并最终扎根中国大地、开花结果，决不是偶然的，而是因为它回答了近代以来中华民族面临的历史性课题、指明了实现伟大复兴的正确道路，是因为它同我国传承了几千年的优秀历史文化和广大人民日用而不觉的价值观念具有高度的契合性。这是历史的结论、人民的选择。',
+ h:'两个「因为」：①回答历史性课题、指明复兴道路；②同优秀历史文化和日用而不觉的价值观念高度契合。落脚句「这是历史的结论、人民的选择」。',
+ k:['决不是偶然的','历史性课题','日用而不觉','高度的契合性','历史的结论、人民的选择']},
+
+{p:'一节·历史与人民的选择',t:'判断主义的标准',star:0,
+ q:'判断一个国家实行什么样的主义，关键看什么？',
+ a:'一个国家实行什么样的主义，关键要看这个主义能否解决这个国家面临的历史性课题。什么是社会主义、怎样建设社会主义，是中国共产党人思考的基本问题。',
+ h:'两句填空常一起考：①关键要看能否解决历史性课题；②什么是社会主义、怎样建设社会主义是基本问题。',
+ k:['关键要看','历史性课题','基本问题']},
+
+{p:'一节·不是别的主义',t:'两个逻辑的辩证统一',star:1,
+ q:'2025 山东财经、安徽师范、宁波大学、中央财经；2023 华中农大：为什么说中国特色社会主义是社会主义，不是别的什么主义？',
+ a:'中国特色社会主义是科学社会主义理论逻辑和中国社会发展历史逻辑的辩证统一。习近平指出，中国特色社会主义，既坚持了科学社会主义基本原则，又根据时代条件赋予其鲜明的中国特色。中国特色社会主义之所以是社会主义，而不是其他什么主义，就是因为我们始终坚持科学社会主义基本原则，并根据新的时代条件赋予其鲜明的中国特色。',
+ h:'核心公式：社会主义 ＝ 科学社会主义基本原则（理论逻辑）＋ 中国特色（历史逻辑）。答题先摆「辩证统一」，再展开两头。',
+ k:['科学社会主义理论逻辑','中国社会发展历史逻辑','辩证统一','科学社会主义基本原则','鲜明的中国特色']},
+
+{p:'一节·不是别的主义',t:'科学社会主义基本原则（1—5）',star:1,
+ q:'科学社会主义基本原则的前五条是什么？',
+ a:'（1）资本主义必然灭亡、社会主义必然胜利。（2）无产阶级是最先进最革命的阶级，肩负着推翻资本主义旧世界、建立社会主义和共产主义新世界的历史使命。（3）无产阶级革命是无产阶级进行斗争的最高形式，以建立无产阶级专政的国家为目的。（4）要在生产资料公有制基础上组织生产，以满足全体社会成员的需要为生产的根本目的。（5）要对社会生产进行有计划的指导和调节，实行按劳分配原则。',
+ h:'前五条口诀「灭阶革公计」：两个必然、无产阶级、革命、公有制、按劳分配。',
+ k:['资本主义必然灭亡、社会主义必然胜利','最先进最革命的阶级','推翻资本主义旧世界','无产阶级专政','生产资料公有制','按劳分配']},
+
+{p:'一节·不是别的主义',t:'科学社会主义基本原则（6—10）',star:1,
+ q:'科学社会主义基本原则的后五条是什么？',
+ a:'（6）要合乎自然规律地改造和利用自然，努力实现人与自然的和谐共生。（7）必须坚持科学的理论指导，大力发展社会主义先进文化。（8）无产阶级政党是无产阶级的先锋队，社会主义事业必须始终坚持无产阶级政党的领导。（9）社会主义社会要大力解放和发展生产力，逐步消灭剥削和消除两极分化，实现共同富裕和社会全面进步，并最终向共产主义社会过渡。（10）共产主义是人类最美好的社会制度，实现共产主义是共产党人的最高理想。',
+ h:'后五条口诀「自文党富共」：人与自然、先进文化、党的领导、共同富裕、共产主义。著作线索：《共产党宣言》第一次全面阐述 →《资本论》及手稿展开论证 →《哥达纲领批判》《反杜林论》总结阐发。',
+ k:['人与自然的和谐共生','社会主义先进文化','无产阶级政党','消灭剥削和消除两极分化','共同富裕','共产主义','最高理想']},
+
+{p:'一节·不是别的主义',t:'三个「没有变」',star:0,
+ q:'科学社会主义诞生170多年来，什么变了、什么没变？',
+ a:'科学社会主义诞生170多年来，人类社会发生了翻天覆地的变化，世界资本主义和社会主义都发生了很大变化，但是资本主义的基本矛盾没有变，工人阶级的历史使命没有变，科学社会主义的真理性没有变。',
+ h:'三不变：资本主义基本矛盾、工人阶级历史使命、科学社会主义真理性。数字：170多年。',
+ k:['170多年','资本主义的基本矛盾没有变','工人阶级的历史使命没有变','科学社会主义的真理性没有变']},
+
+{p:'一节·不是别的主义',t:'中国特色体现在哪里（制度层面）',star:1,
+ q:'中国特色社会主义「鲜明的中国特色」具体体现在哪些方面？',
+ a:'中国共产党领导下，立足基本国情，以经济建设为中心，坚持四项基本原则，坚持改革开放，解放和发展社会生产力，建设社会主义市场经济、社会主义民主政治、社会主义先进文化、社会主义和谐社会、社会主义生态文明，促进人的全面发展，逐步实现全体人民共同富裕，建成富强民主文明和谐美丽的社会主义现代化强国；坚持人民代表大会制度的根本政治制度，中国共产党领导的多党合作和政治协商制度、民族区域自治制度以及基层群众自治制度等基本政治制度，坚持中国特色社会主义法律体系，坚持公有制为主体多种所有制经济共同发展、按劳分配为主体多种分配方式并存、社会主义市场经济体制等社会主义基本经济制度。',
+ h:'三大块：①五个「社会主义xx」（市场经济、民主政治、先进文化、和谐社会、生态文明）②根本政治制度＋三个基本政治制度＋法律体系 ③三项基本经济制度（所有制、分配、体制）。',
+ k:['人民代表大会制度','多党合作和政治协商制度','民族区域自治制度','基层群众自治制度','公有制为主体多种所有制经济共同发展','按劳分配为主体多种分配方式并存','社会主义市场经济体制','人的全面发展']},
+
+{p:'一节·不是别的主义',t:'「新版本」的四个「不是」',star:1,
+ q:'如何理解中国特色社会主义写出了科学社会主义的「新版本」？',
+ a:'当代中国的伟大社会变革，不是简单延续我国历史文化的母版，不是简单套用马克思主义经典作家设想的模板，不是其他国家社会主义实践的再版，也不是国外现代化发展的翻版。只有把科学社会主义基本原则同我国具体实际、历史文化传统、时代要求紧密结合起来，在实践中不断探索总结，才能更好地坚持和发展中国特色社会主义。',
+ h:'四个「不是」必背：母版（历史文化）、模板（经典作家设想）、再版（他国社会主义实践）、翻版（国外现代化）。后半句三个结合对象：具体实际、历史文化传统、时代要求。',
+ k:['母版','模板','再版','翻版','具体实际、历史文化传统、时代要求']},
+
+{p:'一节·不是别的主义',t:'驳斥错误舆论',star:0,
+ q:'如何看待「国家资本主义」「资本社会主义」「新官僚资本主义」等说法？',
+ a:'近年来，国内外有些舆论提出中国现在搞的究竟还是不是社会主义的疑问，有人说是「资本主义」，还有人干脆说是「国家资本主义」「新官僚资本主义」。这些都是完全错误的。反复炒作这些说法的目的，就是为遏制中国制造舆论，企图通过抹黑中国社会制度，动摇人们对中国特色社会主义的信心，迫使我们放弃被实践所证明的成功道路和制度。',
+ h:'答题三步：亮明「完全错误」→ 揭动机（遏制中国、抹黑制度、动摇信心）→ 落脚「决不放弃被实践证明的成功道路和制度」。',
+ k:['国家资本主义','新官僚资本主义','完全错误的','遏制中国','抹黑','成功道路和制度']},
+
+{p:'一节·四个自信',t:'改革开放以来一切成绩和进步的根本原因',star:1,
+ q:'改革开放以来我们取得一切成绩和进步的根本原因是什么？',
+ a:'开辟了中国特色社会主义道路，形成了中国特色社会主义理论体系，确立了中国特色社会主义制度，发展了中国特色社会主义文化。其中，道路是实现途径，理论体系是行动指南，制度是根本保障，文化是精神力量，四者统一于中国特色社会主义伟大实践。',
+ h:'四个动词要对应准确：开辟道路、形成理论体系、确立制度、发展文化。四者定位：道路＝实现途径，理论体系＝行动指南，制度＝根本保障，文化＝精神力量。',
+ k:['开辟','形成','确立','发展','实现途径','行动指南','根本保障','精神力量','伟大实践']},
+
+{p:'一节·四个自信',t:'道路自信',star:1,
+ q:'2025 广西师范大学、2024 东华大学名词解释：坚持道路自信。',
+ a:'坚定道路自信，就是坚信中国特色社会主义道路是实现社会主义现代化、创造人民美好生活的必由之路，是实现中华民族伟大复兴的必由之路。这一道路，既坚持以经济建设为中心，又全面推进经济、政治、文化、社会、生态文明建设以及其他各方面建设；既坚持四项基本原则，又坚持改革开放；既不断解放和发展社会生产力，又逐步实现全体人民共同富裕、促进人的全面发展。',
+ h:'核心句：两个「必由之路」（实现现代化和创造美好生活、实现民族复兴）。三个「既…又…」：中心＋全面、四项基本原则＋改革开放、发展生产力＋共同富裕。',
+ k:['必由之路','以经济建设为中心','四项基本原则','改革开放','共同富裕','人的全面发展']},
+
+{p:'一节·四个自信',t:'理论自信',star:0,
+ q:'什么是理论自信？',
+ a:'坚定理论自信，就是坚信中国特色社会主义理论体系是指导党和人民实现中华民族伟大复兴的正确理论，是立足时代前沿、与时俱进的科学理论。这一理论体系，紧密结合我国改革发展实际，紧密结合新的时代条件，科学回答了建设中国特色社会主义的一系列基本问题，坚持和发展了马克思主义，赋予了马克思主义新的鲜活力量。',
+ h:'两个定位：正确理论（实现民族复兴）＋ 科学理论（立足时代前沿、与时俱进）。两个「紧密结合」：改革发展实际、新的时代条件。',
+ k:['正确理论','立足时代前沿','与时俱进','科学理论','新的鲜活力量']},
+
+{p:'一节·四个自信',t:'制度自信',star:0,
+ q:'什么是制度自信？',
+ a:'坚定制度自信，就是坚信中国特色社会主义制度是当代中国发展进步的根本制度保障，是具有明显制度优势、强大自我完善能力的先进制度。这一制度，是一个严密完整的科学制度体系，起四梁八柱作用的是根本制度、基本制度、重要制度，既坚持了社会主义的根本性质，又借鉴了古今中外制度建设的有益成果，符合我国国情，集中体现了中国特色社会主义的特点和优势，具有显著优越性和强大生命力。',
+ h:'定位词：根本制度保障。制度体系三层：根本制度、基本制度、重要制度（四梁八柱）。两组「既…又…」：根本性质＋借鉴成果；符合国情＋体现优势。',
+ k:['根本制度保障','严密完整的科学制度体系','根本制度、基本制度、重要制度','显著优越性和强大生命力']},
+
+{p:'一节·四个自信',t:'文化自信',star:1,
+ q:'2025 上海理工大学名词解释：文化自信。',
+ a:'坚定文化自信，就是坚信中国特色社会主义文化积淀着中华民族最深层的精神追求，代表着中华民族独特的精神标识，是激励全党全国各族人民奋勇前进的强大精神力量。这一文化，源自于中华民族5000多年文明历史所孕育的中华优秀传统文化，熔铸于党领导人民在革命、建设、改革中创造的革命文化和社会主义先进文化，植根于中国特色社会主义伟大实践。',
+ h:'三句话定位：最深层的精神追求／独特的精神标识／强大精神力量。三个来源动词必须准确：源自于优秀传统文化、熔铸于革命文化和社会主义先进文化、植根于伟大实践。',
+ k:['最深层的精神追求','独特的精神标识','强大精神力量','源自于','熔铸于','植根于','5000多年']},
+
+{p:'一节·四个自信',t:'为什么能坚定「四个自信」（三个来源）',star:1,
+ q:'2023 贵州大学简答：四个自信的主要内容及其统一性。我们为什么可以坚定「四个自信」？',
+ a:'中国特色社会主义道路自信、理论自信、制度自信、文化自信，来源于实践、来源于人民、来源于真理。中国特色社会主义道路、理论、制度、文化，是党和人民100多年奋斗、创造、积累的根本成就，是深刻总结世界社会主义发展正反两方面经验，经过长期实践探索取得的科学成果。正是深厚的实践基础和人民的广泛参与、深切认同，铸就了「四个自信」的坚实根基。马克思主义深刻揭示了社会主义必然代替资本主义的客观规律，这是我们坚定「四个自信」的理论支撑和根本依据。要把共产主义远大理想同中国特色社会主义共同理想统一起来、同我们正在做的事情统一起来。',
+ h:'三个来源逐个对应：实践＝100多年奋斗创造积累的根本成就；人民＝广泛参与、深切认同；真理＝马克思主义揭示两个必然的客观规律。',
+ k:['来源于实践、来源于人民、来源于真理','100多年','正反两方面经验','坚实根基','理论支撑和根本依据','远大理想','共同理想']},
+
+{p:'一节·四个自信',t:'坚定四个自信的根基和底气',star:1,
+ q:'坚定「四个自信」，中国共产党和中国人民的底气在哪里？',
+ a:'我们有中国共产党的坚强领导，这是中国特色社会主义最本质的特征、中国特色社会主义制度的最大优势；我们有新中国成立、改革开放以来特别是党的十八大以来形成的更为完善的制度保证、更为坚实的物质基础、更为主动的精神力量，时与势在我们一边，这是中国特色社会主义所独具的发展优势；我们有连绵不绝的中华5000多年文明，这是中国特色社会主义的文化根脉和突出优势，是我们在世界风云激荡中站稳脚跟的根基。我们说要坚定中国特色社会主义道路自信、理论自信、制度自信，说到底是要坚定文化自信，文化自信是更基础、更广泛、更深厚的自信，是一个国家、一个民族发展中最基本、最深沉、最持久的力量。',
+ h:'三条底气：党的领导（最本质特征、最大优势）／三个「更为」＋时与势（制度保证、物质基础、精神力量）／5000多年文明（文化根脉、突出优势）。结尾金句必背：说到底是要坚定文化自信，文化自信是更基础、更广泛、更深厚的自信，是更基本、更深沉、更持久的力量。',
+ k:['最本质的特征','最大优势','更为完善的制度保证','更为坚实的物质基础','更为主动的精神力量','时与势','文化根脉','更基础、更广泛、更深厚的自信','最基本、最深沉、最持久的力量']},
+
+{p:'二节·新的历史方位',t:'新时代的内涵（五个「是」）',star:1,
+ q:'2025 国防科大、新疆农大；2023 天津工大、西北农林、山东财经；2022 北京交大：中国特色社会主义进入新时代的内涵。',
+ a:'中国特色社会主义新时代，是承前启后、继往开来、在新的历史条件下继续夺取中国特色社会主义伟大胜利的时代，是决胜全面建成小康社会、进而全面建设社会主义现代化强国的时代，是全国各族人民团结奋斗、不断创造美好生活、逐步实现全体人民共同富裕的时代，是全体中华儿女勠力同心、奋力实现中华民族伟大复兴中国梦的时代，是我国不断为人类作出更大贡献的时代。',
+ h:'五个「是」抓尾词：伟大胜利 → 现代化强国 → 共同富裕 → 中国梦 → 人类贡献。口诀「胜国共梦人」。注意「勠力同心」的写法。',
+ k:['承前启后、继往开来','伟大胜利','全面建成小康社会','社会主义现代化强国','共同富裕','勠力同心','中国梦','更大贡献']},
+
+{p:'二节·新的历史方位',t:'新时代的意义（三个「意味着」）',star:1,
+ q:'2023 西电、济南大学；2022 中南大学、东南大学、北京化工大学：简述中国特色社会主义进入新时代的历史意义。',
+ a:'意味着近代以来久经磨难的中华民族迎来了从站起来、富起来到强起来的伟大飞跃，迎来了实现中华民族伟大复兴的光明前景；意味着科学社会主义在21世纪的中国焕发出强大生机活力，在世界上高高举起了中国特色社会主义伟大旗帜；意味着中国特色社会主义道路、理论、制度、文化不断发展，拓展了发展中国家走向现代化的途径，给世界上那些既希望加快发展又希望保持自身独立性的国家和民族提供了全新选择，为解决人类问题贡献了中国智慧和中国方案。',
+ h:'三个「意味着」对应：中华民族（站起来富起来强起来）→ 科学社会主义（21世纪中国、高高举起旗帜）→ 世界贡献（拓展途径、全新选择、中国智慧中国方案）。由内到外三层递进。',
+ k:['久经磨难','从站起来、富起来到强起来','光明前景','强大生机活力','高高举起','拓展了发展中国家走向现代化的途径','全新选择','中国智慧和中国方案']},
+
+{p:'二节·新的历史方位',t:'新时代的三个「反映」',star:1,
+ q:'2024 山东大学、东北石油大学论述：为什么说中国进入了新的历史方位？',
+ a:'第一，中国特色社会主义进入新时代，是我国社会主要矛盾发生新变化的反映。社会主要矛盾状况及其变化，是认识把握社会发展阶段性特征的重要依据。第二，是党的主要任务发生新变化的反映。第三，是中国和世界关系发生新变化的反映。',
+ h:'三个「反映」：主要矛盾新变化／党的主要任务新变化／中国和世界关系新变化。这是论述题「为什么说进入新时代」的标准三段式。',
+ k:['社会主要矛盾发生新变化','党的主要任务发生新变化','中国和世界关系发生新变化','阶段性特征']},
+
+{p:'二节·新的历史方位',t:'新时代党的主要任务',star:0,
+ q:'党的十八大后，党面临的主要任务是什么？',
+ a:'党的十八大后，党面临的主要任务是，实现第一个百年奋斗目标，开启实现第二个百年奋斗目标新征程，朝着实现中华民族伟大复兴的宏伟目标继续前进。这个主要任务是新时代我们党一切工作的指挥棒，是党和国家各个方面各个部门工作的统领。',
+ h:'两句话：实现第一个百年目标 ＋ 开启第二个百年新征程。两个比喻定位：指挥棒、统领。',
+ k:['第一个百年奋斗目标','第二个百年奋斗目标','指挥棒','统领']},
+
+{p:'二节·新的历史方位',t:'中国和世界关系的新变化',star:0,
+ q:'如何理解新时代中国和世界关系发生的新变化？',
+ a:'当今时代，世界进入新的动荡变革期，世界百年未有之大变局和中华民族伟大复兴战略全局相互交织、深度互动，中国同国际社会的联系空前紧密，中国对世界的依靠、对国际事务的参与在不断加深，世界对中国的依靠、对中国的影响也在不断加深。世界对中国特色社会主义的关注，从未像今天这样广泛、深切、聚焦；中国特色社会主义对世界的影响，也从未像今天这样全面、深刻、长远。坚持和发展新时代中国特色社会主义，要牢牢把握国内国际两个大局。',
+ h:'两组「从未像今天这样」形成对仗，是论述题里的高分词句。落脚：牢牢把握国内国际两个大局。',
+ k:['动荡变革期','相互交织、深度互动','空前紧密','从未像今天这样','两个大局']},
+
+{p:'二节·社会主要矛盾',t:'社会主要矛盾的转化',star:1,
+ q:'新时代我国社会主要矛盾发生了怎样的转化？',
+ a:'改革开放后，我国社会主要矛盾是人民日益增长的物质文化需要同落后的社会生产之间的矛盾。党的十八大以来，转化为人民日益增长的美好生活需要和不平衡不充分的发展之间的矛盾。',
+ h:'前：物质文化需要 ↔ 落后的社会生产。后：美好生活需要 ↔ 不平衡不充分的发展。只变两头，中间结构不变。',
+ k:['物质文化需要','落后的社会生产','美好生活需要','不平衡不充分的发展']},
+
+{p:'二节·社会主要矛盾',t:'转化的依据',star:1,
+ q:'2023 福州大学、2022 延边大学：简述新时代我国社会主要矛盾发生转化的依据。',
+ a:'经过长期发展，人民对美好生活的向往更加强烈、需要日益广泛，不仅对物质文化生活提出了更高要求，而且在民主、法治、公平、正义、安全、环境等方面的要求日益增长，人民对美好生活的向往总体上已经从「有没有」转向「好不好」，人民群众的需要呈现多样化、多层次、多方面的特点，再只讲「物质文化需要」已不能真实全面反映人民群众的愿望和要求。同时，我国社会生产力水平总体上显著提高，社会生产能力在很多方面进入世界前列，我国长期所处的短缺经济和供给不足状况已经发生根本性改变，再讲「落后的社会生产」已经不符合实际，更加突出的问题是发展不平衡不充分。发展不平衡不充分问题成为满足人民日益增长的美好生活需要的主要制约因素。',
+ h:'两边各一句「再讲……已不符合实际」——需要侧：从「有没有」转向「好不好」；生产侧：落后社会生产 → 不平衡不充分。六个需求领域：民主、法治、公平、正义、安全、环境。',
+ k:['从「有没有」转向「好不好」','多样化、多层次、多方面','民主、法治、公平、正义、安全、环境','短缺经济和供给不足','主要制约因素']},
+
+{p:'二节·社会主要矛盾',t:'发展不平衡与不充分的含义',star:0,
+ q:'2023 深圳大学：「发展不平衡不充分」分别指什么？',
+ a:'发展不平衡，主要是各区域各领域各方面存在失衡现象，制约了整体发展水平提升；发展不充分，主要是我国全面实现社会主义现代化还有相当长的路要走，发展任务仍然很重。发展不平衡不充分问题成为满足人民日益增长的美好生活需要的主要制约因素。',
+ h:'不平衡＝各区域各领域各方面的失衡（横向结构）；不充分＝实现现代化还有长路要走（纵向程度）。',
+ k:['各区域各领域各方面存在失衡现象','整体发展水平提升','相当长的路要走','主要制约因素']},
+
+{p:'二节·社会主要矛盾',t:'关系全局的历史性变化',star:1,
+ q:'2025 吉林大学：为什么说新时代社会主要矛盾变化是关系全局的历史性变化？',
+ a:'第一，新时代我国社会主要矛盾的变化，反映了社会发展的客观实际，明确了解决当代中国发展主要问题的根本着力点。第二，是关系全局的历史性变化，对党和国家工作提出了许多新要求：要在继续推动发展的基础上，着力解决好发展不平衡不充分问题，大力提升发展质量和效益，更好满足人民在经济、政治、文化、社会、生态等方面日益增长的需要，更好推动人的全面发展、社会全面进步；要有全局观，对各种矛盾做到了然于胸，同时又要紧紧围绕主要矛盾，优先解决主要矛盾和矛盾的主要方面，以此带动其他矛盾的解决，在整体推进中实现重点突破，以重点突破带动经济社会发展水平整体跃升。',
+ h:'两层：①反映客观实际、明确根本着力点；②提出新要求（两条：着力解决不平衡不充分提升质量效益 ＋ 有全局观抓主要矛盾带动其他）。',
+ k:['客观实际','根本着力点','发展质量和效益','人的全面发展、社会全面进步','全局观','了然于胸','主要矛盾和矛盾的主要方面','重点突破']},
+
+{p:'二节·社会主要矛盾',t:'两个「没有变」',star:1,
+ q:'社会主要矛盾变化了，我国所处的历史阶段变了吗？',
+ a:'新时代我国社会主要矛盾的变化，是在社会主义初级阶段中发生的变化，没有改变对我国社会主义所处历史阶段的判断。我国仍处于并将长期处于社会主义初级阶段的基本国情没有变，我国是世界最大发展中国家的国际地位没有变。新征程上，必须始终牢牢把握我国发展的阶段性特征，毫不动摇贯彻党在社会主义初级阶段的基本路线，既不能落后于时代，也不能脱离实际、超越阶段。',
+ h:'两个没有变：基本国情（社会主义初级阶段）、国际地位（世界最大发展中国家）。两个「不能」：不能落后于时代、不能脱离实际超越阶段。',
+ k:['社会主义初级阶段','基本国情没有变','世界最大发展中国家','国际地位没有变','不能落后于时代','不能脱离实际、超越阶段']},
+
+{p:'二节·伟大变革',t:'党的十八大前面对的突出问题',star:0,
+ q:'党的十八大前，党和国家面对哪些突出矛盾和问题？',
+ a:'一系列长期积累及新出现的突出矛盾和问题亟待解决：党内存在不少落实党的领导弱化、虚化、淡化问题，一些地方和部门形式主义、官僚主义、享乐主义和奢靡之风屡禁不止，一些贪腐问题触目惊心；经济结构性体制性矛盾突出，发展不平衡、不协调、不可持续，传统发展模式难以为继；一些人对中国特色社会主义政治制度自信不足，有法不依、执法不严等问题严重存在；拜金主义、享乐主义、极端个人主义和历史虚无主义等错误思潮不时出现，网络舆论乱象丛生；民生保障存在不少薄弱环节；资源环境约束趋紧、环境污染等问题突出。',
+ h:'六大问题按领域：党建（弱化虚化淡化、四风、贪腐）→ 经济（结构性体制性、不平衡不协调不可持续）→ 政治（制度自信不足、有法不依执法不严）→ 思想（拜金享乐极端个人主义历史虚无主义、网络乱象）→ 民生（薄弱环节）→ 生态（资源环境约束）。',
+ k:['弱化、虚化、淡化','形式主义、官僚主义、享乐主义和奢靡之风','结构性体制性矛盾','有法不依、执法不严','拜金主义','历史虚无主义','网络舆论乱象','资源环境约束趋紧']},
+
+{p:'二节·伟大变革',t:'突破性进展（13 条）',star:1,
+ q:'新时代在解决突出矛盾和问题上取得了哪些突破性进展？',
+ a:'党的领导全面加强，党中央权威和集中统一领导得到有力保证；全面从严治党不断深化，党的自我净化、自我完善、自我革新、自我提高能力显著增强，管党治党宽松软状况得到根本扭转，反腐败斗争取得压倒性胜利并全面巩固；把握新发展阶段、贯彻新发展理念、构建新发展格局，我国经济迈上更高质量、更有效率、更加公平、更可持续、更为安全的发展之路；全面深化改革开放向广度和深度进军，中国特色社会主义制度更加成熟更加定型，国家治理体系和治理能力现代化水平明显提高；全过程人民民主得到全面发展；全面依法治国扎实推进；新时代党的创新理论深入人心，社会主义核心价值观广泛传播，中华优秀传统文化得到创造性转化、创新性发展，我国意识形态领域形势发生全局性、根本性转变；人民生活全方位改善，社会治理水平大幅度提升；美丽中国建设迈出重大步伐，我国生态环境保护发生历史性、转折性、全局性变化；人民军队实现整体性革命性重塑；国家安全得到全面加强，平安中国建设迈向更高水平；推动香港进入由乱到治走向由治及兴的新阶段；中国特色大国外交全面推进，构建人类命运共同体成为引领时代潮流和人类前进方向的鲜明旗帜。',
+ h:'13 条按领域归并：党的领导 → 从严治党反腐 → 经济（三新）→ 改革开放 → 民主 → 法治 → 文化意识形态 → 民生治理 → 生态文明 → 军队 → 国家安全 → 港澳台 → 外交。高分词：「宽松软得到根本扭转」「压倒性胜利并全面巩固」「历史性、转折性、全局性变化」「由乱到治走向由治及兴」。',
+ k:['压倒性胜利并全面巩固','宽松软状况得到根本扭转','更高质量、更有效率、更加公平、更可持续、更为安全','更加成熟更加定型','创造性转化、创新性发展','全局性、根本性转变','历史性、转折性、全局性变化','整体性革命性重塑','由乱到治走向由治及兴','鲜明旗帜']},
+
+{p:'二节·伟大变革',t:'里程碑意义（四个维度）',star:1,
+ q:'2025 哈尔滨师范；2023 西南财经、吉林大学、湖南科技大学：新时代十年伟大变革的历史意义。',
+ a:'新时代的伟大变革，在党史、新中国史、改革开放史、社会主义发展史、中华民族发展史上具有里程碑意义。走过百年奋斗历程的中国共产党在革命性锻造中更加坚强有力，党的政治领导力、思想引领力、群众组织力、社会号召力显著增强，始终成为全国人民的主心骨、始终成为坚强领导核心。中国人民的前进动力更加强大、奋斗精神更加昂扬、必胜信念更加坚定，焕发出更为强烈的历史自觉和主动精神。改革开放和社会主义现代化建设深入推进，书写了经济快速发展和社会长期稳定两大奇迹新篇章，实现中华民族伟大复兴进入了不可逆转的历史进程。科学社会主义在21世纪的中国焕发出新的蓬勃生机，中国式现代化为人类实现现代化提供了新的选择，为解决人类面临的共同问题提供更多更好的中国智慧、中国方案、中国力量。',
+ h:'五史定位 ＋ 四个主体：中国共产党（四力增强、主心骨、领导核心）／中国人民（历史自觉和主动精神）／改革开放和现代化建设（两大奇迹、不可逆转）／科学社会主义（新的选择、中国智慧中国方案中国力量）。「四力」必背：政治领导力、思想引领力、群众组织力、社会号召力。',
+ k:['党史、新中国史、改革开放史、社会主义发展史、中华民族发展史','政治领导力、思想引领力、群众组织力、社会号召力','主心骨','历史自觉和主动精神','经济快速发展和社会长期稳定两大奇迹','不可逆转的历史进程','新的选择','中国智慧、中国方案、中国力量']},
+
+{p:'三节·基本理论路线方略',t:'党的基本理论',star:0,
+ q:'什么是党的基本理论？如何坚持？',
+ a:'党的基本理论是坚持和发展中国特色社会主义的行动指南。坚持党的基本理论，就是要坚定马克思主义信仰，坚持马克思主义指导地位，坚持不懈用习近平新时代中国特色社会主义思想凝心铸魂，用党的基本理论指导实践、推动工作。',
+ h:'定位：行动指南。三个动作：坚定信仰、坚持指导地位、凝心铸魂。',
+ k:['行动指南','马克思主义信仰','指导地位','凝心铸魂']},
+
+{p:'三节·基本理论路线方略',t:'党的基本路线',star:1,
+ q:'党在社会主义初级阶段的基本路线是什么？',
+ a:'党的基本路线是国家的生命线、人民的幸福线。党在社会主义初级阶段的基本路线是：领导和团结全国各族人民，以经济建设为中心，坚持四项基本原则，坚持改革开放，自力更生，艰苦创业，为把我国建设成为富强民主文明和谐美丽的社会主义现代化强国而奋斗。党的基本路线明确了中国特色社会主义发展的历史方位、主体力量、兴国之要、立国之本、强国之路和奋斗目标，必须牢牢坚持、毫不动摇。',
+ h:'两个定位：国家的生命线、人民的幸福线。六要素对应：全国各族人民＝主体力量，以经济建设为中心＝兴国之要，四项基本原则＝立国之本，改革开放＝强国之路，现代化强国＝奋斗目标。',
+ k:['国家的生命线、人民的幸福线','以经济建设为中心','四项基本原则','自力更生，艰苦创业','富强民主文明和谐美丽','兴国之要','立国之本','强国之路']},
+
+{p:'三节·基本理论路线方略',t:'党的基本方略',star:0,
+ q:'党的基本方略是什么？涵盖哪些内容？',
+ a:'党的十九大概括的以「十四个坚持」为主要内容的基本方略，涵盖了坚持党的全面领导和全面从严治党，涵盖了「五位一体」总体布局和「四个全面」战略布局，涵盖了国防和军队建设、维护国家安全、「一国两制」和祖国统一、对外战略等方面，反映了我们党对建设中国特色社会主义的规律性认识。要全面贯彻党的基本方略，坚持党的最高纲领和基本纲领的统一。',
+ h:'内容＝十四个坚持（十九大概括）。三个「涵盖了」：党的领导和从严治党／两个布局／军队、安全、统一、外交。',
+ k:['十四个坚持','党的全面领导','全面从严治党','五位一体','四个全面','规律性认识','最高纲领和基本纲领']},
+
+{p:'三节·两个布局',t:'「五位一体」总体布局',star:1,
+ q:'2024 重庆大学：新时代「五位一体」总体布局的内涵和意义。',
+ a:'物质文明、政治文明、精神文明、社会文明、生态文明，相互联系、相互促进、不可分割。经济建设是中心，政治建设是保障，文化建设是灵魂，社会建设是条件，生态文明建设是基础。要按照「五位一体」总体布局的整体性目标要求，坚持以经济建设为中心，努力推动社会主义物质文明、政治文明、精神文明、社会文明、生态文明协调发展，不断推进和拓展中国式现代化，不断丰富和发展人类文明新形态。',
+ h:'五个文明 ＋ 五个定位（中心／保障／灵魂／条件／基础）——这个对应是选择题和填空高频。注意「五位一体」讲的是五个「文明」，别和五个「建设」的表述混用。',
+ k:['物质文明、政治文明、精神文明、社会文明、生态文明','经济建设是中心','政治建设是保障','文化建设是灵魂','社会建设是条件','生态文明建设是基础','人类文明新形态']},
+
+{p:'三节·两个布局',t:'「四个全面」战略布局',star:1,
+ q:'2023 贵州大学：「四个全面」战略布局的主要内容和意义。',
+ a:'全面建成小康社会后，「四个全面」是全面建设社会主义现代化国家、全面深化改革、全面依法治国、全面从严治党。全面建设社会主义现代化国家是战略目标，在「四个全面」中居于引领地位；全面深化改革、全面依法治国、全面从严治党是三大战略举措，为全面建设社会主义现代化国家提供重要保障。要深刻认识「四个全面」之间的有机联系，将其作为具有内在理论和实践逻辑关系的统一体来把握和推进，努力做到相辅相成、相互促进、相得益彰。',
+ h:'易错提醒：第一个「全面」已从「全面建成小康社会」更新为「全面建设社会主义现代化国家」（2020 年后）。结构＝一个战略目标 ＋ 三大战略举措。',
+ k:['全面建设社会主义现代化国家','全面深化改革','全面依法治国','全面从严治党','战略目标','引领地位','三大战略举措','重要保障','相得益彰']},
+
+{p:'三节·两个布局',t:'统筹推进两个布局的意义',star:1,
+ q:'统筹推进「五位一体」总体布局和协调推进「四个全面」战略布局有什么重要意义？',
+ a:'第一，确立了新时代坚持和发展中国特色社会主义的重大战略部署。第二，指明了实现高质量发展的重要路径，高质量发展是全面建设社会主义现代化国家的首要任务。第三，回应了人民对美好生活的向往，坚持以人民为中心的发展思想，切实解决急难愁盼问题，让人民更多更好享有经济、政治、文化、社会、生态文明发展成果，让人民群众的获得感成色更足、幸福感更可持续、安全感更有保障。第四，创造了人类文明新形态，成功走出了中国式现代化道路，打破了「现代化=西方化」的迷思，拓展了发展中国家走向现代化的路径选择，为人类对更好社会制度的探索提供了中国方案。',
+ h:'四条意义抓首句：战略部署／高质量发展（首要任务）／美好生活（获得感成色更足、幸福感更可持续、安全感更有保障）／人类文明新形态（打破「现代化=西方化」迷思）。',
+ k:['重大战略部署','首要任务','急难愁盼','获得感成色更足、幸福感更可持续、安全感更有保障','人类文明新形态','现代化=西方化','路径选择','中国方案']},
+
+{p:'三节·两个布局',t:'新征程上怎么干',star:0,
+ q:'新征程上，如何统筹推进「五位一体」和协调推进「四个全面」？',
+ a:'必须紧紧扭住全面建设社会主义现代化国家这个战略目标不动摇，紧紧扭住全面深化改革、全面依法治国、全面从严治党三个战略举措不放松，在推动经济发展的基础上，建设社会主义市场经济、民主政治、先进文化、和谐社会、生态文明，协同推进人民富裕、国家强盛、中国美丽。',
+ h:'两个「紧紧扭住」：战略目标不动摇、三大举措不放松。五个建设目标：市场经济、民主政治、先进文化、和谐社会、生态文明。三个协同：人民富裕、国家强盛、中国美丽。',
+ k:['战略目标不动摇','三个战略举措不放松','人民富裕、国家强盛、中国美丽']},
+
+{p:'三节·开拓前进',t:'社会主义是不断发展和完善的过程',star:0,
+ q:'如何理解社会主义是一个不断发展和完善的实践过程？',
+ a:'社会主义是一个不断发展和完善的实践过程，需要一代又一代人的接续奋斗。必须坚持马克思主义的发展观点，增强历史自觉、坚定历史自信，发挥历史的主动性和创造性，锐意进取、大胆探索，确保中国特色社会主义事业始终立于不败之地，并不断创造新的伟大奇迹。社会主义是前无古人的伟大事业，没有现成的方案可以遵循，必须随着时代、实践和科学的发展不断探索前进。',
+ h:'关键词：接续奋斗、马克思主义的发展观点、历史自觉和历史自信、历史的主动性和创造性、立于不败之地。',
+ k:['接续奋斗','马克思主义的发展观点','历史自觉','历史自信','主动性和创造性','立于不败之地','前无古人']},
+
+{p:'三节·开拓前进',t:'在斗争中开辟和前进',star:0,
+ q:'如何理解「社会主义发展道路从来都不是笔直的」？',
+ a:'社会主义发展道路从来都不是笔直的，始终充满着险阻曲折，需要依靠顽强斗争打开事业发展新天地。要把握新的伟大斗争的历史特点，发扬斗争精神，增强斗争本领，凝聚起全党全国各族人民的意志和力量，全力战胜一切可以预见和难以预见的风险挑战。',
+ h:'一组动宾：把握历史特点、发扬斗争精神、增强斗争本领、凝聚意志力量、战胜风险挑战。',
+ k:['险阻曲折','顽强斗争','新的伟大斗争','发扬斗争精神','增强斗争本领','风险挑战']},
+
+{p:'三节·开拓前进',t:'收尾金句（论述题可用）',star:1,
+ q:'本章的收尾金句是什么？（论述题结尾可套用）',
+ a:'中国特色社会主义取得了巨大成就，书写了科学社会主义历史上最恢宏的史诗。历史只会眷顾坚定者、奋进者、搏击者，而不会等待犹豫者、懈怠者、畏难者。要牢记空谈误国、实干兴邦，埋头苦干、踔厉奋发，不断开创中国特色社会主义事业新局面，让科学社会主义迎来更加光明的发展前景。',
+ h:'对仗结构：眷顾「坚定者、奋进者、搏击者」 vs 不等待「犹豫者、懈怠者、畏难者」。再加「空谈误国、实干兴邦」。论述题结尾套用这两句很加分。',
+ k:['最恢宏的史诗','坚定者、奋进者、搏击者','犹豫者、懈怠者、畏难者','空谈误国、实干兴邦','埋头苦干、踔厉奋发']}
+];
+
+const KEY_STORE='ch1-flashcards-v1';
+let state=JSON.parse(localStorage.getItem(KEY_STORE)||'{}');
+let filter='all', mode='seg', order=DECK.map((_,i)=>i), idx=0, flipped=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function deck(){
+  let list=order.filter(i=>{
+    const c=DECK[i], st=state[i]||{};
+    if(filter==='star') return c.star===1;
+    if(filter==='learning') return (st.streak||0)<2;
+    if(filter==='mastered') return (st.streak||0)>=2;
+    return true;
+  });
+  return list.length?list:[0];
+}
+
+function segsOf(text){
+  const raw=text.match(/[^。，；、？！]+[。，；、？！]?/g)||[text];
+  return raw.map(s=>s.trim()).filter(Boolean);
+}
+function renderSeg(text){
+  return segsOf(text).map(s=>
+    s.replace(/\s/g,'').length>=2?`<span class="cloze">${esc(s)}</span>`:esc(s)
+  ).join('');
+}
+function renderKey(text,terms){
+  const ts=[...new Set(terms||[])].sort((a,b)=>b.length-a.length);
+  let out=esc(text);
+  ts.forEach(t=>{
+    const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+    out=out.replace(re,m=>`<span class="cloze">${m}</span>`);
+  });
+  return out;
+}
+
+function render(){
+  const list=deck();
+  if(idx>=list.length) idx=0;
+  if(idx<0) idx=list.length-1;
+  const i=list[idx], c=DECK[i], st=state[i]||{streak:0};
+  const star=c.star?'★★★':'';
+  const no=`卡 ${i+1} / ${DECK.length}`;
+
+  ['f','b'].forEach(f=>{
+    $(f+'-part').textContent=c.p;
+    $(f+'-no').textContent=no;
+    $(f+'-star').textContent=star;
+  });
+  $('f-q').textContent=c.q;
+  $('b-q').textContent=c.q;
+  $('b-hook').textContent=c.h;
+  $('b-a').innerHTML=esc(c.a);
+  $('f-a').innerHTML = mode==='seg' ? renderSeg(c.a) : renderKey(c.a,c.k);
+
+  const days=['第 1 天','第 3 天','第 7 天','第 15 天'];
+  const s=st.streak||0;
+  $('f-due').textContent = s>=2 ? '已毕业' : '下次复习 '+(days[Math.min(s,3)]||'第 15 天');
+
+  $('toggleAll').textContent='全部显示';
+  $('toggleAll').classList.remove('on');
+
+  const done=DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  $('prog').style.width=(done/DECK.length*100)+'%';
+  $('card').classList.toggle('flip',flipped);
+  updateToc(done);
+}
+
+function buildToc(){
+  const groups=[];
+  DECK.forEach((c,i)=>{
+    let g=groups.find(x=>x.p===c.p);
+    if(!g){ g={p:c.p,items:[]}; groups.push(g); }
+    g.items.push(i);
+  });
+  $('toc-body').innerHTML=groups.map(g=>`
+    <div class="toc-g">
+      <h6>${esc(g.p)}<span class="cnt"></span></h6>
+      <ul>${g.items.map(i=>`
+        <li data-i="${i}">
+          <span class="tn">${i+1}</span>
+          <span class="tt">${esc(DECK[i].t)}</span>
+          ${DECK[i].star?'<span class="ts">★★★</span>':''}
+          <span class="td"></span>
+        </li>`).join('')}</ul>
+    </div>`).join('');
+  $('toc-body').addEventListener('click',e=>{
+    const li=e.target.closest('li');
+    if(li) jumpTo(+li.dataset.i);
+  });
+}
+
+function updateToc(done){
+  if(!$('toc-body').children.length) return;
+  const cur=deck()[idx];
+  document.querySelectorAll('#toc-body li').forEach(li=>{
+    const i=+li.dataset.i, s=(state[i]||{streak:0}).streak||0;
+    li.classList.toggle('cur', i===cur);
+    li.classList.toggle('done', s>=2);
+    li.classList.toggle('half', s>0&&s<2);
+    li.querySelector('.td').textContent = s>=2?'✓':(s>0?'◐':'');
+  });
+  document.querySelectorAll('#toc-body .toc-g').forEach(g=>{
+    const lis=[...g.querySelectorAll('li')];
+    g.querySelector('.cnt').textContent = lis.filter(l=>l.classList.contains('done')).length+' / '+lis.length;
+  });
+  const total=DECK.length, d=(done!==undefined)?done:DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  const half=DECK.filter((_,j)=>{const s=(state[j]||{streak:0}).streak||0;return s>0&&s<2;}).length;
+  $('tocSum').textContent=`已掌握 ${d} / ${total}　记住过一次 ${half}　未背 ${total-d-half}`;
+}
+
+function openToc(){ $('toc').classList.add('on'); $('tocMask').classList.add('on'); $('tocBtn').classList.add('on'); }
+function closeToc(){ $('toc').classList.remove('on'); $('tocMask').classList.remove('on'); $('tocBtn').classList.remove('on'); }
+function toggleToc(){ $('toc').classList.contains('on')?closeToc():openToc(); }
+
+function jumpTo(i){
+  if(filter!=='all'){
+    filter='all';
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  }
+  const p=deck().indexOf(i);
+  if(p>=0){ idx=p; flipped=false; render(); closeToc(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function flip(){ flipped=!flipped; $('card').classList.toggle('flip',flipped); }
+function go(d){ const l=deck(); idx=(idx+d+l.length)%l.length; flipped=false; render(); }
+function mark(ok){
+  const list=deck(), i=list[idx], st=state[i]||{streak:0,last:0};
+  st.streak = ok ? Math.min((st.streak||0)+1,4) : 0;
+  st.last=Date.now();
+  state[i]=st; localStorage.setItem(KEY_STORE,JSON.stringify(state));
+  if(filter==='learning'||filter==='mastered'){ idx=0; render(); }
+  else { go(1); }
+}
+
+$('f-a').addEventListener('click',e=>{
+  const el=e.target.closest('.cloze');
+  if(el) el.classList.toggle('on');
+});
+$('toggleAll').addEventListener('click',()=>{
+  const cs=[...document.querySelectorAll('#f-a .cloze')];
+  const allOn=cs.length&&cs.every(c=>c.classList.contains('on'));
+  cs.forEach(c=>c.classList.toggle('on',!allOn));
+  $('toggleAll').textContent=allOn?'全部显示':'全部隐藏';
+  $('toggleAll').classList.toggle('on',!allOn);
+});
+document.querySelectorAll('[data-m]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+document.querySelectorAll('[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f; idx=0;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+$('tocBtn').addEventListener('click',toggleToc);
+$('tocBtn2').addEventListener('click',toggleToc);
+$('tocX').addEventListener('click',closeToc);
+$('tocMask').addEventListener('click',closeToc);
+$('shuffle').addEventListener('click',()=>{
+  order=DECK.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  idx=0; render();
+});
+$('reset').addEventListener('click',()=>{
+  if(confirm('清空全部掌握进度？')){ state={}; localStorage.removeItem(KEY_STORE); idx=0; render(); }
+});
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('flip').addEventListener('click',flip);
+$('got').addEventListener('click',()=>mark(true));
+$('again').addEventListener('click',()=>mark(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key===' '){flip();e.preventDefault();}
+  else if(k==='f'){$('toggleAll').click();}
+  else if(k==='m'){mode = mode==='seg'?'key':'seg';document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===mode));render();}
+  else if(k==='g'){mark(true);}
+  else if(k==='r'){mark(false);}
+  else if(k==='s'){$('shuffle').click();}
+  else if(k==='t'){toggleToc();}
+  else if(e.key==='Escape'){closeToc();}
+});
+
+buildToc();
+render();
+</script>
+</body>
+</html>
