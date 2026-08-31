@@ -1,27 +1,31 @@
-# 导论 · 背诵抽认卡
+# 背诵抽认卡（章节导航版）
 
 在线访问：https://1128-66.github.io/flashcards/
 
 ## 这是什么
 
-自包含的单文件 HTML 抽认卡（无任何外部依赖），通过 GitHub Pages 部署，可在任意设备（手机 / 平板 / 电脑）联网访问。学习进度保存在各设备浏览器本地（localStorage），不同设备间互不影响。
+自包含的单文件 HTML 抽认卡合集，通过 GitHub Pages 部署，可在任意设备联网访问。学习进度保存在各设备浏览器本地（localStorage），不同设备间互不影响。
 
-## 如何更新内容
+- **首页**（`index.html`）：章节导航，列出所有章节卡片
+- **章节页**：每章一个独立 HTML，如 `01-导论.html`
 
-在任意有 git 的电脑上：
+## 如何新增一个章节
 
-```bash
-git clone https://github.com/1128-66/flashcards.git
-cd flashcards
-# 用新的 HTML 覆盖 index.html
-git add index.html
-git commit -m "更新内容"
-git push origin main
-```
+以新增「第二章」为例：
 
-推送后 GitHub Pages 会在 1~2 分钟内自动重新部署，无需额外操作。
+1. 制作好该章的抽认卡 HTML
+2. 命名规范：`两位数字 + 连字符 + 章节名`，如 `02-xxx.html`（数字前缀决定首页排序）
+3. 放入仓库并推送：
+   ```bash
+   git add 02-xxx.html
+   git commit -m "新增第二章"
+   git push origin main
+   ```
+4. **更新首页**：编辑 `index.html`，在「章节列表」注释之间复制一份 `<a class="chapter">…</a>`，把编号、标题、链接改好，再推送一次
 
-## 注意事项
+推送后 GitHub Pages 会在 1~2 分钟内自动重新部署。
+
+## 注意
 
 - 仓库为公开仓库，链接不主动公开就不会被搜到，但请勿放入任何敏感信息。
-- 更新时只需保持文件名为 `index.html`，否则访问地址会变化。
+- 章节文件名请保持英文数字前缀 + 中文名（如 `01-导论.html`），不要有空格。
