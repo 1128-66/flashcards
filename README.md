@@ -15,13 +15,17 @@
 
 1. 制作好该章的抽认卡 HTML
 2. 命名规范：`两位数字 + 连字符 + 章节名`，如 `02-xxx.html`（数字前缀决定首页排序）
-3. 放入仓库并推送：
+3. 在章节页 `<header>` 的标题上方加返回入口（和 `01-导论.html` 里一致）：
+   ```html
+   <a class="home-link" href="index.html">← 章节导航</a>
+   ```
+4. 放入仓库并推送：
    ```bash
    git add 02-xxx.html
    git commit -m "新增第二章"
    git push origin main
    ```
-4. **更新首页**：编辑 `index.html`，在「章节列表」注释之间复制一份 `<a class="chapter">…</a>`，把编号、标题、链接改好，再推送一次
+5. **更新首页**：编辑 `index.html`，在「章节列表」注释之间复制一份 `<a class="chapter">…</a>`，把编号、标题、链接改好，再推送一次
 
 推送后 GitHub Pages 会在 1~2 分钟内自动重新部署。
 

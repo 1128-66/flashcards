@@ -143,12 +143,19 @@ details li:before{content:"· ";color:var(--faint)}
 .toc-g li.cur{background:var(--accent-dim);color:var(--text)}
 .toc-g li.cur .tn{color:var(--accent-soft)}
 .toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
+  <a class="home-link" href="index.html">← 章节导航</a>
   <h1>导论 · 背诵抽认卡</h1>
   <div class="sub">习近平新时代中国特色社会主义思想概论 · 导论六部分 · 30 张卡</div>
   <div class="bar">
