@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第四章 · 背诵抽认卡</title>
+<style>
+:root{
+  --bg:#12141a; --surface:#1a1d26; --surface-2:#21252f; --line:#2c313d;
+  --text:#e6e8ee; --muted:#98a0b0; --faint:#6c7488;
+  --accent:#1D9E75; --accent-soft:#5DCAA5; --accent-dim:rgba(93,202,165,.14);
+  --star:#EF9F27; --danger:#E24B4A;
+  --mask:#2b3240; --mask-hover:#394154;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; padding:24px 18px 60px;
+}
+.wrap{max-width:820px;margin:0 auto}
+
+header{margin-bottom:18px}
+h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+.sub{color:var(--faint);font-size:13px;margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  padding:5px 12px; border-radius:99px; font-size:13px; cursor:pointer;
+  transition:.15s; user-select:none;
+}
+.chip:hover{border-color:var(--faint);color:var(--text)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.spacer{flex:1}
+
+.progress{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{
+  margin-top:18px; perspective:2000px;
+}
+.faces{
+  position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.card.flip .faces{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 22px; min-height:360px;
+}
+.faces{display:grid}
+.front{transform:none}
+.back{transform:rotateY(180deg)}
+
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);margin-bottom:14px}
+.tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 9px;border-radius:6px;color:var(--muted)}
+.star{color:var(--star)}
+.q{font-size:19px;font-weight:600;line-height:1.6;margin-bottom:6px}
+.qhint{font-size:12px;color:var(--faint);margin-bottom:18px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--faint);color:var(--text)}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.tip{font-size:12px;color:var(--faint);margin-left:auto}
+
+.answer{font-size:16px;line-height:2.05;letter-spacing:.2px}
+.cloze{
+  background:var(--mask); color:transparent; border-radius:4px; cursor:pointer;
+  padding:1px 3px; transition:background .12s,color .12s;
+  box-decoration-break:clone; -webkit-box-decoration-break:clone;
+}
+.cloze:hover{background:var(--mask-hover)}
+.cloze.on{background:var(--accent-dim);color:var(--text)}
+.cloze.on:hover{background:rgba(93,202,165,.24)}
+
+.sec{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.sec h4{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:1px;margin-bottom:8px}
+.sec p{font-size:15px;line-height:1.9;color:var(--text)}
+.hook{color:var(--accent-soft)}
+.mnem{background:var(--accent-dim);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 14px;font-size:16px;line-height:1.95;color:var(--accent-soft);
+  font-weight:600;letter-spacing:.4px}
+.expand{margin-top:13px}
+.expand ol{list-style:none;counter-reset:ex}
+.expand li{position:relative;padding:8px 0 8px 33px;font-size:14.5px;line-height:1.95;color:var(--text);
+  border-bottom:1px dashed var(--line)}
+.expand li:last-child{border-bottom:none}
+.expand li::before{content:counter(ex);counter-increment:ex;position:absolute;left:0;top:11px;
+  width:21px;height:21px;border-radius:50%;background:var(--accent);color:#0b0e14;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+.expand li b{color:var(--accent-soft);font-weight:600}
+.plain{font-size:15.5px;line-height:2.0;color:var(--text)}
+
+nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.btn-lg{padding:9px 18px;font-size:14px}
+.btn-ok{border-color:var(--accent);color:var(--accent-soft)}
+.btn-ok:hover{background:var(--accent-dim)}
+.btn-bad{border-color:#5a3030;color:#e08b8b}
+.btn-bad:hover{background:rgba(226,75,74,.12)}
+
+.keys{margin-top:16px;font-size:12px;color:var(--faint);line-height:2}
+kbd{
+  background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+}
+details{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--faint)}
+details[open] summary:before{content:"▾ "}
+details h5{font-size:13px;color:var(--accent-soft);margin:14px 0 6px;font-weight:500}
+details li{font-size:13px;color:var(--muted);line-height:1.9;list-style:none;padding-left:2px}
+details li:before{content:"· ";color:var(--faint)}
+.due{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+.toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+.toc-mask.on{opacity:1;pointer-events:auto}
+.toc{
+  position:fixed;top:0;left:0;height:100%;width:min(430px,90vw);z-index:50;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,.2,.2,1);
+  overflow-y:auto;padding:22px 20px 50px;
+}
+.toc.on{transform:none}
+.toc-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.toc-head h3{font-size:16px;font-weight:600}
+.toc-x{margin-left:auto;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;padding:2px 7px;border-radius:6px}
+.toc-x:hover{background:var(--surface-2);color:var(--text)}
+.toc-sum{font-size:12px;color:var(--faint);margin-bottom:18px}
+.toc-g{margin-bottom:18px}
+.toc-g h6{
+  font-size:12px;font-weight:500;color:var(--accent-soft);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--line);
+}
+.toc-g h6 .cnt{margin-left:auto;color:var(--faint);font-size:11px}
+.toc-g ul{list-style:none}
+.toc-g li{
+  display:flex;align-items:baseline;gap:9px;padding:6px 9px;border-radius:8px;
+  font-size:13.5px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.toc-g li:hover{background:var(--surface-2);color:var(--text)}
+.toc-g li .tn{flex:none;width:22px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint)}
+.toc-g li .tt{flex:1;line-height:1.5}
+.toc-g li .ts{flex:none;font-size:9px;color:var(--star);letter-spacing:-.5px}
+.toc-g li .td{flex:none;width:14px;text-align:center;font-size:12px;color:var(--faint)}
+.toc-g li.half .td{color:var(--star)}
+.toc-g li.done .td{color:var(--accent)}
+.toc-g li.done .tt{color:var(--faint)}
+.toc-g li.cur{background:var(--accent-dim);color:var(--text)}
+.toc-g li.cur .tn{color:var(--accent-soft)}
+.toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="home-link" href="../index.html">← 章节导航</a>
+  <h1>第四章 · 背诵抽认卡</h1>
+  <div class="sub">x背诵资料正式版 · 7 个考点 · 重点 3 张 · 逐条口诀</div>
+  <div class="bar">
+    <span class="chip on" data-f="all">全部</span>
+    <span class="chip" data-f="star">重点 ★★★</span>
+    <span class="chip" data-f="learning">学习中</span>
+    <span class="chip" data-f="mastered">已掌握</span>
+    <span class="spacer"></span>
+    <span class="chip" id="tocBtn">目录</span>
+    <span class="chip" id="shuffle">打乱</span>
+    <span class="chip" id="reset">重置进度</span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</header>
+
+<div class="card" id="card">
+  <div class="faces">
+    <section class="face front">
+      <div class="meta">
+        <span class="tag" id="f-part"></span>
+        <span id="f-no"></span>
+        <span class="star" id="f-star"></span>
+        <span class="spacer"></span>
+        <span class="due" id="f-due"></span>
+      </div>
+      <div class="q" id="f-q"></div>
+      <div class="qhint">先口述或默写，再点色块逐句核对</div>
+      <div class="tools">
+        <button class="btn on" data-m="seg">逐句挖空</button>
+        <button class="btn" data-m="key">只挖关键</button>
+        <button class="btn" id="toggleAll">全部显示</button>
+        <span class="tip">点色块 → 显现；再点 → 盖回去</span>
+      </div>
+      <div class="answer" id="f-a"></div>
+    </section>
+
+    <section class="face back">
+      <div class="meta">
+        <span class="tag" id="b-part"></span>
+        <span id="b-no"></span>
+        <span class="star" id="b-star"></span>
+      </div>
+      <div class="q" id="b-q"></div>
+      <div class="sec">
+        <h4>记忆口诀</h4>
+        <div class="mnem" id="b-mnem"></div>
+        <div class="expand" id="b-expand"></div>
+      </div>
+      <div class="sec">
+        <h4>完整答案</h4>
+        <div class="plain" id="b-a"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav>
+  <button class="btn btn-lg" id="tocBtn2">目录</button>
+  <button class="btn btn-lg" id="prev">← 上一张</button>
+  <button class="btn btn-lg" id="flip">翻面</button>
+  <button class="btn btn-lg" id="next">下一张 →</button>
+  <span class="spacer"></span>
+  <button class="btn btn-lg btn-bad" id="again">再看看</button>
+  <button class="btn btn-lg btn-ok" id="got">记住了</button>
+</nav>
+
+<div class="keys">
+  <kbd>←</kbd> <kbd>→</kbd> 切换　<kbd>空格</kbd> 翻面　<kbd>F</kbd> 全部显示/隐藏　<kbd>M</kbd> 切换挖空模式　<kbd>G</kbd> 记住了　<kbd>R</kbd> 再看看　<kbd>T</kbd> 目录　<kbd>Esc</kbd> 关闭　<kbd>S</kbd> 打乱
+</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<aside class="toc" id="toc">
+  <div class="toc-head">
+    <h3>目录</h3>
+    <span class="toc-x" id="tocX">×</span>
+  </div>
+  <div class="toc-sum" id="tocSum"></div>
+  <div id="toc-body"></div>
+  <div class="toc-foot">
+    <span style="color:var(--accent)">✓</span> 已掌握（连续两次记住）<br>
+    <span style="color:var(--star)">◐</span> 记住过一次　·　空白＝还没背<br>
+    点任意一条直接跳过去，<kbd>T</kbd> 开关目录
+  </div>
+</aside>
+
+<details>
+  <summary>关于本卡组</summary>
+  <ul>
+    <li>来源：x背诵资料正式版.docx「第四章」，共 7 个考点，逐一成卡。</li>
+    <li>正面＝考点原文全文，逐句挖空，点色块显现、再点盖回。</li>
+    <li>背面「记忆口诀」为逐条编写的<b>由点及面</b>口诀：口诀里每个字对应一条，下方按 ①②③ 逐条展开成完整表述。<b>先背口诀，再对着编号把每条复述出来。</b></li>
+    <li>标注 <span style="color:#EF9F27">★★★</span> 的是本章篇幅最大的考点（篇幅排前 1/3，多为论述题量级）。</li>
+    <li>建议：正面用「逐句挖空」默写全文，翻面用「口诀＋展开」核对要点；考前用「只挖关键」速扫。</li>
+  </ul>
+</details>
+
+</div>
+
+<script>
+const DECK = [
+{p:"04 第四章",t:"考点35、如何理解江山就是人民，人民就是江山",star:0,
+ q:"考点35、如何理解江山就是人民，人民就是江山",
+ a:"中国共产党来自人民、依靠人民，党的一切奋斗都是为了人民。①要坚持以人民为中心的执政理念，始终保持同人民群众的血肉联系，始终接受人民批评和监督，始终同人民同呼吸、共命运、心连心。第一，人民是历史的创造者，是真正的英雄。人民是创造历史的真正动力，是历史发展和社会进步的主体力量。坚持以人民为中心，体现了历史唯物主义基本原理，是我们党总结历史经验、把握历史规律得出的重要结论。（1）如何认识人民群众在历史上的作用，是社会历史观的重大问题。历史唯物主义群众史观认为，人民是历史的创造者，在创造历史中起决定性作用，第一次彻底解决了这个重大问题。人民群众是社会物质财富的创造者，人民群众是社会精神财富的创造者，人民群众是社会变革的决定力量。（2）尊重人民历史地位，充分发挥人民主体作用，这是总结党的百年奋斗历史经验得出的重要结论。中国共产党100多年的历史，是一部党与人民心心相印、与人民同甘共苦的历史，也是一部党领导人民团结奋斗、带领人民不断前进的历史。第二，打江山、守江山、守的是人民的心。民心是最大的政治，决定事业兴衰成败。只有紧紧依靠最广大人民群众，为人民执好政、掌好权，才能始终赢得人民群众衷心拥护，实现长期执政，带领人民创造更加美好的生活。（1）人民在一个国家的地位是由这个国家的政权性质决定的。我国是工人阶级领导的、以工农联盟为基础的人民民主专政的社会主义国家，国家一切权力属于人民。人民在我国的主人翁地位，决定了党和国家的一切工作都必须把人民放在最高位置。（2）江山就是人民，人民就是江山，这是由我们党的性质、宗旨决定的。中国共产党作为以马克思主义为指导的无产阶级政党，除了国家、民族、人民的利益，没有自己特殊的利益，从来不代表任何利益集团、任何权势团体、任何特权阶层的利益。党代表最广大人民的根本利益，这就要求党必须始终坚持全心全意为人民服务的宗旨。第三，人民立场是中国共产党的根本政治立场。人民立场是中国共产党的根本政治立场，是我们党区别于其他政党的显著标志。坚持这一根本立场，就要坚持以人民为中心的执政理念，将其贯穿于党和国家事业发展各方面。（1）坚持人民立场，就要始终牢记党的初心和使命。为中华民族谋复兴，是中国 共产党人的初心和使命，是激励一代代中国共产党人前仆后继、英勇奋斗的根本动力。（2）坚持人民立场，就要始终保持党同人民群众的血肉联系。保持党同人民群众的血肉联系关系到党的生死存亡、兴旺发达。我们党的最大政治优势是密切联系群众，党执政后的最大危险是脱离群众。（3）坚持人民立场，就要热爱人民、尊重人民、敬畏人民。坚持人民立场，凝结着中国共产党对中国人民的深厚情感，体现了深切真挚的人民情怀。",
+ m:"「创·心·立」＝人民是历史的创造者／打江山守江山守的是人民的心／人民立场是根本政治立场（助记：创造历史，守住民心，站稳立场）",
+ e:"①总→中国共产党来自人民、依靠人民，党的一切奋斗都是为了人民。要坚持以人民为中心的执政理念，始终保持同人民群众的血肉联系②创→人民是历史的创造者，是真正的英雄。人民是创造历史的真正动力，是历史发展和社会进步的主体力量：（1）如何认识人民群众在历史上的作用，是社会历史观的重大问题，历史唯物主义群众史观认为人民是历史的创造者（2）尊重人民历史地位、充分发挥人民主体作用，这是总结党的百年奋斗历史经验得出的重要结论③心→打江山、守江山，守的是人民的心。民心是最大的政治，决定事业兴衰成败，只有紧紧依靠最广大人民群众才能无往不胜：（1）人民在一个国家的地位是由这个国家的政权性质决定的，我国是工人阶级领导的、以工农联盟为基础的人民民主专政的社会主义国家（2）江山就是人民、人民就是江山，这是由我们党的性质、宗旨决定的，中国共产党是以马克思主义为指导、全心全意为人民服务的政党④立→人民立场是中国共产党的根本政治立场，是我们党区别于其他政党的显著标志：（1）坚持人民立场，就要始终牢记党的初心和使命，为中国人民谋幸福、为中华民族谋复兴（2）就要始终保持党同人民群众的血肉联系，这关系到党的生死存亡（3）就要热爱人民、尊重人民、敬畏人民，凝结着中国共产党对中国人民的深厚情怀",
+ h:"口诀：「创·心·立」＝人民是历史的创造者／打江山守江山守的是人民的心／人民立场是根本政治立场（助记：创造历史，守住民心，站稳立场）　｜　由点及面：①总→中国共产党来自人民、依靠人民，党的一切奋斗都是为了人民。要坚持以人民为中心的执政理念，始终保持同人民群众的血肉联系②创→人民是历史的创造者，是真正的英雄。人民是创造历史的真正动力，是历史发展和社会进步的主体力量：（1）如何认识人民群众在历史上的作用，是社会历史观的重大问题，历史唯物主义群众史观认为人民是历史的创造者（2）尊重人民历史地位、充分发挥人民主体作用，这是总结党的百年奋斗历史经验得出的重要结论③心→打江山、守江山，守的是人民的心。民心是最大的政治，决定事业兴衰成败，只有紧紧依靠最广大人民群众才能无往不胜：（1）人民在一个国家的地位是由这个国家的政权性质决定的，我国是工人阶级领导的、以工农联盟为基础的人民民主专政的社会主义国家（2）江山就是人民、人民就是江山，这是由我们党的性质、宗旨决定的，中国共产党是以马克思主义为指导、全心全意为人民服务的政党④立→人民立场是中国共产党的根本政治立场，是我们党区别于其他政党的显著标志：（1）坚持人民立场，就要始终牢记党的初心和使命，为中国人民谋幸福、为中华民族谋复兴（2）就要始终保持党同人民群众的血肉联系，这关系到党的生死存亡（3）就要热爱人民、尊重人民、敬畏人民，凝结着中国共产党对中国人民的深厚情怀",
+ k:["我国是工人阶级领导的","中国共产党来自人民","任何特权阶层的利益","英勇奋斗的根本动力","人民是历史的创造者","尊重人民历史地位","守的是人民的心","人民就是江山"]},
+
+{p:"04 第四章",t:"考点36、如何理解人民对美好生活的向往就是党的奋斗目标",star:0,
+ q:"考点36、如何理解人民对美好生活的向往就是党的奋斗目标",
+ a:"坚持人民至上，必须始终把人民放在心中最高的位置，想人民之所想，行人民之所嘱。必须把人民对美好生活的向往作为党的奋斗目标，团结带领人民共同创造美好的未来。第一，为人民谋幸福是党始终坚守的初心，让人民过上好日子是党一贯的追求。（1）为了让人民过上好日子，我们党团结带领人民实现民族独立、人民解放，建立了新中国；（2）为了让人民过上好日子，我们党团结带领人民建立社会主义制度、改变一穷二白的国家面貌；（3）为了让人民过上好日子，我们党团结带领人民实行改革开放，解放和发展社会生产力，解决温饱、实现总体小康、全面建设小康社会；（4）为了让人民过上好日子，我们党团结带领人民决胜全面建成小康社会，打赢脱贫攻坚战，迈上全面建设社会主义现代化国家新征程，人民对美好生活的向往不断变为现实。第二，人民对美好生活的向往就是党的奋斗目标，这体现了我国社会主要矛盾转化对党和国家工作的新要求。进入新时代，我国社会主要矛盾发生了转化，人民的美好生活需要呈现出多样化、多层次、多方面的特点。必须牢牢把握我国社会主要矛盾的新变化，顺应人民对高品质生活的新期待，在高质量发展中努力为人民创造更美好、更幸福的生活。",
+ m:"「初心—四绩—新要求」；四绩「立·制·富·康」＝建立新中国、确立社会主义制度、改革开放实现总体小康、决胜全面小康打赢脱贫攻坚",
+ e:"①总→坚持人民至上，必须始终把人民放在心中最高的位置，想人民之所想、行人民之所嘱，把人民对美好生活的向往作为党的奋斗目标②初→为人民谋幸福是党始终坚守的初心，让人民过上好日子是党一贯的追求③绩→四件大事（口诀「立制富康」）：（1）为了让人民过上好日子，我们党团结带领人民实现民族独立、人民解放，建立了新中国（2）团结带领人民建立社会主义制度，改变了一穷二白的国家面貌（3）团结带领人民实行改革开放，解放和发展社会生产力，解决温饱、实现总体小康（4）团结带领人民决胜全面建成小康社会，打赢脱贫攻坚战，迈上全面建设社会主义现代化国家新征程④新→人民对美好生活的向往就是党的奋斗目标，这体现了我国社会主要矛盾转化对党和国家工作的新要求。进入新时代，人民对美好生活的需要日益广泛，不仅对物质文化生活提出了更高要求，而且在民主、法治、公平、正义、安全、环境等方面的要求日益增长",
+ h:"口诀：「初心—四绩—新要求」；四绩「立·制·富·康」＝建立新中国、确立社会主义制度、改革开放实现总体小康、决胜全面小康打赢脱贫攻坚　｜　由点及面：①总→坚持人民至上，必须始终把人民放在心中最高的位置，想人民之所想、行人民之所嘱，把人民对美好生活的向往作为党的奋斗目标②初→为人民谋幸福是党始终坚守的初心，让人民过上好日子是党一贯的追求③绩→四件大事（口诀「立制富康」）：（1）为了让人民过上好日子，我们党团结带领人民实现民族独立、人民解放，建立了新中国（2）团结带领人民建立社会主义制度，改变了一穷二白的国家面貌（3）团结带领人民实行改革开放，解放和发展社会生产力，解决温饱、实现总体小康（4）团结带领人民决胜全面建成小康社会，打赢脱贫攻坚战，迈上全面建设社会主义现代化国家新征程④新→人民对美好生活的向往就是党的奋斗目标，这体现了我国社会主要矛盾转化对党和国家工作的新要求。进入新时代，人民对美好生活的需要日益广泛，不仅对物质文化生活提出了更高要求，而且在民主、法治、公平、正义、安全、环境等方面的要求日益增长",
+ k:["为了让人民过上好日子","全面建设小康社会","实现总体小康","多方面的特点","更幸福的生活","坚持人民至上","多层次"]},
+
+{p:"04 第四章",t:"考点37、如何依靠人民创造历史伟业",star:0,
+ q:"考点37、如何依靠人民创造历史伟业",
+ a:"人民是我们党的生命之根、执政之基、力量之源。 一路走来，党紧紧依靠人民赢得胜利、取得成功。面向未来，党永远要依靠人民创造新的历史伟业。第一，依靠人民创造历史伟业，必须尊重人民主体地位。（1）中国共产党之所以能够发展壮大，中国特色社会主义之所以能够不断前进，正是因为依靠了人民。谋划发展，最了解实际情况的是人民群众；推动改革，最大的依靠力量也是人民群众。（2）改革开放在认识和实践上的每一次突破和发展，改革开放中每一个新生事物的产生和展，改革开放每一个方面经验的创造和积累，无不来自亿万人民的实践和智慧。第二，依靠人民创造历史伟业，必须尊重人民首创精神。我们党历来尊重人民首创精神，始终把人民群众作为智慧和力量的源泉，始终把政治智慧的增长、执政本领的增强深深扎根于人民的创造性实践之中。（1）尊重人民首创精神，就要激发人民群众的创新创造活力，把蕴藏于人民群众中的无穷创造力焕发出来。（2）尊重人民首创精神，就要及时发现、总结、概括人民群众实践中形成的新鲜经验，使之上升为理论和政策，更好指导中国特色社会主义实践。",
+ m:"「主·创」＝尊重人民主体地位、尊重人民首创精神（助记：尊重“主创”）",
+ e:"①总→人民是我们党的生命之根、执政之基、力量之源。一路走来，党紧紧依靠人民赢得胜利、取得成功；面向未来，仍然必须依靠人民创造历史伟业②主→依靠人民创造历史伟业，必须尊重人民主体地位：（1）中国共产党之所以能够发展壮大，中国特色社会主义之所以能够不断前进，正是因为依靠了人民，谋划发展要问计于民（2）改革开放在认识和实践上的每一次突破和发展、每一个新生事物的产生和发展、每一个方面经验的创造和积累，无不来自人民的实践和智慧③创→依靠人民创造历史伟业，必须尊重人民首创精神，我们党历来尊重人民首创精神，始终把人民群众作为智慧和力量的源泉：（1）尊重人民首创精神，就要激发人民群众的创新创造活力，把蕴藏于人民群众中的无穷创造力焕发出来（2）就要及时发现、总结、概括人民群众实践中形成的新鲜经验，使之上升为理论和政策",
+ h:"口诀：「主·创」＝尊重人民主体地位、尊重人民首创精神（助记：尊重“主创”）　｜　由点及面：①总→人民是我们党的生命之根、执政之基、力量之源。一路走来，党紧紧依靠人民赢得胜利、取得成功；面向未来，仍然必须依靠人民创造历史伟业②主→依靠人民创造历史伟业，必须尊重人民主体地位：（1）中国共产党之所以能够发展壮大，中国特色社会主义之所以能够不断前进，正是因为依靠了人民，谋划发展要问计于民（2）改革开放在认识和实践上的每一次突破和发展、每一个新生事物的产生和发展、每一个方面经验的创造和积累，无不来自人民的实践和智慧③创→依靠人民创造历史伟业，必须尊重人民首创精神，我们党历来尊重人民首创精神，始终把人民群众作为智慧和力量的源泉：（1）尊重人民首创精神，就要激发人民群众的创新创造活力，把蕴藏于人民群众中的无穷创造力焕发出来（2）就要及时发现、总结、概括人民群众实践中形成的新鲜经验，使之上升为理论和政策",
+ k:["人民是我们党的生命之根","依靠人民创造历史伟业","尊重人民首创精神","执政之基","力量之源","取得成功","总结"]},
+
+{p:"04 第四章",t:"考点38、为什么说人民是党的工作的最高裁决者和最终评判者",star:0,
+ q:"考点38、为什么说人民是党的工作的最高裁决者和最终评判者",
+ a:"我们党是全心全意为人民服务的党，党的执政水平和执政成效不是由自己说了算，必须而且只能由人民来评判。要始终把人民放在心中最高位置，树立正确的政绩观，以人民满意不满意作为检验工作的最终评判标准。第一，让群众满意是我们党做好一切工作的价值取向和根本标准。我们党是以辩证唯物主义和历史唯物主义作为世界观和方法论的党，人民在党的理论路线方针政策和一切工作中始终处于最高的地位，这决定了党的工作的最高裁决者和最终评判者只能是人民。第二，必须牢固树立和践行正确的政绩观。政绩为谁而树、树什么样的政绩、靠什么树政绩，是一个必须认真回答的重大问题。习近平指出：“中国共产党把为民办事、为民造福作为最重要的政绩，把为老百姓办了多少好事实事作为检验政绩的重要标准。”坚持把好事实事做到群众心坎 上，真正做到对历史和人民负责，这是党员干部应当始终坚守的态度。",
+ m:"「评·标·绩」＝执政成效由人民评判／群众满意是根本标准／树立和践行正确政绩观",
+ e:"①总→我们党是全心全意为人民服务的党，党的执政水平和执政成效不是由自己说了算，必须而且只能由人民来评判②评→党的一切工作都要以人民拥护不拥护、赞成不赞成、高兴不高兴、答应不答应作为衡量标准，把人民作为党的工作的最高裁决者和最终评判者③标→让群众满意是我们党做好一切工作的价值取向和根本标准。我们党是以辩证唯物主义和历史唯物主义作为世界观和方法论的党，始终坚持人民是历史的创造者这一历史唯物主义基本观点④绩→必须牢固树立和践行正确的政绩观。政绩为谁而树、树什么样的政绩、靠什么树政绩，是一个必须认真回答的重大问题；要把为民造福作为最重要的政绩，坚决反对形式主义、官僚主义，不做表面文章",
+ h:"口诀：「评·标·绩」＝执政成效由人民评判／群众满意是根本标准／树立和践行正确政绩观　｜　由点及面：①总→我们党是全心全意为人民服务的党，党的执政水平和执政成效不是由自己说了算，必须而且只能由人民来评判②评→党的一切工作都要以人民拥护不拥护、赞成不赞成、高兴不高兴、答应不答应作为衡量标准，把人民作为党的工作的最高裁决者和最终评判者③标→让群众满意是我们党做好一切工作的价值取向和根本标准。我们党是以辩证唯物主义和历史唯物主义作为世界观和方法论的党，始终坚持人民是历史的创造者这一历史唯物主义基本观点④绩→必须牢固树立和践行正确的政绩观。政绩为谁而树、树什么样的政绩、靠什么树政绩，是一个必须认真回答的重大问题；要把为民造福作为最重要的政绩，坚决反对形式主义、官僚主义，不做表面文章",
+ k:["树什么样的政绩","政绩为谁而树"]},
+
+{p:"04 第四章",t:"考点39、如何坚持和贯彻党的群众路线",star:1,
+ q:"考点39、如何坚持和贯彻党的群众路线",
+ a:"习近平指出：“群众路线是我们党的生命线和根本工作路线，是我们党永葆青春活力和战斗力的重要传家宝。”不论过去、现在和将来，我们都要坚持一切为了群众、 一切依靠群众，从群众中来到群众中去，把党的正确主张变为群众的自觉行动，把群众路线贯彻到治国理政全部活动之中。第一，坚持和贯彻党的群众路线。习近平指出：“群众路线是我们党的生命线和根本工作路线，是我们党永葆青春活力和战斗力的重要传家宝。”1、群众路线是我们党始终坚持的根本工作方法。党的领导工作的正确方法就是将群众意见集中起来形成正确的决策，又到群众中宣传解释，将决策化为群众的行动，并在群众实践中检验这些决策是否正确。2、贯彻党的群众路线，“知”是基础、是前提，“行”是重点、是关键。必须以知促行、以行促知，做到知行合一，使群众路线落地稳、扎根深，融入经济社会发展全过程，贯穿到党的全部工作中。第二，调查研究是获得真知灼见的源头活水，是贯彻群众路线的有效途径。1、要扑下身子、沉到一线、深入基层，听真话、察实情，从人民的创造性实践中获得正确认识；要坚持问题导向，增强问题意识，把问题找准、把对策提实；要到困难较多、情况复杂、矛盾尖锐的地方去把脉问诊，拿出破解难题的实招、硬招；要在深入分析思考上下功夫，真正把群众面临的问题发现出来，把群众的意见反映上来，把群众创造的经验总结出来。2、从加强党的全面领导、推进新时代党的建设新的伟大工程，到打好防范化解重大风险、精准脱贫、污染防治三大攻坚战，从推动京津冀协同发展、长三角一体化发展、粤港澳大湾区建设，到谋划长江经济带发展、黄河流域生态保护和高质量发展等，都是在深入调查研究基础上作出的重大战略决策。",
+ m:"「线·研」＝坚持群众路线＋调查研究；群众路线内涵「为·靠·来·去」＝一切为了群众、一切依靠群众、从群众中来、到群众中去",
+ e:"①总→习近平指出：“群众路线是我们党的生命线和根本工作路线，是我们党永葆青春活力和战斗力的重要传家宝。”不论过去、现在和将来，都要坚持一切为了群众、一切依靠群众，从群众中来、到群众中去②线→坚持和贯彻党的群众路线（口诀「为靠来去」）：一切为了群众、一切依靠群众，从群众中来、到群众中去，把群众的意见集中起来、化为系统的意见，再到群众中坚持下去，使党的正确主张变为群众的自觉行动③研→调查研究是获得真知灼见的源头活水，是贯彻群众路线的有效途径：要扑下身子、沉到一线、深入基层，听真话、察实情，把调查研究作为谋事之基、成事之道",
+ h:"口诀：「线·研」＝坚持群众路线＋调查研究；群众路线内涵「为·靠·来·去」＝一切为了群众、一切依靠群众、从群众中来、到群众中去　｜　由点及面：①总→习近平指出：“群众路线是我们党的生命线和根本工作路线，是我们党永葆青春活力和战斗力的重要传家宝。”不论过去、现在和将来，都要坚持一切为了群众、一切依靠群众，从群众中来、到群众中去②线→坚持和贯彻党的群众路线（口诀「为靠来去」）：一切为了群众、一切依靠群众，从群众中来、到群众中去，把群众的意见集中起来、化为系统的意见，再到群众中坚持下去，使党的正确主张变为群众的自觉行动③研→调查研究是获得真知灼见的源头活水，是贯彻群众路线的有效途径：要扑下身子、沉到一线、深入基层，听真话、察实情，把调查研究作为谋事之基、成事之道",
+ k:["坚持和贯彻党的群众路线","是前提，“行”是重点","从加强党的全面领导","深入基层，听真话","长三角一体化发展","必须以知促行","要到困难较多","”不论过去"]},
+
+{p:"04 第四章",t:"考点40、如何把为人民造福的事情真正办好办实",star:1,
+ q:"考点40、如何把为人民造福的事情真正办好办实",
+ a:"坚持以人民为中心的发展思想，不是一句空洞口号，不能只停留在口头上、止步于思想环节，而是要落实到党和国家的各项事业中，体现到人民群众的切身感受上，把发展思想转化为发展实践。第一，为人民造福，要落实到新时代中国特色社会主义的各项事业、全部工作之中。在经济高质量发展中，不断破解发展不平衡、不协调、不可持续问题，更好满足人民群众个性化、多样化、不断升级的需求；在民主政治建设中，发展全过程人民民主，使国家政治生活和社会生活各环节、各方面都体现人民意愿、听到人民声音；在文化建设中，不断满足人民日益增长的精神文化需求，使人民在精神生活上更加充盈起来。第二，为人民造福，要着力解决好人民群众最关心最直接最现实的利益问题。人民群众是共产党的安身立命之本，共产党人永远不能脱离群众、轻视群众、漠视群众疾苦。心中要有人民，眼里要有群众，想群众之所想，急群众之所急，解群众之所难，把群众的小事当作大事来办。从最困难的群体入手，经常到他们家中走一走、看一看，关心他们的疾苦，多做雪中送炭的事情。第三，为人民造福，要一件事情接着一件事情办， 一年接着一年干。为民造福的事情面广量大，具有稳定性、连续性、累积性等特点，有的当下就可以解决，有的则相对复杂，需要发扬钉钉子精神， 一锤一锤接着敲，钉牢一颗再钉下一颗，不断钉下去，合力攻坚、久久为功、 一抓到底、抓出成效。",
+ m:"三要求「全·实·久」＝落实到各项事业全部工作／解决最关心最直接最现实的利益问题／一件接一件一年接一年久久为功",
+ e:"①总→坚持以人民为中心的发展思想，不是一句空洞口号，不能只停留在口头上、止步于思想环节，而是要落实到党和国家各项事业、全部工作之中②全→为人民造福，要落实到新时代中国特色社会主义的各项事业、全部工作之中，在经济高质量发展中不断破解发展难题、厚植发展优势③实→为人民造福，要着力解决好人民群众最关心最直接最现实的利益问题。人民群众是共产党的安身立命之本，要用心用情用力解决好群众急难愁盼问题④久→为人民造福，要一件事情接着一件事情办，一年接着一年干。为民造福的事情面广量大，具有稳定性、连续性，必须锲而不舍、久久为功",
+ h:"口诀：三要求「全·实·久」＝落实到各项事业全部工作／解决最关心最直接最现实的利益问题／一件接一件一年接一年久久为功　｜　由点及面：①总→坚持以人民为中心的发展思想，不是一句空洞口号，不能只停留在口头上、止步于思想环节，而是要落实到党和国家各项事业、全部工作之中②全→为人民造福，要落实到新时代中国特色社会主义的各项事业、全部工作之中，在经济高质量发展中不断破解发展难题、厚植发展优势③实→为人民造福，要着力解决好人民群众最关心最直接最现实的利益问题。人民群众是共产党的安身立命之本，要用心用情用力解决好群众急难愁盼问题④久→为人民造福，要一件事情接着一件事情办，一年接着一年干。为民造福的事情面广量大，具有稳定性、连续性，必须锲而不舍、久久为功",
+ k:["各方面都体现人民意愿","不断升级的需求","全部工作之中","听到人民声音","漠视群众疾苦","为人民造福","轻视群众","久久为功"]},
+
+{p:"04 第四章",t:"考点41、推动全体人民共同富裕取得更为明显的实质性进展",star:1,
+ q:"考点41、推动全体人民共同富裕取得更为明显的实质性进展",
+ a:"共同富裕是中国特色社会主义的本质要求，是中国式现代化的重要特征。坚持以人民为中心的发展思想，真正做到发展成果由人民共享，就必须落实到扎实推进全体人民共同富裕上，在推动共同富裕过程中促进人的全面发展。第一，实现共同富裕不仅是经济问题，而且是关系党的执政基础的重大政治问题。在中国共产党领导的社会主义中国，我们追求的发展是造福人民的发展，我们追求的富裕是全体人民共同富裕，决不能允许贫富差距越来越大。新征程上，谱写全面建设社会主义现代化国家新篇章，必须把扎实推动全体人民共同富裕摆在更加重要的位置。第二，要从全局角度来把握共同富裕。共同富裕是全体人民共同富裕，是人民群众物质生活和精神生活都富裕，不是少数人的富裕，也不是整齐划一的平均主义，不是所有人都同时富裕，也不是所有地区同时达到一个富裕水准。要处理好先富和共富的关系，允许一部分人先富起来，同时要积极推动先富带后富。第二，扎实推进共同富裕，必须坚持正确的原则和科学的思路。促进共同富裕，要把握好鼓励勤劳创新致富、坚持基本经济制度、尽力而为量力而行、坚持循序渐进的原则。总的思路是，坚持以人民为中心的发展思想，在高质量发展中促进共同富裕，正确处理效率和公平的关系，构建初次分配、再分配、三次分配协调配套的基础性制度安排，扩大中等收入群体比重，增加低收入群体收入，合理调节高收入，取缔非法收入，形成中间大、两头小的橄榄型分配结构，促进社会公平正义，促进人的全面发展，使全体人民朝着共同富裕目标扎实迈进。第四，推动全体人民共同富裕与促进人的全面发展是高度统一的。《共产党宣言》确立了马克思主义政党的最高目标是实现共产主义，并把实现人的自由而全面发展作为共产主义的本质特征。习近平指出：“现代化的最终目标是实现人自由而全面的发展。”推动全体人民共同富裕的过程，必须是人民的物质生活不断提升、精神世界不断丰富的过程，是不断促进人的全面发展的过程。",
+ m:"四内容「政·局·原·人」＝关系执政基础的重大政治问题／从全局把握共同富裕／坚持正确原则和思路／与人的全面发展高度统一；原则「勤·制·量·序」",
+ e:"①总→共同富裕是中国特色社会主义的本质要求，是中国式现代化的重要特征。坚持以人民为中心的发展思想，就要推动全体人民共同富裕取得更为明显的实质性进展②政→实现共同富裕不仅是经济问题，而且是关系党的执政基础的重大政治问题。在中国共产党领导的社会主义中国，实现共同富裕是我们党矢志不渝的奋斗目标③局→要从全局角度来把握共同富裕。共同富裕是全体人民共同富裕，是人民群众物质生活和精神生活都富裕，不是少数人的富裕，也不是整齐划一的平均主义，要分阶段逐步推进④原→扎实推进共同富裕，必须坚持正确的原则和科学的思路（口诀「勤制量序」）：鼓励勤劳创新致富，坚持基本经济制度，尽力而为、量力而行，坚持循序渐进⑤人→推动全体人民共同富裕与促进人的全面发展是高度统一的。《共产党宣言》确立了马克思主义政党的最高目标是实现每个人自由而全面的发展，共同富裕为人的全面发展奠定物质基础，人的全面发展又为共同富裕提供精神动力",
+ h:"口诀：四内容「政·局·原·人」＝关系执政基础的重大政治问题／从全局把握共同富裕／坚持正确原则和思路／与人的全面发展高度统一；原则「勤·制·量·序」　｜　由点及面：①总→共同富裕是中国特色社会主义的本质要求，是中国式现代化的重要特征。坚持以人民为中心的发展思想，就要推动全体人民共同富裕取得更为明显的实质性进展②政→实现共同富裕不仅是经济问题，而且是关系党的执政基础的重大政治问题。在中国共产党领导的社会主义中国，实现共同富裕是我们党矢志不渝的奋斗目标③局→要从全局角度来把握共同富裕。共同富裕是全体人民共同富裕，是人民群众物质生活和精神生活都富裕，不是少数人的富裕，也不是整齐划一的平均主义，要分阶段逐步推进④原→扎实推进共同富裕，必须坚持正确的原则和科学的思路（口诀「勤制量序」）：鼓励勤劳创新致富，坚持基本经济制度，尽力而为、量力而行，坚持循序渐进⑤人→推动全体人民共同富裕与促进人的全面发展是高度统一的。《共产党宣言》确立了马克思主义政党的最高目标是实现每个人自由而全面的发展，共同富裕为人的全面发展奠定物质基础，人的全面发展又为共同富裕提供精神动力",
+ k:["坚持循序渐进的原则","坚持基本经济制度","尽力而为量力而行","扎实推进共同富裕","再分配"]}
+];
+
+const KEY_STORE='bs-mn-04_第四章-v1';
+let state=JSON.parse(localStorage.getItem(KEY_STORE)||'{}');
+let filter='all', mode='seg', order=DECK.map((_,i)=>i), idx=0, flipped=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function deck(){
+  let list=order.filter(i=>{
+    const c=DECK[i], st=state[i]||{};
+    if(filter==='star') return c.star===1;
+    if(filter==='learning') return (st.streak||0)<2;
+    if(filter==='mastered') return (st.streak||0)>=2;
+    return true;
+  });
+  return list.length?list:[0];
+}
+
+function segsOf(text){
+  const raw=text.match(/[^。，；、？！]+[。，；、？！]?/g)||[text];
+  return raw.map(s=>s.trim()).filter(Boolean);
+}
+function renderSeg(text){
+  return segsOf(text).map(s=>
+    s.replace(/\s/g,'').length>=2?`<span class="cloze">${esc(s)}</span>`:esc(s)
+  ).join('');
+}
+function renderKey(text,terms){
+  const ts=[...new Set(terms||[])].sort((a,b)=>b.length-a.length);
+  let out=esc(text);
+  ts.forEach(t=>{
+    const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+    out=out.replace(re,m=>`<span class="cloze">${m}</span>`);
+  });
+  return out;
+}
+
+function render(){
+  const list=deck();
+  if(idx>=list.length) idx=0;
+  if(idx<0) idx=list.length-1;
+  const i=list[idx], c=DECK[i], st=state[i]||{streak:0};
+  const star=c.star?'★★★':'';
+  const no=`卡 ${i+1} / ${DECK.length}`;
+
+  ['f','b'].forEach(f=>{
+    $(f+'-part').textContent=c.p;
+    $(f+'-no').textContent=no;
+    $(f+'-star').textContent=star;
+  });
+  $('f-q').textContent=c.q;
+  $('b-q').textContent=c.q;
+  $('b-mnem').textContent=c.m||'';
+  const ex=(c.e||'').split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).filter(s=>s.trim());
+  $('b-expand').innerHTML=ex.length?('<ol>'+ex.map(function(s){
+    const t=s.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]/,'').trim();
+    const k=t.indexOf('→');
+    return '<li>'+(k>0?'<b>'+esc(t.slice(0,k))+'</b>　'+esc(t.slice(k+1)):esc(t))+'</li>';
+  }).join('')+'</ol>'):'';
+  $('b-a').innerHTML=esc(c.a);
+  $('f-a').innerHTML = mode==='seg' ? renderSeg(c.a) : renderKey(c.a,c.k);
+
+  const days=['第 1 天','第 3 天','第 7 天','第 15 天'];
+  const s=st.streak||0;
+  $('f-due').textContent = s>=2 ? '已毕业' : '下次复习 '+(days[Math.min(s,3)]||'第 15 天');
+
+  $('toggleAll').textContent='全部显示';
+  $('toggleAll').classList.remove('on');
+
+  const done=DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  $('prog').style.width=(done/DECK.length*100)+'%';
+  $('card').classList.toggle('flip',flipped);
+  updateToc(done);
+}
+
+function buildToc(){
+  const groups=[];
+  DECK.forEach((c,i)=>{
+    let g=groups.find(x=>x.p===c.p);
+    if(!g){ g={p:c.p,items:[]}; groups.push(g); }
+    g.items.push(i);
+  });
+  $('toc-body').innerHTML=groups.map(g=>`
+    <div class="toc-g">
+      <h6>${esc(g.p)}<span class="cnt"></span></h6>
+      <ul>${g.items.map(i=>`
+        <li data-i="${i}">
+          <span class="tn">${i+1}</span>
+          <span class="tt">${esc(DECK[i].t)}</span>
+          ${DECK[i].star?'<span class="ts">★★★</span>':''}
+          <span class="td"></span>
+        </li>`).join('')}</ul>
+    </div>`).join('');
+  $('toc-body').addEventListener('click',e=>{
+    const li=e.target.closest('li');
+    if(li) jumpTo(+li.dataset.i);
+  });
+}
+
+function updateToc(done){
+  if(!$('toc-body').children.length) return;
+  const cur=deck()[idx];
+  document.querySelectorAll('#toc-body li').forEach(li=>{
+    const i=+li.dataset.i, s=(state[i]||{streak:0}).streak||0;
+    li.classList.toggle('cur', i===cur);
+    li.classList.toggle('done', s>=2);
+    li.classList.toggle('half', s>0&&s<2);
+    li.querySelector('.td').textContent = s>=2?'✓':(s>0?'◐':'');
+  });
+  document.querySelectorAll('#toc-body .toc-g').forEach(g=>{
+    const lis=[...g.querySelectorAll('li')];
+    g.querySelector('.cnt').textContent = lis.filter(l=>l.classList.contains('done')).length+' / '+lis.length;
+  });
+  const total=DECK.length, d=(done!==undefined)?done:DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  const half=DECK.filter((_,j)=>{const s=(state[j]||{streak:0}).streak||0;return s>0&&s<2;}).length;
+  $('tocSum').textContent=`已掌握 ${d} / ${total}　记住过一次 ${half}　未背 ${total-d-half}`;
+}
+
+function openToc(){ $('toc').classList.add('on'); $('tocMask').classList.add('on'); $('tocBtn').classList.add('on'); }
+function closeToc(){ $('toc').classList.remove('on'); $('tocMask').classList.remove('on'); $('tocBtn').classList.remove('on'); }
+function toggleToc(){ $('toc').classList.contains('on')?closeToc():openToc(); }
+
+function jumpTo(i){
+  if(filter!=='all'){
+    filter='all';
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  }
+  const p=deck().indexOf(i);
+  if(p>=0){ idx=p; flipped=false; render(); closeToc(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function flip(){ flipped=!flipped; $('card').classList.toggle('flip',flipped); }
+function go(d){ const l=deck(); idx=(idx+d+l.length)%l.length; flipped=false; render(); }
+function mark(ok){
+  const list=deck(), i=list[idx], st=state[i]||{streak:0,last:0};
+  st.streak = ok ? Math.min((st.streak||0)+1,4) : 0;
+  st.last=Date.now();
+  state[i]=st; localStorage.setItem(KEY_STORE,JSON.stringify(state));
+  if(filter==='learning'||filter==='mastered'){ idx=0; render(); }
+  else { go(1); }
+}
+
+$('f-a').addEventListener('click',e=>{
+  const el=e.target.closest('.cloze');
+  if(el) el.classList.toggle('on');
+});
+$('toggleAll').addEventListener('click',()=>{
+  const cs=[...document.querySelectorAll('#f-a .cloze')];
+  const allOn=cs.length&&cs.every(c=>c.classList.contains('on'));
+  cs.forEach(c=>c.classList.toggle('on',!allOn));
+  $('toggleAll').textContent=allOn?'全部显示':'全部隐藏';
+  $('toggleAll').classList.toggle('on',!allOn);
+});
+document.querySelectorAll('[data-m]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+document.querySelectorAll('[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f; idx=0;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+$('tocBtn').addEventListener('click',toggleToc);
+$('tocBtn2').addEventListener('click',toggleToc);
+$('tocX').addEventListener('click',closeToc);
+$('tocMask').addEventListener('click',closeToc);
+$('shuffle').addEventListener('click',()=>{
+  order=DECK.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  idx=0; render();
+});
+$('reset').addEventListener('click',()=>{
+  if(confirm('清空全部掌握进度？')){ state={}; localStorage.removeItem(KEY_STORE); idx=0; render(); }
+});
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('flip').addEventListener('click',flip);
+$('got').addEventListener('click',()=>mark(true));
+$('again').addEventListener('click',()=>mark(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key===' '){flip();e.preventDefault();}
+  else if(k==='f'){$('toggleAll').click();}
+  else if(k==='m'){mode = mode==='seg'?'key':'seg';document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===mode));render();}
+  else if(k==='g'){mark(true);}
+  else if(k==='r'){mark(false);}
+  else if(k==='s'){$('shuffle').click();}
+  else if(k==='t'){toggleToc();}
+  else if(e.key==='Escape'){closeToc();}
+});
+
+buildToc();
+render();
+</script>
+</body>
+</html>
