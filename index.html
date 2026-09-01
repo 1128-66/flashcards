@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>背诵抽认卡 · 章节导航</title>
+<title>习思想 · 背诵抽认卡</title>
 <style>
 :root{
   --bg:#12141a;
@@ -21,7 +21,7 @@ body{
   font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   min-height:100vh;
 }
-.wrap{max-width:880px;margin:0 auto;padding:48px 20px 80px}
+.wrap{max-width:960px;margin:0 auto;padding:48px 20px 80px}
 header{text-align:center;margin-bottom:40px}
 .logo{
   width:56px;height:56px;border-radius:16px;margin:0 auto 18px;
@@ -32,38 +32,35 @@ header{text-align:center;margin-bottom:40px}
 h1{font-size:26px;font-weight:700;letter-spacing:1px}
 .sub{color:var(--muted);font-size:14px;margin-top:10px;line-height:1.7}
 .sub b{color:var(--accent-soft);font-weight:600}
+.count{
+  display:inline-flex;align-items:center;gap:6px;margin-top:14px;
+  font-size:12px;color:var(--accent-soft);
+  background:rgba(93,202,165,.08);border:1px solid rgba(93,202,165,.25);
+  padding:5px 14px;border-radius:99px;
+}
 
 /* 章节卡片网格 */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
 .chapter{
   position:relative;display:block;text-decoration:none;
   background:var(--surface);border:1px solid var(--line);border-radius:14px;
-  padding:22px 20px;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  padding:20px 18px;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
 }
 .chapter:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 10px 28px rgba(29,158,117,.14)}
 .chapter:hover .arrow{transform:translateX(3px);color:var(--accent-soft)}
 .badge{
   display:inline-flex;align-items:center;gap:6px;
-  font-size:12px;color:var(--accent-soft);background:var(--accent-dim,#14211c);
+  font-size:12px;color:var(--accent-soft);
   border:1px solid rgba(93,202,165,.25);
-  padding:4px 10px;border-radius:99px;margin-bottom:14px;
+  padding:3px 10px;border-radius:99px;margin-bottom:12px;
   font-family:ui-monospace,monospace;
 }
-.chapter h2{font-size:18px;font-weight:700;margin-bottom:8px}
-.chapter p{font-size:13px;color:var(--muted);line-height:1.6}
+.chapter h2{font-size:17px;font-weight:700;margin-bottom:6px}
+.chapter p{font-size:12.5px;color:var(--muted);line-height:1.6}
 .chapter .arrow{
-  position:absolute;right:18px;bottom:18px;font-size:18px;color:var(--muted);
+  position:absolute;right:16px;bottom:16px;font-size:16px;color:var(--muted);
   transition:transform .18s ease,color .18s ease;
 }
-/* 占位卡片（预留位） */
-.placeholder{
-  border:1.5px dashed var(--line);background:transparent;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-height:150px;color:var(--muted);border-radius:14px;
-}
-.placeholder .plus{font-size:24px;margin-bottom:6px;opacity:.6}
-.placeholder span{font-size:13px}
-
 footer{
   margin-top:48px;text-align:center;color:var(--muted);font-size:12px;line-height:2;
 }
@@ -80,36 +77,126 @@ footer .tip b{color:var(--accent-soft);font-weight:600}
 <div class="wrap">
   <header>
     <div class="logo">🎴</div>
-    <h1>背诵抽认卡</h1>
-    <p class="sub">按章节整理的背诵卡合集 · 点击章节开始学习<br>
-      进度保存在本设备浏览器中，<b>换设备不影响互不干扰</b></p>
+    <h1>习思想 · 背诵抽认卡</h1>
+    <p class="sub">习近平新时代中国特色社会主义思想概论 · 全册背诵卡<br>
+      进度保存在本设备浏览器中，<b>各章独立、互不干扰</b></p>
+    <span class="count">📚 已收录 18 章 · 导论 + 第一 ~ 十七章</span>
   </header>
 
   <nav class="grid">
-    <!-- ===== 章节列表：每新增一章，复制下面一个 chapter 卡片改编号/标题/链接即可 ===== -->
-    <a class="chapter" href="01-导论.html">
-      <span class="badge">01</span>
+    <a class="chapter" href="习思想/00_导论_抽认卡.html">
+      <span class="badge">00</span>
       <h2>导论</h2>
-      <p>全章核心概念与考点背诵卡</p>
+      <p>全册总纲 · 六部分</p>
       <span class="arrow">→</span>
     </a>
-    <a class="chapter" href="02-第一章.html">
-      <span class="badge">02</span>
+    <a class="chapter" href="习思想/01_第一章_抽认卡.html">
+      <span class="badge">01</span>
       <h2>第一章</h2>
-      <p>新时代坚持和发展中国特色社会主义 · 三节九目</p>
+      <p>新时代坚持和发展中国特色社会主义</p>
       <span class="arrow">→</span>
     </a>
-    <!-- ===== 章节列表结束 ===== -->
-
-    <div class="placeholder">
-      <div class="plus">＋</div>
-      <span>更多章节即将加入</span>
-    </div>
+    <a class="chapter" href="习思想/02_第二章_抽认卡.html">
+      <span class="badge">02</span>
+      <h2>第二章</h2>
+      <p>以中国式现代化全面推进中华民族伟大复兴</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/03_第三章_抽认卡.html">
+      <span class="badge">03</span>
+      <h2>第三章</h2>
+      <p>坚持党的全面领导</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/04_第四章_抽认卡.html">
+      <span class="badge">04</span>
+      <h2>第四章</h2>
+      <p>坚持以人民为中心</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/05_第五章_抽认卡.html">
+      <span class="badge">05</span>
+      <h2>第五章</h2>
+      <p>全面深化改革开放</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/06_第六章_抽认卡.html">
+      <span class="badge">06</span>
+      <h2>第六章</h2>
+      <p>推动高质量发展</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/07_第七章_抽认卡.html">
+      <span class="badge">07</span>
+      <h2>第七章</h2>
+      <p>社会主义现代化建设的教育、科技、人才战略</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/08_第八章_抽认卡.html">
+      <span class="badge">08</span>
+      <h2>第八章</h2>
+      <p>发展全过程人民民主</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/09_第九章_抽认卡.html">
+      <span class="badge">09</span>
+      <h2>第九章</h2>
+      <p>坚持全面依法治国</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/10_第十章_抽认卡.html">
+      <span class="badge">10</span>
+      <h2>第十章</h2>
+      <p>建设社会主义文化强国</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/11_第十一章_抽认卡.html">
+      <span class="badge">11</span>
+      <h2>第十一章</h2>
+      <p>加强以民生为重点的社会建设</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/12_第十二章_抽认卡.html">
+      <span class="badge">12</span>
+      <h2>第十二章</h2>
+      <p>建设社会主义生态文明</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/13_第十三章_抽认卡.html">
+      <span class="badge">13</span>
+      <h2>第十三章</h2>
+      <p>维护和塑造国家安全</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/14_第十四章_抽认卡.html">
+      <span class="badge">14</span>
+      <h2>第十四章</h2>
+      <p>建设巩固国防和强大人民军队</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/15_第十五章_抽认卡.html">
+      <span class="badge">15</span>
+      <h2>第十五章</h2>
+      <p>坚持「一国两制」和推进祖国完全统一</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/16_第十六章_抽认卡.html">
+      <span class="badge">16</span>
+      <h2>第十六章</h2>
+      <p>推动构建人类命运共同体</p>
+      <span class="arrow">→</span>
+    </a>
+    <a class="chapter" href="习思想/17_第十七章_抽认卡.html">
+      <span class="badge">17</span>
+      <h2>第十七章</h2>
+      <p>全面从严治党</p>
+      <span class="arrow">→</span>
+    </a>
   </nav>
 
   <footer>
     <div class="tip">
-      💡 小提示：手机浏览器可在菜单里选择「添加到主屏幕」，<br>
+      💡 手机浏览器可在菜单里选「添加到主屏幕」，<br>
       把它变成一个独立 App 图标，随时点开即学
     </div>
   </footer>
