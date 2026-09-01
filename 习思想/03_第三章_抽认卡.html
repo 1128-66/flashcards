@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第三章 · 背诵抽认卡</title>
+<style>
+:root{
+  --bg:#12141a; --surface:#1a1d26; --surface-2:#21252f; --line:#2c313d;
+  --text:#e6e8ee; --muted:#98a0b0; --faint:#6c7488;
+  --accent:#1D9E75; --accent-soft:#5DCAA5; --accent-dim:rgba(93,202,165,.14);
+  --star:#EF9F27; --danger:#E24B4A;
+  --mask:#2b3240; --mask-hover:#394154;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; padding:24px 18px 60px;
+}
+.wrap{max-width:820px;margin:0 auto}
+
+header{margin-bottom:18px}
+h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+.sub{color:var(--faint);font-size:13px;margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  padding:5px 12px; border-radius:99px; font-size:13px; cursor:pointer;
+  transition:.15s; user-select:none;
+}
+.chip:hover{border-color:var(--faint);color:var(--text)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.spacer{flex:1}
+
+.progress{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{
+  margin-top:18px; perspective:2000px;
+}
+.faces{
+  position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.card.flip .faces{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 22px; min-height:360px;
+}
+.faces{display:grid}
+.front{transform:none}
+.back{transform:rotateY(180deg)}
+
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);margin-bottom:14px}
+.tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 9px;border-radius:6px;color:var(--muted)}
+.star{color:var(--star)}
+.q{font-size:19px;font-weight:600;line-height:1.6;margin-bottom:6px}
+.qhint{font-size:12px;color:var(--faint);margin-bottom:18px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--faint);color:var(--text)}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.tip{font-size:12px;color:var(--faint);margin-left:auto}
+
+.answer{font-size:16px;line-height:2.05;letter-spacing:.2px}
+.cloze{
+  background:var(--mask); color:transparent; border-radius:4px; cursor:pointer;
+  padding:1px 3px; transition:background .12s,color .12s;
+  box-decoration-break:clone; -webkit-box-decoration-break:clone;
+}
+.cloze:hover{background:var(--mask-hover)}
+.cloze.on{background:var(--accent-dim);color:var(--text)}
+.cloze.on:hover{background:rgba(93,202,165,.24)}
+
+.sec{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.sec h4{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:1px;margin-bottom:8px}
+.sec p{font-size:15px;line-height:1.9;color:var(--text)}
+.hook{color:var(--accent-soft)}
+.mnem{background:var(--accent-dim);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 14px;font-size:16px;line-height:1.95;color:var(--accent-soft);
+  font-weight:600;letter-spacing:.4px}
+.expand{margin-top:13px}
+.expand ol{list-style:none;counter-reset:ex}
+.expand li{position:relative;padding:8px 0 8px 33px;font-size:14.5px;line-height:1.95;color:var(--text);
+  border-bottom:1px dashed var(--line)}
+.expand li:last-child{border-bottom:none}
+.expand li::before{content:counter(ex);counter-increment:ex;position:absolute;left:0;top:11px;
+  width:21px;height:21px;border-radius:50%;background:var(--accent);color:#0b0e14;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+.expand li b{color:var(--accent-soft);font-weight:600}
+.plain{font-size:15.5px;line-height:2.0;color:var(--text)}
+
+nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.btn-lg{padding:9px 18px;font-size:14px}
+.btn-ok{border-color:var(--accent);color:var(--accent-soft)}
+.btn-ok:hover{background:var(--accent-dim)}
+.btn-bad{border-color:#5a3030;color:#e08b8b}
+.btn-bad:hover{background:rgba(226,75,74,.12)}
+
+.keys{margin-top:16px;font-size:12px;color:var(--faint);line-height:2}
+kbd{
+  background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+}
+details{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--faint)}
+details[open] summary:before{content:"▾ "}
+details h5{font-size:13px;color:var(--accent-soft);margin:14px 0 6px;font-weight:500}
+details li{font-size:13px;color:var(--muted);line-height:1.9;list-style:none;padding-left:2px}
+details li:before{content:"· ";color:var(--faint)}
+.due{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+.toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+.toc-mask.on{opacity:1;pointer-events:auto}
+.toc{
+  position:fixed;top:0;left:0;height:100%;width:min(430px,90vw);z-index:50;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,.2,.2,1);
+  overflow-y:auto;padding:22px 20px 50px;
+}
+.toc.on{transform:none}
+.toc-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.toc-head h3{font-size:16px;font-weight:600}
+.toc-x{margin-left:auto;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;padding:2px 7px;border-radius:6px}
+.toc-x:hover{background:var(--surface-2);color:var(--text)}
+.toc-sum{font-size:12px;color:var(--faint);margin-bottom:18px}
+.toc-g{margin-bottom:18px}
+.toc-g h6{
+  font-size:12px;font-weight:500;color:var(--accent-soft);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--line);
+}
+.toc-g h6 .cnt{margin-left:auto;color:var(--faint);font-size:11px}
+.toc-g ul{list-style:none}
+.toc-g li{
+  display:flex;align-items:baseline;gap:9px;padding:6px 9px;border-radius:8px;
+  font-size:13.5px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.toc-g li:hover{background:var(--surface-2);color:var(--text)}
+.toc-g li .tn{flex:none;width:22px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint)}
+.toc-g li .tt{flex:1;line-height:1.5}
+.toc-g li .ts{flex:none;font-size:9px;color:var(--star);letter-spacing:-.5px}
+.toc-g li .td{flex:none;width:14px;text-align:center;font-size:12px;color:var(--faint)}
+.toc-g li.half .td{color:var(--star)}
+.toc-g li.done .td{color:var(--accent)}
+.toc-g li.done .tt{color:var(--faint)}
+.toc-g li.cur{background:var(--accent-dim);color:var(--text)}
+.toc-g li.cur .tn{color:var(--accent-soft)}
+.toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="home-link" href="../index.html">← 章节导航</a>
+  <h1>第三章 · 背诵抽认卡</h1>
+  <div class="sub">x背诵资料正式版 · 9 个考点 · 重点 3 张 · 逐条口诀</div>
+  <div class="bar">
+    <span class="chip on" data-f="all">全部</span>
+    <span class="chip" data-f="star">重点 ★★★</span>
+    <span class="chip" data-f="learning">学习中</span>
+    <span class="chip" data-f="mastered">已掌握</span>
+    <span class="spacer"></span>
+    <span class="chip" id="tocBtn">目录</span>
+    <span class="chip" id="shuffle">打乱</span>
+    <span class="chip" id="reset">重置进度</span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</header>
+
+<div class="card" id="card">
+  <div class="faces">
+    <section class="face front">
+      <div class="meta">
+        <span class="tag" id="f-part"></span>
+        <span id="f-no"></span>
+        <span class="star" id="f-star"></span>
+        <span class="spacer"></span>
+        <span class="due" id="f-due"></span>
+      </div>
+      <div class="q" id="f-q"></div>
+      <div class="qhint">先口述或默写，再点色块逐句核对</div>
+      <div class="tools">
+        <button class="btn on" data-m="seg">逐句挖空</button>
+        <button class="btn" data-m="key">只挖关键</button>
+        <button class="btn" id="toggleAll">全部显示</button>
+        <span class="tip">点色块 → 显现；再点 → 盖回去</span>
+      </div>
+      <div class="answer" id="f-a"></div>
+    </section>
+
+    <section class="face back">
+      <div class="meta">
+        <span class="tag" id="b-part"></span>
+        <span id="b-no"></span>
+        <span class="star" id="b-star"></span>
+      </div>
+      <div class="q" id="b-q"></div>
+      <div class="sec">
+        <h4>记忆口诀</h4>
+        <div class="mnem" id="b-mnem"></div>
+        <div class="expand" id="b-expand"></div>
+      </div>
+      <div class="sec">
+        <h4>完整答案</h4>
+        <div class="plain" id="b-a"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav>
+  <button class="btn btn-lg" id="tocBtn2">目录</button>
+  <button class="btn btn-lg" id="prev">← 上一张</button>
+  <button class="btn btn-lg" id="flip">翻面</button>
+  <button class="btn btn-lg" id="next">下一张 →</button>
+  <span class="spacer"></span>
+  <button class="btn btn-lg btn-bad" id="again">再看看</button>
+  <button class="btn btn-lg btn-ok" id="got">记住了</button>
+</nav>
+
+<div class="keys">
+  <kbd>←</kbd> <kbd>→</kbd> 切换　<kbd>空格</kbd> 翻面　<kbd>F</kbd> 全部显示/隐藏　<kbd>M</kbd> 切换挖空模式　<kbd>G</kbd> 记住了　<kbd>R</kbd> 再看看　<kbd>T</kbd> 目录　<kbd>Esc</kbd> 关闭　<kbd>S</kbd> 打乱
+</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<aside class="toc" id="toc">
+  <div class="toc-head">
+    <h3>目录</h3>
+    <span class="toc-x" id="tocX">×</span>
+  </div>
+  <div class="toc-sum" id="tocSum"></div>
+  <div id="toc-body"></div>
+  <div class="toc-foot">
+    <span style="color:var(--accent)">✓</span> 已掌握（连续两次记住）<br>
+    <span style="color:var(--star)">◐</span> 记住过一次　·　空白＝还没背<br>
+    点任意一条直接跳过去，<kbd>T</kbd> 开关目录
+  </div>
+</aside>
+
+<details>
+  <summary>关于本卡组</summary>
+  <ul>
+    <li>来源：x背诵资料正式版.docx「第三章」，共 9 个考点，逐一成卡。</li>
+    <li>正面＝考点原文全文，逐句挖空，点色块显现、再点盖回。</li>
+    <li>背面「记忆口诀」为逐条编写的<b>由点及面</b>口诀：口诀里每个字对应一条，下方按 ①②③ 逐条展开成完整表述。<b>先背口诀，再对着编号把每条复述出来。</b></li>
+    <li>标注 <span style="color:#EF9F27">★★★</span> 的是本章篇幅最大的考点（篇幅排前 1/3，多为论述题量级）。</li>
+    <li>建议：正面用「逐句挖空」默写全文，翻面用「口诀＋展开」核对要点；考前用「只挖关键」速扫。</li>
+  </ul>
+</details>
+
+</div>
+
+<script>
+const DECK = [
+{p:"03 第三章",t:"考点26、如何理解中国最大的国情就是中国共产党的领导",star:0,
+ q:"考点26、如何理解中国最大的国情就是中国共产党的领导",
+ a:"中国共产党是中国特色社会主义事业的坚强领导核心。没有中国共产党，就没有新中国，就没有中国特色社会主义。第一，中国共产党的领导地位是在历史奋斗中形成的。近代以来，为了拯救民族危亡，中国人民奋起反抗，仁人志士奔走呐喊，各种救国方案轮番出台，但都以失败告终。中国共产党的成立，使中国人民有了前进的主心骨和领路人，中华民族伟大复兴的梦想一步步成为现实。在中国共产党的领导下，我国仅用几十年时间就走完发达国家几百年走过的工业化历程，创造了经济快速发展和社会长期稳定两大奇迹。历史和现实都证明，中国人民和中华民族之所以能够扭转近代以后的历史命运、取得今天的伟大成就，最根本的是有中国共产党的坚强领导。第二，中国共产党领导是人民当家作主的可靠保障。人民当家作主是我们党领导人民长期奋斗的历史成果。我们党自成立之日起就致力于建设人民当家作主的新社会，并领导人民为之浴血奋斗，建立了人民当家作主的新中国。没有中国共产党的领导，人民当家作主的愿望就无法实现。第三，中国共产党领导关系中国特色社会主义的性质、方向和命运。中国特色社会主义之所以是社会主义，究其根本就在于坚持科学社会主义基本原则，在于坚持中国共产党的领导。党的性质宗旨、 理想信念、初心使命赋予中国特色社会主义事业以信仰的力量、真理的力量、团结奋斗的力量，决定着中国特色社会主义事业的前途命运。第四，中国共产党领导是实现中华民族伟大复兴的根本保证。只有坚持中国共产党的领导，才能以坚定的必胜信念、强烈的历史自觉和主动精神，凝聚起全党全国各族人民为实现中华民族伟大复兴攻坚克难、团结奋斗的磅礴伟力，确保中华民族伟大复兴号巨轮劈波斩浪、扬帆远航。",
+ m:"四原因「史·民·质·兴」＝历史奋斗中形成／人民当家作主的可靠保障／关系性质方向命运／民族复兴的根本保证",
+ e:"①总→中国共产党是中国特色社会主义事业的坚强领导核心。没有中国共产党，就没有新中国，就没有中国特色社会主义②史→中国共产党的领导地位是在历史奋斗中形成的。近代以来，为了拯救民族危亡，中国人民奋起反抗，仁人志士奔走呐喊，各种救国方案轮番出台但最终都失败了，是中国共产党领导人民实现了民族独立和人民解放③民→中国共产党领导是人民当家作主的可靠保障。人民当家作主是我们党领导人民长期奋斗的历史成果，只有坚持党的领导才能真正实现人民当家作主④质→中国共产党领导关系中国特色社会主义的性质、方向和命运。中国特色社会主义之所以是社会主义，归根到底是因为坚持中国共产党的领导⑤兴→中国共产党领导是实现中华民族伟大复兴的根本保证。只有坚持中国共产党的领导，才能以坚定的必胜信念推进民族复兴伟业",
+ h:"口诀：四原因「史·民·质·兴」＝历史奋斗中形成／人民当家作主的可靠保障／关系性质方向命运／民族复兴的根本保证　｜　由点及面：①总→中国共产党是中国特色社会主义事业的坚强领导核心。没有中国共产党，就没有新中国，就没有中国特色社会主义②史→中国共产党的领导地位是在历史奋斗中形成的。近代以来，为了拯救民族危亡，中国人民奋起反抗，仁人志士奔走呐喊，各种救国方案轮番出台但最终都失败了，是中国共产党领导人民实现了民族独立和人民解放③民→中国共产党领导是人民当家作主的可靠保障。人民当家作主是我们党领导人民长期奋斗的历史成果，只有坚持党的领导才能真正实现人民当家作主④质→中国共产党领导关系中国特色社会主义的性质、方向和命运。中国特色社会主义之所以是社会主义，归根到底是因为坚持中国共产党的领导⑤兴→中国共产党领导是实现中华民族伟大复兴的根本保证。只有坚持中国共产党的领导，才能以坚定的必胜信念推进民族复兴伟业",
+ k:["党的性质宗旨","方向和命运","真理的力量","理想信念","扬帆远航"]},
+
+{p:"03 第三章",t:"考点27、如何理解中国共产党领导是中国特色社会主义制度的最大优势",star:0,
+ q:"考点27、如何理解中国共产党领导是中国特色社会主义制度的最大优势",
+ a:"我国国家制度和国家治理体系具有多方面的显著优势，其中最大优势是中国共产党领导。只有坚持党的领导，才能更好发挥党和国家的各方面优势，更好推动中国特色社会主义事业不断向前发展。第一，中国共产党以马克思主义作为行动指南，在实践中不断推进马克思主义中国化时代化，为坚持和完善中国特色社会主义制度提供强大理论优势。马克思主义为我们提供科学的世界观和方法论，是建立和完善中国特色社会主义制度的理论基础，是制定正确路线方针政策的科学指导，是解决改革发展稳定一系列重大问题的强大武器。中国共产党运用马克思主义及时科学解答时代新课题，不断推进马克思主义中国化时代化，是推动中国特色社会主义制度不断完善、确保中国特色社会主义事业始终充满生机活力的根本原因。第二，中国共产党的自身优势是中国特色社会主义制度优势的主要来源。中国共产党是中国工人阶级的先锋队，同时是中国人民和中华民族的先锋队，集中了全民族先进分子，具有广泛坚实的阶级基础、群众基础和社会基础，是中国特色社会主义事业的领导核心。只有坚持党的领导，才能使党自身的优势充分彰显，不断转化为中国特色社会主义制度优势和国家治理效能。第三，中国共产党能够集中全党全国力量、凝聚全民族共同意志，在各项事业中发挥总揽全局、协调各方的作用，确保中国特色社会主义制度的显著优势充分彰显。党是全国各族人民众望所归的领导核心，是保持社会稳定、推动国家发展、实现祖国统一、维护民族团结的强大领导力量，使中国特色社会主义制度的优势在国家治理中得到充分发挥。",
+ m:"三原因「导·源·聚」＝马克思主义提供理论指导／党的自身优势是制度优势来源／能集中力量凝聚意志总揽全局",
+ e:"①总→我国国家制度和国家治理体系具有多方面的显著优势，其中最大优势是中国共产党领导，只有坚持党的领导才能把制度优势转化为治理效能②导→中国共产党以马克思主义作为行动指南，在实践中不断推进马克思主义中国化时代化，为坚持和完善中国特色社会主义制度提供了科学理论指导③源→中国共产党的自身优势是中国特色社会主义制度优势的主要来源。中国共产党是中国工人阶级的先锋队，同时是中国人民和中华民族的先锋队，党的政治优势、组织优势转化为制度优势④聚→中国共产党能够集中全党全国力量、凝聚全民族共同意志，在各项事业中发挥总揽全局、协调各方的作用，是维护民族团结的强大领导力量，使中国特色社会主义制度的优势在国家治理中得到充分发挥",
+ h:"口诀：三原因「导·源·聚」＝马克思主义提供理论指导／党的自身优势是制度优势来源／能集中力量凝聚意志总揽全局　｜　由点及面：①总→我国国家制度和国家治理体系具有多方面的显著优势，其中最大优势是中国共产党领导，只有坚持党的领导才能把制度优势转化为治理效能②导→中国共产党以马克思主义作为行动指南，在实践中不断推进马克思主义中国化时代化，为坚持和完善中国特色社会主义制度提供了科学理论指导③源→中国共产党的自身优势是中国特色社会主义制度优势的主要来源。中国共产党是中国工人阶级的先锋队，同时是中国人民和中华民族的先锋队，党的政治优势、组织优势转化为制度优势④聚→中国共产党能够集中全党全国力量、凝聚全民族共同意志，在各项事业中发挥总揽全局、协调各方的作用，是维护民族团结的强大领导力量，使中国特色社会主义制度的优势在国家治理中得到充分发挥",
+ k:["推动国家发展","实现祖国统一"]},
+
+{p:"03 第三章",t:"考点28、如何理解加强党的全面领导为新时代党和国家事业发展提供了坚强保障",star:0,
+ q:"考点28、如何理解加强党的全面领导为新时代党和国家事业发展提供了坚强保障",
+ a:"党的十八大以来，以习近平同志为核心的党中央坚持和加强党的全面领导，全党全国各族人民对坚持党的领导的认识不断深化，党的领导制度体系更加健全，党在应对各种风险挑战中发挥了中流砥柱的作用，为党和国家事业取得历史性成就、发生历史性变革提供了根本保证。第一，坚持和加强党的全面领导，使党的领导核心作用充分彰显。（1）我们党高度重视加强和改善党的领导，为党和国家事业发展提供了根本政治保证，同时也一度存在对坚持党的领导的模糊认识，在实践中出现落实党的领导弱化、虚化、淡化等问题。经过持续的思想教育和政治、组织、作风、纪律建设，特别是开展一系列集中学习教育，全党对坚持党的全面领导的认识达到了高度一致。（2）坚持和加强党的领导的制度体系不断完善，明确党的领导制度是我国的根本领导制度，建立健全维护党中央权威和集中统一领导的各项制度，形成了横向到边、纵向到底的坚持党的全面领导制度体系，党的全面领导的政治优势得到更加充分发挥。第二，坚持和加强党的全面领导，使党的政治领导力、思想引领力、群众组织力、社会号召力显著增强。（1）政治领导力是马克思主义政党第一位的能力，全面加强党的领导大大提高了全党的政治判断力、政治领悟力、政治执行力；（2）全面加强党的领导大大推进了思想建党、理论强党，党勇于进行理论探索和创新，创立了习近平新时代中国特色社会主义思想；（3）群众组织力是我们党坚如磐石、坚不可摧的力量根基，全面加强党的领导大大增强了党同人民群众的血肉联系，人民群众更加紧密团结在党的周围；（4）社会号召力是党的先进性和感召力的重要体现，全面加强党的领导大大增进了党与社会各方面各阶层的联系，党在全社会的凝聚力和影响力进一步增强。第三，坚持和加强党的全面领导，为推进新时代中国特色社会主义事业提供了政治保证，使党成为风雨来袭时中国人民最可靠的主心骨。（1）全面加强党的领导，使我们有效应对严峻复杂的国际形势和接踵而至的巨大风险挑战，有力推进了党和国家各项事业的顺利发展，胜利实现了全面建成小康社会的战略目标，开启了全面建设社会主义现代化国家新征程；（2）反腐败是最彻底的自我革命，我们党构建起反腐败工作新格局，实现了反腐败领导体制重塑，反腐败斗争取得压倒性胜利并全面巩固；（3）脱贫攻坚是一场必须打赢打好的硬仗，我们党形成和强化了中央统筹、省负总责、市县抓落实的工作机制，形成了五级书记抓扶贫、全党动员促攻坚的生动局面，确保了最终夺取脱贫攻坚战全面胜利；（4）面对突如其来的新冠疫情，我们党统揽全局、果断决策，坚持人民至上、生命至上，第一时间调动全国力量，党的基层组织全面动员，奋力夺取疫情防控重大决定性胜利；（5）面对美西方挑起的经贸摩擦和各种极限施压，我们党坚持国家利益为重、国内政治优先，保持战略定力，发扬斗争精神，展示不畏强权的坚定意志，在斗争中维护国家尊严和核心利益，牢牢掌握了我国发展和安全主动权。",
+ m:"「彰·四力·三保」；四力「政·思·群·社」＝政治领导力、思想引领力、群众组织力、社会号召力；三保「应·反·脱」＝应对风险、反腐败、脱贫攻坚",
+ e:"①总→党的十八大以来，以习近平同志为核心的党中央坚持和加强党的全面领导，全党全国各族人民对坚持党的领导的认识达到新的高度②彰→使党的领导核心作用充分彰显：我们党高度重视加强和改善党的领导，为党和国家事业发展提供了根本政治保证，同时也一度存在对坚持党的领导认识模糊、行动乏力等问题；坚持和加强党的领导的制度体系不断完善，明确党的领导制度是我国的根本领导制度，建立健全维护党中央权威和集中统一领导的制度机制③四力→使党的政治领导力、思想引领力、群众组织力、社会号召力显著增强（口诀「政思群社」）：（1）政治领导力是马克思主义政党第一位的能力，全面加强党的领导大大提高了全党的政治判断力、政治领悟力、政治执行力（2）大大推进了思想建党、理论强党，党勇于进行理论探索和创新，创立了习近平新时代中国特色社会主义思想（3）群众组织力是我们党坚如磐石、坚不可摧的力量根基，大大增强了党同人民群众的血肉联系（4）社会号召力是党的先进性和感召力的重要体现，大大增进了党与社会各方面各阶层的联系④三保→为推进新时代中国特色社会主义事业提供了政治保证，使党成为风雨来袭时中国人民最可靠的主心骨（口诀「应反脱」）：（1）使我们有效应对严峻复杂的国际形势和接踵而至的巨大风险挑战，有力推进了党和国家各项事业（2）反腐败是最彻底的自我革命，我们党构建起反腐败工作新格局，实现了反腐败领导体制重塑，反腐败斗争取得压倒性胜利并全面巩固（3）脱贫攻坚是一场必须打赢打好的硬仗，我们党形成和强化了中央统筹、省负总责、市县抓落实的工作机制",
+ h:"口诀：「彰·四力·三保」；四力「政·思·群·社」＝政治领导力、思想引领力、群众组织力、社会号召力；三保「应·反·脱」＝应对风险、反腐败、脱贫攻坚　｜　由点及面：①总→党的十八大以来，以习近平同志为核心的党中央坚持和加强党的全面领导，全党全国各族人民对坚持党的领导的认识达到新的高度②彰→使党的领导核心作用充分彰显：我们党高度重视加强和改善党的领导，为党和国家事业发展提供了根本政治保证，同时也一度存在对坚持党的领导认识模糊、行动乏力等问题；坚持和加强党的领导的制度体系不断完善，明确党的领导制度是我国的根本领导制度，建立健全维护党中央权威和集中统一领导的制度机制③四力→使党的政治领导力、思想引领力、群众组织力、社会号召力显著增强（口诀「政思群社」）：（1）政治领导力是马克思主义政党第一位的能力，全面加强党的领导大大提高了全党的政治判断力、政治领悟力、政治执行力（2）大大推进了思想建党、理论强党，党勇于进行理论探索和创新，创立了习近平新时代中国特色社会主义思想（3）群众组织力是我们党坚如磐石、坚不可摧的力量根基，大大增强了党同人民群众的血肉联系（4）社会号召力是党的先进性和感召力的重要体现，大大增进了党与社会各方面各阶层的联系④三保→为推进新时代中国特色社会主义事业提供了政治保证，使党成为风雨来袭时中国人民最可靠的主心骨（口诀「应反脱」）：（1）使我们有效应对严峻复杂的国际形势和接踵而至的巨大风险挑战，有力推进了党和国家各项事业（2）反腐败是最彻底的自我革命，我们党构建起反腐败工作新格局，实现了反腐败领导体制重塑，反腐败斗争取得压倒性胜利并全面巩固（3）脱贫攻坚是一场必须打赢打好的硬仗，我们党形成和强化了中央统筹、省负总责、市县抓落实的工作机制",
+ k:["坚持和加强党的全面领导","社会号召力显著增强","党的十八大以来","淡化等问题","思想引领力","群众组织力","政治领悟力","政治执行力"]},
+
+{p:"03 第三章",t:"考点29、中国共产党是最高政治领导力量",star:0,
+ q:"考点29、中国共产党是最高政治领导力量",
+ a:"坚持中国共产党的领导地位是一个重大的理论和实践问题。习近平明确指出：“在当今中国，没有大于中国共产党的政治力量或其他什么力量。党政军民学，东西南北中，党是领导一切的，是最高的政治领导力量。”这一论断深刻阐明了中国共产党在国家政治生活中的领导核心地位。第一，中国共产党作为最高政治领导力量，得到了最广大人民群众的支持和拥护，得到了各民主党派、各团体、各民族、各阶层、各界人士的支持和拥护。中国共产党作为最高政治领导力量不是自封的，而是在历史发展中形成的。第二，中国共产党作为最高政治领导力量是由我国国家性质和政治制度体系决定的。我国是工人阶级领导的、以工农联盟为基础的人民民主专政的社会主义国家，工人阶级领导是通过其先锋队——中国共产党领导实现的。中国共产党是我国最高政治领导力量，党的领导制度在我国国家政治制度体系中居于统领地位。第三，中国共产党作为最高政治领导力量是由中华民族伟大复兴事业决定的。近代以来，中华民族为实现伟大复兴的奋斗历史充分证明，没有一个用先进理论武装的坚强政治领导力量，实现伟大复兴的努力就会落空。正是在中国共产党的坚强领导下，我们才实现了民族独立和人民解放，我们国家才能取得今天这样的发展成就，才具有今天这样的国际地位。",
+ m:"三原因「拥·国·兴」＝人民衷心拥护／国家性质和政治制度体系决定／民族复兴事业决定",
+ e:"①总→坚持中国共产党的领导地位是一个重大的理论和实践问题。习近平明确指出：“在当今中国，没有大于中国共产党的政治力量或其他什么力量。”②拥→中国共产党作为最高政治领导力量，得到了最广大人民群众的支持和拥护，得到了各民主党派、各团体、各民族、各阶层、各界人士的支持和拥护③国→中国共产党作为最高政治领导力量是由我国国家性质和政治制度体系决定的。我国是工人阶级领导的、以工农联盟为基础的人民民主专政的社会主义国家，工人阶级的领导是通过其先锋队中国共产党实现的④兴→中国共产党作为最高政治领导力量是由中华民族伟大复兴事业决定的。近代以来，中华民族为实现伟大复兴进行了艰苦探索，历史证明只有中国共产党才能担负起领导民族复兴的历史重任",
+ h:"口诀：三原因「拥·国·兴」＝人民衷心拥护／国家性质和政治制度体系决定／民族复兴事业决定　｜　由点及面：①总→坚持中国共产党的领导地位是一个重大的理论和实践问题。习近平明确指出：“在当今中国，没有大于中国共产党的政治力量或其他什么力量。”②拥→中国共产党作为最高政治领导力量，得到了最广大人民群众的支持和拥护，得到了各民主党派、各团体、各民族、各阶层、各界人士的支持和拥护③国→中国共产党作为最高政治领导力量是由我国国家性质和政治制度体系决定的。我国是工人阶级领导的、以工农联盟为基础的人民民主专政的社会主义国家，工人阶级的领导是通过其先锋队中国共产党实现的④兴→中国共产党作为最高政治领导力量是由中华民族伟大复兴事业决定的。近代以来，中华民族为实现伟大复兴进行了艰苦探索，历史证明只有中国共产党才能担负起领导民族复兴的历史重任",
+ k:["各界人士的支持和拥护","我国是工人阶级领导的","各团体","各民族","各阶层"]},
+
+{p:"03 第三章",t:"考点30、如何理解党的领导是全面的、系统的、整体的",star:0,
+ q:"考点30、如何理解党的领导是全面的、系统的、整体的",
+ a:"中国共产党作为最高政治领导力量，在党和国家事业发展中居于中心地位。党的领导是全面的、系统的、整体的，必须贯穿到治国理政的方方面面。习近平指出：“哪个领域、哪个方面、哪个环节缺失了弱化了，都会削弱党的力量，损害党和国家事业。”第一，党的领导是全面的。（1）在领导对象上，党领导人大、政府、政协、社会组织等机构；（2）在领导内容上，党领导经济建设、政治建设、文化建设、社会建设、生态文明建设等方面；（3）在领导过程上，党既制定路线方针政策，又协调各方、督促落实，党的领导贯穿于立法、决策、执行、管理、监督等各项工作之中；（4）在领导方式上，党通过制定大政方针，提出立法建议，推荐重要干部，实施党对国家和社会的全面领导。第二，党的领导是系统的。（1）党在推进各项事业发展中发挥着把方向、谋大局、定政策、促改革的作用，通过总揽全局、协调各方，把党的领导落实到国家治理各领域各方面各环节。（2）党通过改革和完善党和国家机构职能体系，完善党的领导体制和工作机制，加强党中央权威和集中统一领导，把党的领导系统地贯穿到国家政权的机构、体制、制度等的设计、安排、运行之中，推进各项事业更好发展。第三，党的领导是整体的。（1）党的领导作为一个统一整体是不可分割的，必须按照民主集中制原则，层层体现到治国理政的全过程各方面。（2）党中央作出的决策部署，党的组织、宣传、统战、政法等部门要贯彻落实，人大、政府、政协、监委、法院、检察院、军队的党组织要贯彻落实，人民团体、企事业单位等的党组织也要贯彻落实。（3）党委在同级各种组织中起领导核心作用，各方面都应该自觉向党委报告重大工作和重大情况，在党委统一领导下尽心尽力做好自身职责范围内的工作。党的领导是全面的、系统的、整体的，并不是说党组织包揽包办一切、事无巨细什么都去管，而是在各级各种组织中发挥领导核心作用，既善于总揽全局，又善于协调各方，不断增强党组织的领导统筹能力，充分调动方方面面的工作积极性，使党的领导作用贯穿于工作全过程。记忆框架：总说+内容1.2.3+结语",
+ m:"「全·系·整」；全面四条「对·内·过·方」＝领导对象、领导内容、领导过程、领导方式；系统「方·局·策·革」＝把方向、谋大局、定政策、促改革",
+ e:"①总→中国共产党作为最高政治领导力量，在党和国家事业发展中居于中心地位。党的领导是全面的、系统的、整体的，必须全面、系统、整体加以落实②全→党的领导是全面的（口诀「对内过方」）：（1）在领导对象上，党领导人大、政府、政协、社会组织等机构（2）在领导内容上，党领导经济建设、政治建设、文化建设、社会建设、生态文明建设等各方面（3）在领导过程上，党既制定路线方针政策，又协调各方、督促落实，党的领导贯穿于立法、决策、执行、管理全过程（4）在领导方式上，党通过制定大政方针、提出立法建议、推荐重要干部，实施党对国家和社会的全面领导③系→党的领导是系统的：党在推进各项事业发展中发挥着把方向、谋大局、定政策、促改革的作用，通过总揽全局、协调各方，把党的领导落实到各领域各方面；党通过改革和完善党和国家机构职能体系，完善党的领导体制和工作机制，加强党中央权威和集中统一领导（口诀「方局策革」）④整→党的领导是整体的：党的领导是一个有机整体，必须完整发挥党的领导作用，不能把党的领导割裂开来、碎片化理解，要使党的领导体现在党和国家事业发展的各领域各方面各环节",
+ h:"口诀：「全·系·整」；全面四条「对·内·过·方」＝领导对象、领导内容、领导过程、领导方式；系统「方·局·策·革」＝把方向、谋大局、定政策、促改革　｜　由点及面：①总→中国共产党作为最高政治领导力量，在党和国家事业发展中居于中心地位。党的领导是全面的、系统的、整体的，必须全面、系统、整体加以落实②全→党的领导是全面的（口诀「对内过方」）：（1）在领导对象上，党领导人大、政府、政协、社会组织等机构（2）在领导内容上，党领导经济建设、政治建设、文化建设、社会建设、生态文明建设等各方面（3）在领导过程上，党既制定路线方针政策，又协调各方、督促落实，党的领导贯穿于立法、决策、执行、管理全过程（4）在领导方式上，党通过制定大政方针、提出立法建议、推荐重要干部，实施党对国家和社会的全面领导③系→党的领导是系统的：党在推进各项事业发展中发挥着把方向、谋大局、定政策、促改革的作用，通过总揽全局、协调各方，把党的领导落实到各领域各方面；党通过改革和完善党和国家机构职能体系，完善党的领导体制和工作机制，加强党中央权威和集中统一领导（口诀「方局策革」）④整→党的领导是整体的：党的领导是一个有机整体，必须完整发挥党的领导作用，不能把党的领导割裂开来、碎片化理解，要使党的领导体现在党和国家事业发展的各领域各方面各环节",
+ k:["生态文明建设等方面","监督等各项工作之中","党的领导是全面的","社会组织等机构","党的领导是全面","党的领导是系统","党的领导是整体","制度等的设计"]},
+
+{p:"03 第三章",t:"考点31、维护党中央权威和集中统一领导",star:0,
+ q:"考点31、维护党中央权威和集中统一领导",
+ a:"党中央集中统一领导是党的领导的最高原则，是党保持团结统一和强大战斗力、不断取得胜利的关键所在。加强和维护党中央权威和集中统一领导，是全党共同的政治责任，是党和国家事业发展的必然要求。第一，维护党中央权威和集中统一领导，是一个成熟的马克思主义执政党的重大建党原则。马克思、恩格斯在创建和领导无产阶级政党的实践中，明确提出无产阶级政党不是自由松散的俱乐部，而是肩负重大历史使命的新型政党，必须维护党的权威。第二，维护党中央权威和集中统一领导，必须坚决贯彻党的理论、路线方针政策和党中央决策部署。这是坚持和加强党中央集中统一领导的必然要求，是各级党组织和全体党员的政治责任和应尽义务。第三，维护党中央权威和集中统一领导，最关键的是坚决维护习近平同志党中央的核心、全党的核心地位。只有坚决维护习近平同志党中央的核心、全党的核心地位，坚决维护党中央权威和集中统一领导，才能更好凝聚全党全国各族人民的共同意志，推动党和国家事业胜利前进。第四，维护党中央权威和集中统一领导，同坚持党的民主集中制是完全一致的。中国共产党是以民主集中制为根本组织原则和领导制度的马克思主义政党。必须坚持党员个人服从党的组织，少数服从多数，下级组织服从上级组织，全党各个组织和全体党员服从党的全国代表大会和中央委员会，核心是全党各个组织和全体党员服从党的全国代表大会和中央委员会。",
+ m:"四条「原·贯·核·制」＝重大建党原则／坚决贯彻党中央决策部署／最关键维护核心地位／同民主集中制完全一致",
+ e:"①总→党中央集中统一领导是党的领导的最高原则，是党保持团结统一和强大战斗力、不断取得胜利的关键所在②原→维护党中央权威和集中统一领导，是一个成熟的马克思主义执政党的重大建党原则。马克思、恩格斯在创建无产阶级政党的实践中就高度重视权威和集中③贯→维护党中央权威和集中统一领导，必须坚决贯彻党的理论、路线方针政策和党中央决策部署，这是坚持和加强党的全面领导的必然要求④核→维护党中央权威和集中统一领导，最关键的是坚决维护习近平同志党中央的核心、全党的核心地位。只有坚决维护核心地位，才能保证全党团结统一、步调一致⑤制→维护党中央权威和集中统一领导，同坚持党的民主集中制是完全一致的。中国共产党是以民主集中制为根本组织原则和领导制度的政党，民主集中制强调民主基础上的集中和集中指导下的民主相结合",
+ h:"口诀：四条「原·贯·核·制」＝重大建党原则／坚决贯彻党中央决策部署／最关键维护核心地位／同民主集中制完全一致　｜　由点及面：①总→党中央集中统一领导是党的领导的最高原则，是党保持团结统一和强大战斗力、不断取得胜利的关键所在②原→维护党中央权威和集中统一领导，是一个成熟的马克思主义执政党的重大建党原则。马克思、恩格斯在创建无产阶级政党的实践中就高度重视权威和集中③贯→维护党中央权威和集中统一领导，必须坚决贯彻党的理论、路线方针政策和党中央决策部署，这是坚持和加强党的全面领导的必然要求④核→维护党中央权威和集中统一领导，最关键的是坚决维护习近平同志党中央的核心、全党的核心地位。只有坚决维护核心地位，才能保证全党团结统一、步调一致⑤制→维护党中央权威和集中统一领导，同坚持党的民主集中制是完全一致的。中国共产党是以民主集中制为根本组织原则和领导制度的政党，民主集中制强调民主基础上的集中和集中指导下的民主相结合",
+ k:["维护党中央权威和集中统一领导","全党的核心地位","马克思"]},
+
+{p:"03 第三章",t:"考点32、党的领导制度是我国的根本政治制度",star:1,
+ q:"考点32、党的领导制度是我国的根本政治制度",
+ a:"中国共产党领导是国家治理体系的核心，党的领导制度是中国特色社会主义制度建设的关键。坚持和完善党的领导制度，事关国家治理的根本。第一，党的领导制度是一个系统完备、内涵丰富的制度体系，主要涵盖六个方面的制度。（1）建立不忘初心、牢记使命的制度，形成长效机制，为坚持和完善党的领导制度体系奠定坚实基础；（2）完善坚定维护党中央权威和集中统一领导的各项制度，坚决把维护习近平同志党中央的核心、全党的核心地位落到实处，明确这一制度体系必须坚持的最高原则；（3）健全党的全面领导制度，确保党在各种组织中发挥领导作用，是这一制度体系的主体内容；（4）健全为人民执政、靠人民执政各项制度，巩固党执政的阶级基础，厚植党执政的群众基础，反映这一制度体系的价值追求；（5）健全提高党的执政能力和领导水平制度，提高党把方向、谋大局、定政策、促改革的能力，体现这一制度体系的实践要求；（6）完善全面从严治党制度，贯彻新时代党的建设总要求，为坚持和完善这一制度体系提供坚强保证。第二，党的领导制度是党的领导核心地位的必然反映和内在要求。（1）明确了我国政治生活的领导关系、领导主体、领导对象，是中国特色社会主义制度体系的核心，是国家治理体系和治理能力现代化的关键，发挥着提纲挈领、无可替代的作用。（2）要进一步坚定党的领导制度的制度自觉和制度自信，在实践中更好地坚持和巩固党的领导制度这个根本领导制度，推动党的领导优势转化为制度优势和治理效能，为全面建设社会主义现代化国家、全面推进中华民族伟大复兴提供坚强政治保障。",
+ m:"六方面制度「初·威·全·民·能·严」＝不忘初心牢记使命、维护党中央权威、党的全面领导、为人民执政靠人民执政、提高执政能力领导水平、全面从严治党（助记：初心权威，全面为民，能力从严）",
+ e:"①总→中国共产党领导是国家治理体系的核心，党的领导制度是中国特色社会主义制度建设的关键，是我国的根本领导制度②六制→党的领导制度是一个系统完备、内涵丰富的制度体系，主要涵盖六个方面的制度（口诀「初威全民能严」）：（1）建立不忘初心、牢记使命的制度，形成长效机制，为坚持和完善党的领导制度体系奠定坚实基础（2）完善坚定维护党中央权威和集中统一领导的各项制度，坚决把维护习近平同志党中央的核心、全党的核心地位落到实处（3）健全党的全面领导制度，确保党在各种组织中发挥领导作用，是这一制度体系的主体内容（4）健全为人民执政、靠人民执政各项制度，巩固党执政的阶级基础，厚植党执政的群众基础（5）健全提高党的执政能力和领导水平制度，提高党把方向、谋大局、定政策、促改革的能力（6）完善全面从严治党制度，贯彻新时代党的建设总要求，为坚持和完善这一制度体系提供坚强保证③反→党的领导制度是党的领导核心地位的必然反映和内在要求：明确了我国政治生活的领导关系、领导主体、领导对象，是中国特色社会主义制度体系的核心，是国家治理体系和治理能力现代化的关键；要进一步坚定党的领导制度的制度自觉和制度自信，在实践中更好地坚持和巩固这个根本领导制度",
+ h:"口诀：六方面制度「初·威·全·民·能·严」＝不忘初心牢记使命、维护党中央权威、党的全面领导、为人民执政靠人民执政、提高执政能力领导水平、全面从严治党（助记：初心权威，全面为民，能力从严）　｜　由点及面：①总→中国共产党领导是国家治理体系的核心，党的领导制度是中国特色社会主义制度建设的关键，是我国的根本领导制度②六制→党的领导制度是一个系统完备、内涵丰富的制度体系，主要涵盖六个方面的制度（口诀「初威全民能严」）：（1）建立不忘初心、牢记使命的制度，形成长效机制，为坚持和完善党的领导制度体系奠定坚实基础（2）完善坚定维护党中央权威和集中统一领导的各项制度，坚决把维护习近平同志党中央的核心、全党的核心地位落到实处（3）健全党的全面领导制度，确保党在各种组织中发挥领导作用，是这一制度体系的主体内容（4）健全为人民执政、靠人民执政各项制度，巩固党执政的阶级基础，厚植党执政的群众基础（5）健全提高党的执政能力和领导水平制度，提高党把方向、谋大局、定政策、促改革的能力（6）完善全面从严治党制度，贯彻新时代党的建设总要求，为坚持和完善这一制度体系提供坚强保证③反→党的领导制度是党的领导核心地位的必然反映和内在要求：明确了我国政治生活的领导关系、领导主体、领导对象，是中国特色社会主义制度体系的核心，是国家治理体系和治理能力现代化的关键；要进一步坚定党的领导制度的制度自觉和制度自信，在实践中更好地坚持和巩固这个根本领导制度",
+ k:["健全党的全面领导制度","完善全面从严治党制度","无可替代的作用","健全为人民执政","建立不忘初心","领导主体","谋大局","定政策"]},
+
+{p:"03 第三章",t:"考点33、健全党中央对重大工作的领导体制",star:1,
+ q:"考点33、健全党中央对重大工作的领导体制",
+ a:"党中央对重大工作的领导体制，是加强党的全面领导的制度安排，是实现党的全面领导的直接体现。加强党的全面领导，必须加强党中央 对党和国家重大工作的领导。第一，加强党中央对重大工作的领导，是我们党的优良传统和宝贵经验。（1）早在土地革命战争时期，我们党就确立了各省委向中央报告的制度，要求各地及时向中央报告工作。（2）1948年初，毛泽东为中共中央起草《关于建立报告制度》的党内指示，推动建立健全全党全军向中央报告工作的制度，加强了党中央对重大工作的领导。（3）党的十八大以来，以习近平同志为核心的党中央进一步加强对重大工作的领导，建立健全深化改革、依法治国、经济、国家安全、网络信息、外交、审计等领域的决策议事协调机构，完善了党中央对国家重大工作的领导体制。第二，加强党中央对重大工作的领导，必须完善党中央重大决策部署落实机制。（1）党的中央委员会、中央政治局、中央政治局常委会，是党的领导决策核心。党中央作出的决策部署，党的各个部门，各类国家机关的党组织，人民团体、企事业单位等的党组织要贯彻落实。（2）要完善贯彻党中央重大决策部署的任务分工、督办落实、定期报告、检查通报、跟踪问效、监督问责等全链条工作机制，确保党中央政令畅通、令行禁止。",
+ m:"「传·落」＝优良传统和宝贵经验＋完善决策部署落实机制；传＝「土·四八·今」（土地革命时期、1948年报告制度、十八大以来）；落＝决策核心＋全链条机制",
+ e:"①总→党中央对重大工作的领导体制，是加强党的全面领导的制度安排，是实现党的全面领导的直接体现②传→加强党中央对重大工作的领导，是我们党的优良传统和宝贵经验：（1）早在土地革命战争时期，我们党就确立了各省委向中央报告的制度，要求各地及时向中央报告工作（2）1948年初，毛泽东为中共中央起草《关于建立报告制度》的党内指示，推动建立健全全党全军向中央报告工作的制度（3）党的十八大以来，以习近平同志为核心的党中央进一步加强对重大工作的领导，建立健全深化改革、依法治国等领域的领导体制③落→加强党中央对重大工作的领导，必须完善党中央重大决策部署落实机制：（1）党的中央委员会、中央政治局、中央政治局常委会是党的领导决策核心，党中央作出的决策部署，党的各级组织必须坚决贯彻执行（2）要完善贯彻党中央重大决策部署的任务分工、督办落实、定期报告、检查通报、跟踪问效、监督问责等全链条机制",
+ h:"口诀：「传·落」＝优良传统和宝贵经验＋完善决策部署落实机制；传＝「土·四八·今」（土地革命时期、1948年报告制度、十八大以来）；落＝决策核心＋全链条机制　｜　由点及面：①总→党中央对重大工作的领导体制，是加强党的全面领导的制度安排，是实现党的全面领导的直接体现②传→加强党中央对重大工作的领导，是我们党的优良传统和宝贵经验：（1）早在土地革命战争时期，我们党就确立了各省委向中央报告的制度，要求各地及时向中央报告工作（2）1948年初，毛泽东为中共中央起草《关于建立报告制度》的党内指示，推动建立健全全党全军向中央报告工作的制度（3）党的十八大以来，以习近平同志为核心的党中央进一步加强对重大工作的领导，建立健全深化改革、依法治国等领域的领导体制③落→加强党中央对重大工作的领导，必须完善党中央重大决策部署落实机制：（1）党的中央委员会、中央政治局、中央政治局常委会是党的领导决策核心，党中央作出的决策部署，党的各级组织必须坚决贯彻执行（2）要完善贯彻党中央重大决策部署的任务分工、督办落实、定期报告、检查通报、跟踪问效、监督问责等全链条机制",
+ k:["早在土地革命战争时期","党的十八大以来","党的中央委员会","1948年初","1948年","中央政治局","依法治国","国家安全"]},
+
+{p:"03 第三章",t:"考点34、如何健全党的全面领导制度",star:1,
+ q:"考点34、如何健全党的全面领导制度",
+ a:"坚持和加强党的全面领导，必须健全党的全面领导制度，发挥党在各种组织中总揽全局、协调各方的领导核心作用，把党的领导贯彻到党和国家所有机构履行职责全过程。第一，必须完善党在各种组织中发挥领导作用的制度。（1）党的全面领导要体现到各种组织中去，发挥好党在同级各种组织中的领导核心作用。党在各种组织中要加强政治领导，加强组织保障，加强思想引领，确保人大、政府、政协、监察机关、审判机关、检察机关、等在党组织统一领导下，各就其位、各司其职、各尽其责、有序协同。（2）健全地方党委对同级人大常委会、政府、政协、法院、检察院党组实施领导的体制机制，完善党领导人民团体、企事业单位、基层群众性自治组织、社会组织的体制机制，确保各级党委在同级各种组织中更好发挥领导核心作用。第二，必须完善党协调各方的机制。（1）要深化党和国家机构改革，完善党和国家机构职能体系，加强统筹协调，理顺职责关系，保证党实施集中统一领导，保证其他机构协同联动、高效运行。（2）各级党委(党组)要从推动全局工作的要求出发，统筹协调好各部门各方面的工作，使工作部署得到更好贯彻落实。（3）各部门各方面要充分发挥积极性、主动性、创造性，但绝不能自行其是、各自为政。（4）各级党组织要不断提高科学执政、民主执政、依法执政的水平，增强总揽全局、协调各方的能力，保证党领导人民有效治理国家。第三，必须完善党领导各项事业的具体制度。（1）要健全党领导经济社会发展各方面重要工作的制度，把党的领导贯彻落实到统筹推进“五位一体”总体布局、协调推进“四个全面”战略布局各领域各方面各环节。（2）健全党领导全面深化改革工作、全面依法治国工作、民族工作、宗教工作、教育工作、科技工作等方面的制度，不断提高党的领导制度化规范化程序化水平。（3）明确党组织的权责和工作方式，使党组织发挥作用制度化、具体化。要将党中央的重大决策部署转化为法律法规和政策政令，使国家机关依法履行职责的过程同时成为坚持和加强党的全面领导的过程。",
+ m:"三方法「组·协·业」＝完善党在各种组织中发挥领导作用的制度／完善党协调各方的机制／完善党领导各项事业的具体制度",
+ e:"①总→坚持和加强党的全面领导，必须健全党的全面领导制度，发挥党在各种组织中总揽全局、协调各方的领导核心作用②组→必须完善党在各种组织中发挥领导作用的制度：党的全面领导要体现到各种组织中去，发挥好党在同级各种组织中的领导核心作用；健全地方党委对同级人大常委会、政府、政协、法院、检察院党组实施领导的体制机制，完善党领导人民团体等的制度③协→必须完善党协调各方的机制：要深化党和国家机构改革，完善党和国家机构职能体系，加强统筹协调、理顺职责关系，保证党实施集中统一领导；各级党委（党组）要从推动全局工作的要求出发，统筹协调好各部门各方面的工作；各部门各方面要充分发挥积极性、主动性、创造性，但绝不能自行其是、各自为政；各级党组织要不断提高科学执政、民主执政、依法执政的水平，增强总揽全局、协调各方的能力④业→必须完善党领导各项事业的具体制度：要健全党领导经济社会发展各方面重要工作的制度，把党的领导贯彻落实到统筹推进“五位一体”总体布局和协调推进“四个全面”战略布局之中；健全党领导全面深化改革工作、全面依法治国工作、民族工作、宗教工作、教育工作、科技工作等方面的制度；明确党组织的权责和工作方式，使党组织发挥作用制度化、具体化，将党中央的重大决策部署转化为法律法规和政策措施",
+ h:"口诀：三方法「组·协·业」＝完善党在各种组织中发挥领导作用的制度／完善党协调各方的机制／完善党领导各项事业的具体制度　｜　由点及面：①总→坚持和加强党的全面领导，必须健全党的全面领导制度，发挥党在各种组织中总揽全局、协调各方的领导核心作用②组→必须完善党在各种组织中发挥领导作用的制度：党的全面领导要体现到各种组织中去，发挥好党在同级各种组织中的领导核心作用；健全地方党委对同级人大常委会、政府、政协、法院、检察院党组实施领导的体制机制，完善党领导人民团体等的制度③协→必须完善党协调各方的机制：要深化党和国家机构改革，完善党和国家机构职能体系，加强统筹协调、理顺职责关系，保证党实施集中统一领导；各级党委（党组）要从推动全局工作的要求出发，统筹协调好各部门各方面的工作；各部门各方面要充分发挥积极性、主动性、创造性，但绝不能自行其是、各自为政；各级党组织要不断提高科学执政、民主执政、依法执政的水平，增强总揽全局、协调各方的能力④业→必须完善党领导各项事业的具体制度：要健全党领导经济社会发展各方面重要工作的制度，把党的领导贯彻落实到统筹推进“五位一体”总体布局和协调推进“四个全面”战略布局之中；健全党领导全面深化改革工作、全面依法治国工作、民族工作、宗教工作、教育工作、科技工作等方面的制度；明确党组织的权责和工作方式，使党组织发挥作用制度化、具体化，将党中央的重大决策部署转化为法律法规和政策措施",
+ k:["必须完善党协调各方的机制","坚持和加强党的全面领导","要深化党和国家机构改革","基层群众性自治组织","全面依法治国工作","企事业单位","五位一体","四个全面"]}
+];
+
+const KEY_STORE='bs-mn-03_第三章-v1';
+let state=JSON.parse(localStorage.getItem(KEY_STORE)||'{}');
+let filter='all', mode='seg', order=DECK.map((_,i)=>i), idx=0, flipped=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function deck(){
+  let list=order.filter(i=>{
+    const c=DECK[i], st=state[i]||{};
+    if(filter==='star') return c.star===1;
+    if(filter==='learning') return (st.streak||0)<2;
+    if(filter==='mastered') return (st.streak||0)>=2;
+    return true;
+  });
+  return list.length?list:[0];
+}
+
+function segsOf(text){
+  const raw=text.match(/[^。，；、？！]+[。，；、？！]?/g)||[text];
+  return raw.map(s=>s.trim()).filter(Boolean);
+}
+function renderSeg(text){
+  return segsOf(text).map(s=>
+    s.replace(/\s/g,'').length>=2?`<span class="cloze">${esc(s)}</span>`:esc(s)
+  ).join('');
+}
+function renderKey(text,terms){
+  const ts=[...new Set(terms||[])].sort((a,b)=>b.length-a.length);
+  let out=esc(text);
+  ts.forEach(t=>{
+    const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+    out=out.replace(re,m=>`<span class="cloze">${m}</span>`);
+  });
+  return out;
+}
+
+function render(){
+  const list=deck();
+  if(idx>=list.length) idx=0;
+  if(idx<0) idx=list.length-1;
+  const i=list[idx], c=DECK[i], st=state[i]||{streak:0};
+  const star=c.star?'★★★':'';
+  const no=`卡 ${i+1} / ${DECK.length}`;
+
+  ['f','b'].forEach(f=>{
+    $(f+'-part').textContent=c.p;
+    $(f+'-no').textContent=no;
+    $(f+'-star').textContent=star;
+  });
+  $('f-q').textContent=c.q;
+  $('b-q').textContent=c.q;
+  $('b-mnem').textContent=c.m||'';
+  const ex=(c.e||'').split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).filter(s=>s.trim());
+  $('b-expand').innerHTML=ex.length?('<ol>'+ex.map(function(s){
+    const t=s.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]/,'').trim();
+    const k=t.indexOf('→');
+    return '<li>'+(k>0?'<b>'+esc(t.slice(0,k))+'</b>　'+esc(t.slice(k+1)):esc(t))+'</li>';
+  }).join('')+'</ol>'):'';
+  $('b-a').innerHTML=esc(c.a);
+  $('f-a').innerHTML = mode==='seg' ? renderSeg(c.a) : renderKey(c.a,c.k);
+
+  const days=['第 1 天','第 3 天','第 7 天','第 15 天'];
+  const s=st.streak||0;
+  $('f-due').textContent = s>=2 ? '已毕业' : '下次复习 '+(days[Math.min(s,3)]||'第 15 天');
+
+  $('toggleAll').textContent='全部显示';
+  $('toggleAll').classList.remove('on');
+
+  const done=DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  $('prog').style.width=(done/DECK.length*100)+'%';
+  $('card').classList.toggle('flip',flipped);
+  updateToc(done);
+}
+
+function buildToc(){
+  const groups=[];
+  DECK.forEach((c,i)=>{
+    let g=groups.find(x=>x.p===c.p);
+    if(!g){ g={p:c.p,items:[]}; groups.push(g); }
+    g.items.push(i);
+  });
+  $('toc-body').innerHTML=groups.map(g=>`
+    <div class="toc-g">
+      <h6>${esc(g.p)}<span class="cnt"></span></h6>
+      <ul>${g.items.map(i=>`
+        <li data-i="${i}">
+          <span class="tn">${i+1}</span>
+          <span class="tt">${esc(DECK[i].t)}</span>
+          ${DECK[i].star?'<span class="ts">★★★</span>':''}
+          <span class="td"></span>
+        </li>`).join('')}</ul>
+    </div>`).join('');
+  $('toc-body').addEventListener('click',e=>{
+    const li=e.target.closest('li');
+    if(li) jumpTo(+li.dataset.i);
+  });
+}
+
+function updateToc(done){
+  if(!$('toc-body').children.length) return;
+  const cur=deck()[idx];
+  document.querySelectorAll('#toc-body li').forEach(li=>{
+    const i=+li.dataset.i, s=(state[i]||{streak:0}).streak||0;
+    li.classList.toggle('cur', i===cur);
+    li.classList.toggle('done', s>=2);
+    li.classList.toggle('half', s>0&&s<2);
+    li.querySelector('.td').textContent = s>=2?'✓':(s>0?'◐':'');
+  });
+  document.querySelectorAll('#toc-body .toc-g').forEach(g=>{
+    const lis=[...g.querySelectorAll('li')];
+    g.querySelector('.cnt').textContent = lis.filter(l=>l.classList.contains('done')).length+' / '+lis.length;
+  });
+  const total=DECK.length, d=(done!==undefined)?done:DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  const half=DECK.filter((_,j)=>{const s=(state[j]||{streak:0}).streak||0;return s>0&&s<2;}).length;
+  $('tocSum').textContent=`已掌握 ${d} / ${total}　记住过一次 ${half}　未背 ${total-d-half}`;
+}
+
+function openToc(){ $('toc').classList.add('on'); $('tocMask').classList.add('on'); $('tocBtn').classList.add('on'); }
+function closeToc(){ $('toc').classList.remove('on'); $('tocMask').classList.remove('on'); $('tocBtn').classList.remove('on'); }
+function toggleToc(){ $('toc').classList.contains('on')?closeToc():openToc(); }
+
+function jumpTo(i){
+  if(filter!=='all'){
+    filter='all';
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  }
+  const p=deck().indexOf(i);
+  if(p>=0){ idx=p; flipped=false; render(); closeToc(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function flip(){ flipped=!flipped; $('card').classList.toggle('flip',flipped); }
+function go(d){ const l=deck(); idx=(idx+d+l.length)%l.length; flipped=false; render(); }
+function mark(ok){
+  const list=deck(), i=list[idx], st=state[i]||{streak:0,last:0};
+  st.streak = ok ? Math.min((st.streak||0)+1,4) : 0;
+  st.last=Date.now();
+  state[i]=st; localStorage.setItem(KEY_STORE,JSON.stringify(state));
+  if(filter==='learning'||filter==='mastered'){ idx=0; render(); }
+  else { go(1); }
+}
+
+$('f-a').addEventListener('click',e=>{
+  const el=e.target.closest('.cloze');
+  if(el) el.classList.toggle('on');
+});
+$('toggleAll').addEventListener('click',()=>{
+  const cs=[...document.querySelectorAll('#f-a .cloze')];
+  const allOn=cs.length&&cs.every(c=>c.classList.contains('on'));
+  cs.forEach(c=>c.classList.toggle('on',!allOn));
+  $('toggleAll').textContent=allOn?'全部显示':'全部隐藏';
+  $('toggleAll').classList.toggle('on',!allOn);
+});
+document.querySelectorAll('[data-m]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+document.querySelectorAll('[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f; idx=0;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+$('tocBtn').addEventListener('click',toggleToc);
+$('tocBtn2').addEventListener('click',toggleToc);
+$('tocX').addEventListener('click',closeToc);
+$('tocMask').addEventListener('click',closeToc);
+$('shuffle').addEventListener('click',()=>{
+  order=DECK.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  idx=0; render();
+});
+$('reset').addEventListener('click',()=>{
+  if(confirm('清空全部掌握进度？')){ state={}; localStorage.removeItem(KEY_STORE); idx=0; render(); }
+});
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('flip').addEventListener('click',flip);
+$('got').addEventListener('click',()=>mark(true));
+$('again').addEventListener('click',()=>mark(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key===' '){flip();e.preventDefault();}
+  else if(k==='f'){$('toggleAll').click();}
+  else if(k==='m'){mode = mode==='seg'?'key':'seg';document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===mode));render();}
+  else if(k==='g'){mark(true);}
+  else if(k==='r'){mark(false);}
+  else if(k==='s'){$('shuffle').click();}
+  else if(k==='t'){toggleToc();}
+  else if(e.key==='Escape'){closeToc();}
+});
+
+buildToc();
+render();
+</script>
+</body>
+</html>
