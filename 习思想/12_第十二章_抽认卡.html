@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第十二章 · 背诵抽认卡</title>
+<style>
+:root{
+  --bg:#12141a; --surface:#1a1d26; --surface-2:#21252f; --line:#2c313d;
+  --text:#e6e8ee; --muted:#98a0b0; --faint:#6c7488;
+  --accent:#1D9E75; --accent-soft:#5DCAA5; --accent-dim:rgba(93,202,165,.14);
+  --star:#EF9F27; --danger:#E24B4A;
+  --mask:#2b3240; --mask-hover:#394154;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; padding:24px 18px 60px;
+}
+.wrap{max-width:820px;margin:0 auto}
+
+header{margin-bottom:18px}
+h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+.sub{color:var(--faint);font-size:13px;margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  padding:5px 12px; border-radius:99px; font-size:13px; cursor:pointer;
+  transition:.15s; user-select:none;
+}
+.chip:hover{border-color:var(--faint);color:var(--text)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.spacer{flex:1}
+
+.progress{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{
+  margin-top:18px; perspective:2000px;
+}
+.faces{
+  position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.card.flip .faces{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 22px; min-height:360px;
+}
+.faces{display:grid}
+.front{transform:none}
+.back{transform:rotateY(180deg)}
+
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);margin-bottom:14px}
+.tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 9px;border-radius:6px;color:var(--muted)}
+.star{color:var(--star)}
+.q{font-size:19px;font-weight:600;line-height:1.6;margin-bottom:6px}
+.qhint{font-size:12px;color:var(--faint);margin-bottom:18px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--faint);color:var(--text)}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.tip{font-size:12px;color:var(--faint);margin-left:auto}
+
+.answer{font-size:16px;line-height:2.05;letter-spacing:.2px}
+.cloze{
+  background:var(--mask); color:transparent; border-radius:4px; cursor:pointer;
+  padding:1px 3px; transition:background .12s,color .12s;
+  box-decoration-break:clone; -webkit-box-decoration-break:clone;
+}
+.cloze:hover{background:var(--mask-hover)}
+.cloze.on{background:var(--accent-dim);color:var(--text)}
+.cloze.on:hover{background:rgba(93,202,165,.24)}
+
+.sec{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.sec h4{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:1px;margin-bottom:8px}
+.sec p{font-size:15px;line-height:1.9;color:var(--text)}
+.hook{color:var(--accent-soft)}
+.mnem{background:var(--accent-dim);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 14px;font-size:16px;line-height:1.95;color:var(--accent-soft);
+  font-weight:600;letter-spacing:.4px}
+.expand{margin-top:13px}
+.expand ol{list-style:none;counter-reset:ex}
+.expand li{position:relative;padding:8px 0 8px 33px;font-size:14.5px;line-height:1.95;color:var(--text);
+  border-bottom:1px dashed var(--line)}
+.expand li:last-child{border-bottom:none}
+.expand li::before{content:counter(ex);counter-increment:ex;position:absolute;left:0;top:11px;
+  width:21px;height:21px;border-radius:50%;background:var(--accent);color:#0b0e14;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+.expand li b{color:var(--accent-soft);font-weight:600}
+.plain{font-size:15.5px;line-height:2.0;color:var(--text)}
+
+nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.btn-lg{padding:9px 18px;font-size:14px}
+.btn-ok{border-color:var(--accent);color:var(--accent-soft)}
+.btn-ok:hover{background:var(--accent-dim)}
+.btn-bad{border-color:#5a3030;color:#e08b8b}
+.btn-bad:hover{background:rgba(226,75,74,.12)}
+
+.keys{margin-top:16px;font-size:12px;color:var(--faint);line-height:2}
+kbd{
+  background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+}
+details{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--faint)}
+details[open] summary:before{content:"▾ "}
+details h5{font-size:13px;color:var(--accent-soft);margin:14px 0 6px;font-weight:500}
+details li{font-size:13px;color:var(--muted);line-height:1.9;list-style:none;padding-left:2px}
+details li:before{content:"· ";color:var(--faint)}
+.due{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+.toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+.toc-mask.on{opacity:1;pointer-events:auto}
+.toc{
+  position:fixed;top:0;left:0;height:100%;width:min(430px,90vw);z-index:50;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,.2,.2,1);
+  overflow-y:auto;padding:22px 20px 50px;
+}
+.toc.on{transform:none}
+.toc-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.toc-head h3{font-size:16px;font-weight:600}
+.toc-x{margin-left:auto;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;padding:2px 7px;border-radius:6px}
+.toc-x:hover{background:var(--surface-2);color:var(--text)}
+.toc-sum{font-size:12px;color:var(--faint);margin-bottom:18px}
+.toc-g{margin-bottom:18px}
+.toc-g h6{
+  font-size:12px;font-weight:500;color:var(--accent-soft);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--line);
+}
+.toc-g h6 .cnt{margin-left:auto;color:var(--faint);font-size:11px}
+.toc-g ul{list-style:none}
+.toc-g li{
+  display:flex;align-items:baseline;gap:9px;padding:6px 9px;border-radius:8px;
+  font-size:13.5px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.toc-g li:hover{background:var(--surface-2);color:var(--text)}
+.toc-g li .tn{flex:none;width:22px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint)}
+.toc-g li .tt{flex:1;line-height:1.5}
+.toc-g li .ts{flex:none;font-size:9px;color:var(--star);letter-spacing:-.5px}
+.toc-g li .td{flex:none;width:14px;text-align:center;font-size:12px;color:var(--faint)}
+.toc-g li.half .td{color:var(--star)}
+.toc-g li.done .td{color:var(--accent)}
+.toc-g li.done .tt{color:var(--faint)}
+.toc-g li.cur{background:var(--accent-dim);color:var(--text)}
+.toc-g li.cur .tn{color:var(--accent-soft)}
+.toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="home-link" href="../index.html">← 章节导航</a>
+  <h1>第十二章 · 背诵抽认卡</h1>
+  <div class="sub">x背诵资料正式版 · 8 个考点 · 重点 3 张 · 逐条口诀</div>
+  <div class="bar">
+    <span class="chip on" data-f="all">全部</span>
+    <span class="chip" data-f="star">重点 ★★★</span>
+    <span class="chip" data-f="learning">学习中</span>
+    <span class="chip" data-f="mastered">已掌握</span>
+    <span class="spacer"></span>
+    <span class="chip" id="tocBtn">目录</span>
+    <span class="chip" id="shuffle">打乱</span>
+    <span class="chip" id="reset">重置进度</span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</header>
+
+<div class="card" id="card">
+  <div class="faces">
+    <section class="face front">
+      <div class="meta">
+        <span class="tag" id="f-part"></span>
+        <span id="f-no"></span>
+        <span class="star" id="f-star"></span>
+        <span class="spacer"></span>
+        <span class="due" id="f-due"></span>
+      </div>
+      <div class="q" id="f-q"></div>
+      <div class="qhint">先口述或默写，再点色块逐句核对</div>
+      <div class="tools">
+        <button class="btn on" data-m="seg">逐句挖空</button>
+        <button class="btn" data-m="key">只挖关键</button>
+        <button class="btn" id="toggleAll">全部显示</button>
+        <span class="tip">点色块 → 显现；再点 → 盖回去</span>
+      </div>
+      <div class="answer" id="f-a"></div>
+    </section>
+
+    <section class="face back">
+      <div class="meta">
+        <span class="tag" id="b-part"></span>
+        <span id="b-no"></span>
+        <span class="star" id="b-star"></span>
+      </div>
+      <div class="q" id="b-q"></div>
+      <div class="sec">
+        <h4>记忆口诀</h4>
+        <div class="mnem" id="b-mnem"></div>
+        <div class="expand" id="b-expand"></div>
+      </div>
+      <div class="sec">
+        <h4>完整答案</h4>
+        <div class="plain" id="b-a"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav>
+  <button class="btn btn-lg" id="tocBtn2">目录</button>
+  <button class="btn btn-lg" id="prev">← 上一张</button>
+  <button class="btn btn-lg" id="flip">翻面</button>
+  <button class="btn btn-lg" id="next">下一张 →</button>
+  <span class="spacer"></span>
+  <button class="btn btn-lg btn-bad" id="again">再看看</button>
+  <button class="btn btn-lg btn-ok" id="got">记住了</button>
+</nav>
+
+<div class="keys">
+  <kbd>←</kbd> <kbd>→</kbd> 切换　<kbd>空格</kbd> 翻面　<kbd>F</kbd> 全部显示/隐藏　<kbd>M</kbd> 切换挖空模式　<kbd>G</kbd> 记住了　<kbd>R</kbd> 再看看　<kbd>T</kbd> 目录　<kbd>Esc</kbd> 关闭　<kbd>S</kbd> 打乱
+</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<aside class="toc" id="toc">
+  <div class="toc-head">
+    <h3>目录</h3>
+    <span class="toc-x" id="tocX">×</span>
+  </div>
+  <div class="toc-sum" id="tocSum"></div>
+  <div id="toc-body"></div>
+  <div class="toc-foot">
+    <span style="color:var(--accent)">✓</span> 已掌握（连续两次记住）<br>
+    <span style="color:var(--star)">◐</span> 记住过一次　·　空白＝还没背<br>
+    点任意一条直接跳过去，<kbd>T</kbd> 开关目录
+  </div>
+</aside>
+
+<details>
+  <summary>关于本卡组</summary>
+  <ul>
+    <li>来源：x背诵资料正式版.docx「第十二章」，共 8 个考点，逐一成卡。</li>
+    <li>正面＝考点原文全文，逐句挖空，点色块显现、再点盖回。</li>
+    <li>背面「记忆口诀」为逐条编写的<b>由点及面</b>口诀：口诀里每个字对应一条，下方按 ①②③ 逐条展开成完整表述。<b>先背口诀，再对着编号把每条复述出来。</b></li>
+    <li>标注 <span style="color:#EF9F27">★★★</span> 的是本章篇幅最大的考点（篇幅排前 1/3，多为论述题量级）。</li>
+    <li>建议：正面用「逐句挖空」默写全文，翻面用「口诀＋展开」核对要点；考前用「只挖关键」速扫。</li>
+  </ul>
+</details>
+
+</div>
+
+<script>
+const DECK = [
+{p:"12 第十二章",t:"考点114、如何理解生态兴则文明兴",star:0,
+ q:"考点114、如何理解生态兴则文明兴",
+ a:"第一，自然是生命之母，人与自然是生命共同体。人来源于自然，依赖于自然，在同自然的互动中生产、生活与发展。保护自然就是保护人类，建设生态文明就是造福人类第二，生态环境变化直接影响文明的兴衰演替。历史表明，人类文明的发展离不开良好生态环境这个根本基础。第三，生态文明是人类文明发展的历史趋势。生态文明强调协调人与自然关系，要求解决好工业文明带来的矛盾，把人类活动限制在生态环境能够承受的限度内，顺应了人与自然和谐发展的新要求，昭示着人类文明发展的未来。第四，中华民族向来尊重自然、热爱自然，绵延5000多年的中华文明孕育着丰富的生态文化。",
+ m:"四点「母·替·势·文」＝自然是生命之母／生态环境变化影响文明兴衰演替／生态文明是历史趋势／中华文明孕育生态文化",
+ e:"①母→自然是生命之母，人与自然是生命共同体。人来源于自然，依赖于自然，在同自然的互动中生产、生活与发展②替→生态环境变化直接影响文明的兴衰演替。历史表明，人类文明的发展离不开良好生态环境这个根本基础③势→生态文明是人类文明发展的历史趋势。生态文明强调协调人与自然关系，要求解决好工业文明带来的矛盾，是工业文明发展到一定阶段的必然产物④文→中华民族向来尊重自然、热爱自然，绵延5000多年的中华文明孕育着丰富的生态文化，为建设生态文明提供了深厚滋养",
+ h:"口诀：四点「母·替·势·文」＝自然是生命之母／生态环境变化影响文明兴衰演替／生态文明是历史趋势／中华文明孕育生态文化　｜　由点及面：①母→自然是生命之母，人与自然是生命共同体。人来源于自然，依赖于自然，在同自然的互动中生产、生活与发展②替→生态环境变化直接影响文明的兴衰演替。历史表明，人类文明的发展离不开良好生态环境这个根本基础③势→生态文明是人类文明发展的历史趋势。生态文明强调协调人与自然关系，要求解决好工业文明带来的矛盾，是工业文明发展到一定阶段的必然产物④文→中华民族向来尊重自然、热爱自然，绵延5000多年的中华文明孕育着丰富的生态文化，为建设生态文明提供了深厚滋养",
+ k:["中华民族向来尊重自然","自然是生命之母","5000多年","生活与发展"]},
+
+{p:"12 第十二章",t:"考点115、如何理解绿水青山就是金山银山",star:0,
+ q:"考点115、如何理解绿水青山就是金山银山",
+ a:"生态环境问题归根到底是经济发展方式和生活方式问题。绿水青山就是金山银山，这是重要的发展理念，也是推进现代化建设的重大原则。这一理念，阐明了经济发展与生态环境保护之间的关系，揭示了保护生态环境就是保护生产力、改善生态环境就是发展生产力的道理，指明了实现发展和保护协同共生的新路径。第一，表面上看，生态环境保护和经济发展是矛盾对立的关系，是鱼和熊掌不可兼得的两难选择。但从根本上讲，二者是辩证统一、相辅相成的关系。发展经济不能对资源和生态环境竭泽而渔，生态环境保护也不是舍弃经济发展而缘木求鱼，而是要坚持在发展中保护、在保护中发展。第二，绿水青山既是自然财富、生态财富，又是社会财富、经济财富。绿水青山可带来金山银山，但金山银山却买不到绿水青山。绿水青山还是人民群众健康的重要保障，是人民群众的共有财富。第三，处理好绿水青山和金山银山的关系，关键在人，关键在思路。新时代，我国经济已由高速增长阶段转向高质量发展阶段，生态环境的支撑作用越来越明显。必须要处理好高质量发展和高水平保护的关系，有效降低发展的资源环境代价，持续增强发展的潜力和后劲。",
+ m:"「源·系·富·路」＝归根到底是发展方式和生活方式问题／二者辩证统一相辅相成／既是自然财富生态财富又是社会财富经济财富／关键在人关键在思路；两喻「发展不能竭泽而渔·环保不是缘木求鱼」",
+ e:"①源→生态环境问题归根到底是经济发展方式和生活方式问题。绿水青山就是金山银山，这是重要的发展理念，也是推进现代化建设的重大原则②系→表面上看，生态环境保护和经济发展是矛盾对立的关系，是鱼和熊掌不可兼得的两难选择；但从根本上讲，二者是相辅相成、辩证统一的关系。发展经济不能对资源和生态环境竭泽而渔，生态环境保护也不是舍弃经济发展而缘木求鱼③富→绿水青山既是自然财富、生态财富，又是社会财富、经济财富。绿水青山可带来金山银山，但金山银山却买不到绿水青山④路→处理好绿水青山和金山银山的关系，关键在人，关键在思路。新时代，我国经济已由高速增长阶段转向高质量发展阶段，必须走绿色发展之路",
+ h:"口诀：「源·系·富·路」＝归根到底是发展方式和生活方式问题／二者辩证统一相辅相成／既是自然财富生态财富又是社会财富经济财富／关键在人关键在思路；两喻「发展不能竭泽而渔·环保不是缘木求鱼」　｜　由点及面：①源→生态环境问题归根到底是经济发展方式和生活方式问题。绿水青山就是金山银山，这是重要的发展理念，也是推进现代化建设的重大原则②系→表面上看，生态环境保护和经济发展是矛盾对立的关系，是鱼和熊掌不可兼得的两难选择；但从根本上讲，二者是相辅相成、辩证统一的关系。发展经济不能对资源和生态环境竭泽而渔，生态环境保护也不是舍弃经济发展而缘木求鱼③富→绿水青山既是自然财富、生态财富，又是社会财富、经济财富。绿水青山可带来金山银山，但金山银山却买不到绿水青山④路→处理好绿水青山和金山银山的关系，关键在人，关键在思路。新时代，我国经济已由高速增长阶段转向高质量发展阶段，必须走绿色发展之路",
+ k:["绿水青山既是自然财富","相辅相成的关系","在保护中发展","经济财富","表面上看"]},
+
+{p:"12 第十二章",t:"考点116、把生态文明建设摆在全局工作的突出位置",star:0,
+ q:"考点116、把生态文明建设摆在全局工作的突出位置",
+ a:"生态文明建设是重大经济问题，也是关系党的使命宗旨的重大政治问题、关系民生福祉的重大社会问题。党的十八大以来，我们党把生态文明建设摆在全局工作的突出位置，从思想、法律、体制、组织、作风上全面发力，谋划开展了一系列根本性、开创性、长远性工作。第一，生态文明建设战略地位更加凸显。把“生态文明建设”纳入“五位一体”总体布局，把“坚持人与自然和谐共生”纳入新时代坚持和发展中国特色社会主义的基本方略，把“促进人与自然和谐共生”纳入中国式现代化的本质要求，把“美丽中国”纳入社会主义现代化强国目标，把“绿色”纳入新发展理念，把“污染防治”纳入决胜全面建成小康社会三大攻坚战。第二，生态文明制度体系更加健全。制定数十项涉及生态文明建设的改革方案，生态文明“四梁八柱”性质的制度体系基本形成。制定修订环境保护法、环境保护税法等30多部生态环境领域法律和行政法规，覆盖各类环境要素的法律法规体系基本建立。开展中央生态环境保护督察，坚决查处破坏生态环境的重大典型案件，解决人民群众反映强烈的突出环境问题。第三，污染防治和生态保护更加有力。全方位、全地域、全过程加强生态环境保护，持续开展污染防治攻坚行动，深入实施大气、水、土壤污染防治三大行动计划，打好蓝天、碧水、净土保卫战。开展农村人居环境整治，推行生活垃圾分类。优化国土空间开发布局，以国家重点生态功能区为支撑，实施全国重要生态系统保护和修复重大工程，筑牢国家生态安全屏障。",
+ m:"三成绩「位·制·治」＝战略地位更加凸显／制度体系更加健全／污染防治和生态保护更加有力；三属性「经济·政治·社会」＝重大经济问题、关系党的使命宗旨的重大政治问题、关系民生福祉的重大社会问题",
+ e:"①总→生态文明建设是重大经济问题，也是关系党的使命宗旨的重大政治问题、关系民生福祉的重大社会问题（口诀「经济政治社会」）。党的十八大以来，我们把生态文明建设摆在全局工作的突出位置②位→生态文明建设战略地位更加凸显。把“生态文明建设”纳入“五位一体”总体布局，把“坚持人与自然和谐共生”纳入新时代坚持和发展中国特色社会主义的基本方略③制→生态文明制度体系更加健全。制定数十项涉及生态文明建设的改革方案，生态文明“四梁八柱”性质的制度体系基本形成④治→污染防治和生态保护更加有力。全方位、全地域、全过程加强生态环境保护，持续开展污染防治攻坚行动，生态环境质量显著改善",
+ h:"口诀：三成绩「位·制·治」＝战略地位更加凸显／制度体系更加健全／污染防治和生态保护更加有力；三属性「经济·政治·社会」＝重大经济问题、关系党的使命宗旨的重大政治问题、关系民生福祉的重大社会问题　｜　由点及面：①总→生态文明建设是重大经济问题，也是关系党的使命宗旨的重大政治问题、关系民生福祉的重大社会问题（口诀「经济政治社会」）。党的十八大以来，我们把生态文明建设摆在全局工作的突出位置②位→生态文明建设战略地位更加凸显。把“生态文明建设”纳入“五位一体”总体布局，把“坚持人与自然和谐共生”纳入新时代坚持和发展中国特色社会主义的基本方略③制→生态文明制度体系更加健全。制定数十项涉及生态文明建设的改革方案，生态文明“四梁八柱”性质的制度体系基本形成④治→污染防治和生态保护更加有力。全方位、全地域、全过程加强生态环境保护，持续开展污染防治攻坚行动，生态环境质量显著改善",
+ k:["生态文明制度体系更加健全","坚持人与自然和谐共生","促进人与自然和谐共生","制定修订环境保护法","生态文明建设","长远性工作","净土保卫战","五位一体"]},
+
+{p:"12 第十二章",t:"考点117、如何加快形成绿色生产方式和生活方式",star:0,
+ q:"考点117、如何加快形成绿色生产方式和生活方式",
+ a:"绿色发展是新发展理念的重要内容，是发展观的一场深刻革命。要加快推动发展方式绿色低碳转型，坚持把绿色低碳发展作为解决生态环境问题的治本之策，加快形成绿色生产方式和生活方式，厚植高质量发展的绿色底色。第一，加快推动产业结构、能源结构、交通运输结构等调整优化。调整优化经济结构是从源头推动发展方式绿色转型的重要任务，要抓住产业结构调整这个关键，促进产业结构变“轻”、发展模式变“绿”。第二，推进各类资源节约集约利用。生态环境问题，归根到底是资源过度开发、粗放利用、奢侈消费造成的。加快发展方式绿色转型，必须在转变资源利用方式、提高资源利用效率上下功夫。第三，积极稳妥推进碳达峰碳中和。推进“双碳”工作是破解资源环境约束突出问题、实现可持续发展的迫切需要，是一场广泛而深刻的经济社会系统性变革。第四，健全绿色发展的保障体系。统筹各领域资源，打好法治、市场、科技、政策\"组合拳\"。第五，坚持把建设美丽中国转化为全体人民自觉行动。生态文明是人民群众共同参与共同建设共同享有的事业，每个人都是生态环境的保护者、建设者、受益者。",
+ m:"五方法「结·节·碳·保·民」＝调整优化结构／资源节约集约利用／积极稳妥推进碳达峰碳中和／健全绿色发展保障体系／转化为全体人民自觉行动（助记：结构、节约、双碳、保障、全民）",
+ e:"①总→绿色发展是新发展理念的重要内容，是发展观的一场深刻革命。要加快推动发展方式绿色低碳转型，坚持把绿色低碳发展作为解决生态环境问题的治本之策②结→加快推动产业结构、能源结构、交通运输结构等调整优化。调整优化经济结构是从源头推动发展方式绿色转型的重要举措③节→推进各类资源节约集约利用。生态环境问题，归根到底是资源过度开发、粗放利用、奢侈消费造成的④碳→积极稳妥推进碳达峰碳中和。推进“双碳”工作是破解资源环境约束突出问题、实现可持续发展的迫切需要⑤保→健全绿色发展的保障体系。统筹各领域资源，打好法治、市场、科技、政策“组合拳”⑥民→坚持把建设美丽中国转化为全体人民自觉行动。生态文明是人民群众共同参与共同建设共同享有的事业，每个人都是生态环境的保护者、建设者、受益者",
+ h:"口诀：五方法「结·节·碳·保·民」＝调整优化结构／资源节约集约利用／积极稳妥推进碳达峰碳中和／健全绿色发展保障体系／转化为全体人民自觉行动（助记：结构、节约、双碳、保障、全民）　｜　由点及面：①总→绿色发展是新发展理念的重要内容，是发展观的一场深刻革命。要加快推动发展方式绿色低碳转型，坚持把绿色低碳发展作为解决生态环境问题的治本之策②结→加快推动产业结构、能源结构、交通运输结构等调整优化。调整优化经济结构是从源头推动发展方式绿色转型的重要举措③节→推进各类资源节约集约利用。生态环境问题，归根到底是资源过度开发、粗放利用、奢侈消费造成的④碳→积极稳妥推进碳达峰碳中和。推进“双碳”工作是破解资源环境约束突出问题、实现可持续发展的迫切需要⑤保→健全绿色发展的保障体系。统筹各领域资源，打好法治、市场、科技、政策“组合拳”⑥民→坚持把建设美丽中国转化为全体人民自觉行动。生态文明是人民群众共同参与共同建设共同享有的事业，每个人都是生态环境的保护者、建设者、受益者",
+ k:["推进各类资源节约集约利用","健全绿色发展的保障体系","积极稳妥推进碳达峰碳","发展模式变“绿”","加快推动产业结构","奢侈消费造成的","政策\"组合拳\"","能源结构"]},
+
+{p:"12 第十二章",t:"考点118、如何坚持山水林田湖草沙一体化保护和系统治理",star:0,
+ q:"考点118、如何坚持山水林田湖草沙一体化保护和系统治理",
+ a:"山水林田湖草沙是一个生命共同体，是不可分割的生态系统。要坚持系统观念，进行整体保护、系统修复、综合治理，着力提高生态系统自我修复能力，增强生态系统循环能力，维护生态平衡，提升生态系统多样性、稳定性、持续性。第一，加快实施重要生态系统保护和修复重大工程。（1）要强化国土空间规划和用途管控，划定落实生态保护红线、永久基本农田、城镇开发边界三条控制线以及各类海域保护线；（2）要处理好自然恢复和人工修复的关系，综合运用自然恢复和人工修复两种手段，努力找到生态保护修复的最佳解决方案。第二，推进自然保护地体系建设。（1）科学划定自然保护地保护范围及功能分区，构建以国家公园为主体、自然保护区为基础、各类自然公园为补充的自然保护地体系；（2）逐步把自然生态系统最重要、自然景观最独特、自然遗产最精华、生物多样性最富集的区域纳入国家公园体系。第三，科学推进荒漠化、石漠化、水土流失综合治理，持续开展大规模国土绿化行动。（1）要科学选择植被恢复模式，合理配置林草植被类型和密度，营造防风固沙林网、林带及防风固沙沙漠锁边林草带等；（2）要积极行动起来，从种树开始，种出属于每个人的绿水青山和金山银山，绘出美丽中国的更新画卷。第四，实施生物多样性保护重大工程。（1）加强国家重点保护和珍稀濒危野生动植物及其栖息地的保护修复，构筑生物多样性保护网络；（2）加强生物多样性保护优先区域的保护监管，填补重要区域和重要物种迁地保护空缺；（3）加强生物安全管理，防治外来物种侵害。第五，推行草原森林河流湖泊湿地休养生息。（1）降低人为活动对草原、森林、河流、湖泊、湿地资源的干扰强度，推动生态保护修复；（2）加强长江、黄河等大江大河和重要湖泊湿地生态保护治理；（3）落实禁牧、休牧和草畜平衡制度，促进草原永续利用。",
+ m:"五方法「修·地·荒·生·休」＝生态保护和修复重大工程／自然保护地体系／荒漠化石漠化水土流失综合治理／生物多样性保护重大工程／草原森林河流湖泊湿地休养生息；三条控制线「生态红线·永久基本农田·城镇开发边界」；保护地体系「国家公园（主体）·自然保护区（基础）·自然公园（补充）」",
+ e:"①总→山水林田湖草沙是一个生命共同体，是不可分割的生态系统。要坚持系统观念，进行整体保护、系统修复、综合治理②修→加快实施重要生态系统保护和修复重大工程：（1）要强化国土空间规划和用途管控，划定落实生态保护红线、永久基本农田、城镇开发边界三条控制线（2）要处理好自然恢复和人工修复的关系，综合运用两种手段找到生态保护修复的最佳方案③地→推进自然保护地体系建设：（1）科学划定自然保护地保护范围及功能分区，构建以国家公园为主体、自然保护区为基础、各类自然公园为补充的自然保护地体系（2）逐步把自然生态系统最重要、自然景观最独特、自然遗产最精华、生物多样性最富集的区域纳入国家公园体系④荒→科学推进荒漠化、石漠化、水土流失综合治理，持续开展大规模国土绿化行动。要科学选择植被恢复模式，营造防风固沙林网、林带及防风固沙沙漠锁边林带⑤生→实施生物多样性保护重大工程：（1）加强国家重点保护和珍稀濒危野生动植物及其栖息地的保护修复，构筑生物多样性保护网络（2）加强生物多样性保护优先区域的保护监管，填补重要区域和重要物种迁地保护空缺⑥休→推行草原森林河流湖泊湿地休养生息：（1）降低人为活动对草原、森林、河流、湖泊、湿地资源的干扰强度（2）加强长江、黄河等大江大河和重要湖泊湿地生态保护治理（3）落实禁牧、休牧和草畜平衡制度，促进草原永续利用",
+ h:"口诀：五方法「修·地·荒·生·休」＝生态保护和修复重大工程／自然保护地体系／荒漠化石漠化水土流失综合治理／生物多样性保护重大工程／草原森林河流湖泊湿地休养生息；三条控制线「生态红线·永久基本农田·城镇开发边界」；保护地体系「国家公园（主体）·自然保护区（基础）·自然公园（补充）」　｜　由点及面：①总→山水林田湖草沙是一个生命共同体，是不可分割的生态系统。要坚持系统观念，进行整体保护、系统修复、综合治理②修→加快实施重要生态系统保护和修复重大工程：（1）要强化国土空间规划和用途管控，划定落实生态保护红线、永久基本农田、城镇开发边界三条控制线（2）要处理好自然恢复和人工修复的关系，综合运用两种手段找到生态保护修复的最佳方案③地→推进自然保护地体系建设：（1）科学划定自然保护地保护范围及功能分区，构建以国家公园为主体、自然保护区为基础、各类自然公园为补充的自然保护地体系（2）逐步把自然生态系统最重要、自然景观最独特、自然遗产最精华、生物多样性最富集的区域纳入国家公园体系④荒→科学推进荒漠化、石漠化、水土流失综合治理，持续开展大规模国土绿化行动。要科学选择植被恢复模式，营造防风固沙林网、林带及防风固沙沙漠锁边林带⑤生→实施生物多样性保护重大工程：（1）加强国家重点保护和珍稀濒危野生动植物及其栖息地的保护修复，构筑生物多样性保护网络（2）加强生物多样性保护优先区域的保护监管，填补重要区域和重要物种迁地保护空缺⑥休→推行草原森林河流湖泊湿地休养生息：（1）降低人为活动对草原、森林、河流、湖泊、湿地资源的干扰强度（2）加强长江、黄河等大江大河和重要湖泊湿地生态保护治理（3）落实禁牧、休牧和草畜平衡制度，促进草原永续利用",
+ k:["推进自然保护地体系建设","逐步把自然生态系统最重","要科学选择植被恢复模式","自然保护区为基础","自然景观最独特","自然遗产最精华","科学推进荒漠化","要积极行动起来"]},
+
+{p:"12 第十二章",t:"考点119、用最严格的制度最严密的法治保护生态环境",star:1,
+ q:"考点119、用最严格的制度最严密的法治保护生态环境",
+ a:"保护生态环境必须依靠制度、依靠法治。必须把制度建设作为生态文明建设的重中之重，构建产权清晰、多元参与、激励约束并重、系统完整的生态文明制度体系，把生态文明建设纳入制度化、法治化轨道。第一，实行最严格的生态环境保护制度。完善生态文明领域统筹协调机制，健全党委领导、政府主导、企业主体、社会组织和公众共同参与的现代环境治理体系，构建一体谋划、 一体部署、 一体推进、 一体考核的制度机制。第二，全面建立资源高效利用制度。推进能源革命，构建清洁低碳、安全高效的能源体系；加快建立自然资源统一调查、评价、监测制度，健全自然资源监管体制。第三，严明生态环境保护责任制度。建立生态文明建设目标评价考核制度，强化环境保护、自然资源管控、节能减排等约束性指标管理，严格落实企业主体责任和政府监管责任。第四，制度的生命力在于执行，关键在真抓，靠的是严管。要牢固树立制度的刚性和权威，对已出台的生态环境保护制度必须认真执行，不得作选择、搞变通、打折扣。记忆框架：总说+方法1.2.3.4",
+ m:"四要求「保·利·责·执」＝最严格的生态环境保护制度／资源高效利用制度／生态环境保护责任制度／制度的生命力在于执行",
+ e:"①总→保护生态环境必须依靠制度、依靠法治。必须把制度建设作为生态文明建设的重中之重，构建产权清晰、多元参与、激励与约束并重的生态文明制度体系②保→实行最严格的生态环境保护制度。完善生态文明领域统筹协调机制，健全党委领导、政府主导、企业主体、社会组织和公众共同参与的责任体系③利→全面建立资源高效利用制度。推进能源革命，构建清洁低碳、安全高效的能源体系；加快建立自然资源统一确权登记制度和有偿使用制度④责→严明生态环境保护责任制度。建立生态文明建设目标评价考核制度，强化环境保护、自然资源管控、节能减排等约束性指标管理⑤执→制度的生命力在于执行，关键在真抓，靠的是严管。要牢固树立制度的刚性和权威，对已出台的生态环境保护制度必须坚决执行、一抓到底",
+ h:"口诀：四要求「保·利·责·执」＝最严格的生态环境保护制度／资源高效利用制度／生态环境保护责任制度／制度的生命力在于执行　｜　由点及面：①总→保护生态环境必须依靠制度、依靠法治。必须把制度建设作为生态文明建设的重中之重，构建产权清晰、多元参与、激励与约束并重的生态文明制度体系②保→实行最严格的生态环境保护制度。完善生态文明领域统筹协调机制，健全党委领导、政府主导、企业主体、社会组织和公众共同参与的责任体系③利→全面建立资源高效利用制度。推进能源革命，构建清洁低碳、安全高效的能源体系；加快建立自然资源统一确权登记制度和有偿使用制度④责→严明生态环境保护责任制度。建立生态文明建设目标评价考核制度，强化环境保护、自然资源管控、节能减排等约束性指标管理⑤执→制度的生命力在于执行，关键在真抓，靠的是严管。要牢固树立制度的刚性和权威，对已出台的生态环境保护制度必须坚决执行、一抓到底",
+ k:["保护生态环境必须依靠制度","全面建立资源高效利用制度","严明生态环境保护责任制度","制度的生命力在于执行","一体考核的制度机制","安全高效的能源体系","激励约束并重","自然资源管控"]},
+
+{p:"12 第十二章",t:"考点120、如何共建清洁美丽的世界",star:1,
+ q:"考点120、如何共建清洁美丽的世界",
+ a:"建设人与自然和谐共生的地球家园，要顺应世界各国人民对美好生态环境的需要，以绿色转型为驱动，坚持多边主义，推动全球环境治理体系更加公平合理，携手共建清洁美丽世界。第一，坚持以人为本。加强各国人民在生态领域的合作，发起绿色行动倡议，推动世界各国人民共同参与环境治理，让生态环保思想成为社会生活中的主流文化，使生态文明建设的成果持续造福全人类。第二，坚持科学治理。要顺应当代科技革命和产业变革大方向，抓住绿色转型带来的巨大发展机遇，以创新为驱动，大力推进经济、能源、产业结构转型升级，让良好生态环境成为全球经济社会可持续发展的支撑。第三，坚持多边主义。必须坚持以国际法为基础、以公平正义为要旨、以有效行动为导向，维护以联合国为核心的国际体系，遵循国际社会关于生态环境保护的公约、协定和共识，在实现全球生态治理中加强绿色国际合作，消除绿色贸易壁垒。第四，坚持共同但有区别的责任原则。必须充分考虑历史责任、各国国情和生态治理能力，坚持各尽所能、国家自主决定贡献的制度安排；必须充分肯定发展中国家应对气候变化所作的贡献，照顾其特殊困难和关切。发达国家应该主动承担历史责任，为发展中国家提供资金、技术、能力建设等方面支持，切实帮助发展中国家提高生态治理的能力。",
+ m:"四方法「人·科·多·共」＝坚持以人为本／坚持科学治理／坚持多边主义／坚持共同但有区别的责任原则（助记：人本科学，多边共同）",
+ e:"①总→建设人与自然和谐共生的地球家园，要顺应世界各国人民对美好生态环境的需要，以绿色转型为驱动，坚持多边主义，推动全球环境治理②人→坚持以人为本。加强各国人民在生态领域的合作，发起绿色行动倡议，推动世界各国人民共同参与环境治理③科→坚持科学治理。要顺应当代科技革命和产业变革大方向，抓住绿色转型带来的巨大发展机遇，以创新为驱动④多→坚持多边主义。必须坚持以国际法为基础、以公平正义为要旨、以有效行动为导向，维护以联合国为核心的国际体系⑤共→坚持共同但有区别的责任原则。必须充分考虑历史责任、各国国情和生态治理能力，坚持各尽所能、国家自主贡献",
+ h:"口诀：四方法「人·科·多·共」＝坚持以人为本／坚持科学治理／坚持多边主义／坚持共同但有区别的责任原则（助记：人本科学，多边共同）　｜　由点及面：①总→建设人与自然和谐共生的地球家园，要顺应世界各国人民对美好生态环境的需要，以绿色转型为驱动，坚持多边主义，推动全球环境治理②人→坚持以人为本。加强各国人民在生态领域的合作，发起绿色行动倡议，推动世界各国人民共同参与环境治理③科→坚持科学治理。要顺应当代科技革命和产业变革大方向，抓住绿色转型带来的巨大发展机遇，以创新为驱动④多→坚持多边主义。必须坚持以国际法为基础、以公平正义为要旨、以有效行动为导向，维护以联合国为核心的国际体系⑤共→坚持共同但有区别的责任原则。必须充分考虑历史责任、各国国情和生态治理能力，坚持各尽所能、国家自主贡献",
+ k:["必须充分考虑历史责任","以公平正义为要旨","坚持以人为本","坚持科学治理","坚持多边主义","能源","技术"]},
+
+{p:"12 第十二章",t:"考点121、如何积极推动全球可持续发展",star:1,
+ q:"考点121、如何积极推动全球可持续发展",
+ a:"中国作为世界上最大的发展中国家，深度参与全球气候治理，同世界各国共同推进全球生物多样性治理，积极共建绿色“一带一路”,承担大国责任，展现大国担当。第一，积极参与全球气候治理。中国重信守诺，已经将应对气候变化全面融入国家经济社会发展战略，实施一系列应对气候变化的战略、措施和行动，倡议各方携手应对气候变化挑战，努力推动构建公平合理、合作共赢的全球气候治理体系。第二，积极推进全球生物多样性治理。中国积极落实联合国生态系统恢复十年行动计划，实施生物多样性保护修复重大工程，支持发展中国家生物多样性保护事业，推动全球生物多样性治理迈上新台阶。第三，积极打造绿色“一带一路”。通过建设更紧密的绿色发展伙伴关系，完善“一带一路”绿色发展国际联盟，统筹推进经济增长、社会发展、环境保护，让各国都从中受益，实现共同发展。通过共建“一带一路”生态环保大数据服务平台，继续实施绿色丝路使者计划，为“一带一路”沿线国家和地区绿色发展提供有力支撑，让绿色切实成为共建“一带一路”的底色。",
+ m:"三方法「气·生·路」＝积极参与全球气候治理／积极推进全球生物多样性治理／积极打造绿色“一带一路”",
+ e:"①总→中国作为世界上最大的发展中国家，深度参与全球气候治理，同世界各国共同推进全球生物多样性治理，积极共建绿色“一带一路”②气→积极参与全球气候治理。中国重信守诺，已经将应对气候变化全面融入国家经济社会发展战略，实施一系列应对气候变化的战略、政策和行动③生→积极推进全球生物多样性治理。中国积极落实联合国生态系统恢复十年行动计划，实施生物多样性保护修复重大工程④路→积极打造绿色“一带一路”。通过建设更紧密的绿色发展伙伴关系，完善“一带一路”绿色发展国际联盟，推动共建国家绿色发展",
+ h:"口诀：三方法「气·生·路」＝积极参与全球气候治理／积极推进全球生物多样性治理／积极打造绿色“一带一路”　｜　由点及面：①总→中国作为世界上最大的发展中国家，深度参与全球气候治理，同世界各国共同推进全球生物多样性治理，积极共建绿色“一带一路”②气→积极参与全球气候治理。中国重信守诺，已经将应对气候变化全面融入国家经济社会发展战略，实施一系列应对气候变化的战略、政策和行动③生→积极推进全球生物多样性治理。中国积极落实联合国生态系统恢复十年行动计划，实施生物多样性保护修复重大工程④路→积极打造绿色“一带一路”。通过建设更紧密的绿色发展伙伴关系，完善“一带一路”绿色发展国际联盟，推动共建国家绿色发展",
+ k:["积极打造绿色“一带一路”","积极参与全球气候治理","一带一路","社会发展"]}
+];
+
+const KEY_STORE='bs-mn-12_第十二章-v1';
+let state=JSON.parse(localStorage.getItem(KEY_STORE)||'{}');
+let filter='all', mode='seg', order=DECK.map((_,i)=>i), idx=0, flipped=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function deck(){
+  let list=order.filter(i=>{
+    const c=DECK[i], st=state[i]||{};
+    if(filter==='star') return c.star===1;
+    if(filter==='learning') return (st.streak||0)<2;
+    if(filter==='mastered') return (st.streak||0)>=2;
+    return true;
+  });
+  return list.length?list:[0];
+}
+
+function segsOf(text){
+  const raw=text.match(/[^。，；、？！]+[。，；、？！]?/g)||[text];
+  return raw.map(s=>s.trim()).filter(Boolean);
+}
+function renderSeg(text){
+  return segsOf(text).map(s=>
+    s.replace(/\s/g,'').length>=2?`<span class="cloze">${esc(s)}</span>`:esc(s)
+  ).join('');
+}
+function renderKey(text,terms){
+  const ts=[...new Set(terms||[])].sort((a,b)=>b.length-a.length);
+  let out=esc(text);
+  ts.forEach(t=>{
+    const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+    out=out.replace(re,m=>`<span class="cloze">${m}</span>`);
+  });
+  return out;
+}
+
+function render(){
+  const list=deck();
+  if(idx>=list.length) idx=0;
+  if(idx<0) idx=list.length-1;
+  const i=list[idx], c=DECK[i], st=state[i]||{streak:0};
+  const star=c.star?'★★★':'';
+  const no=`卡 ${i+1} / ${DECK.length}`;
+
+  ['f','b'].forEach(f=>{
+    $(f+'-part').textContent=c.p;
+    $(f+'-no').textContent=no;
+    $(f+'-star').textContent=star;
+  });
+  $('f-q').textContent=c.q;
+  $('b-q').textContent=c.q;
+  $('b-mnem').textContent=c.m||'';
+  const ex=(c.e||'').split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).filter(s=>s.trim());
+  $('b-expand').innerHTML=ex.length?('<ol>'+ex.map(function(s){
+    const t=s.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]/,'').trim();
+    const k=t.indexOf('→');
+    return '<li>'+(k>0?'<b>'+esc(t.slice(0,k))+'</b>　'+esc(t.slice(k+1)):esc(t))+'</li>';
+  }).join('')+'</ol>'):'';
+  $('b-a').innerHTML=esc(c.a);
+  $('f-a').innerHTML = mode==='seg' ? renderSeg(c.a) : renderKey(c.a,c.k);
+
+  const days=['第 1 天','第 3 天','第 7 天','第 15 天'];
+  const s=st.streak||0;
+  $('f-due').textContent = s>=2 ? '已毕业' : '下次复习 '+(days[Math.min(s,3)]||'第 15 天');
+
+  $('toggleAll').textContent='全部显示';
+  $('toggleAll').classList.remove('on');
+
+  const done=DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  $('prog').style.width=(done/DECK.length*100)+'%';
+  $('card').classList.toggle('flip',flipped);
+  updateToc(done);
+}
+
+function buildToc(){
+  const groups=[];
+  DECK.forEach((c,i)=>{
+    let g=groups.find(x=>x.p===c.p);
+    if(!g){ g={p:c.p,items:[]}; groups.push(g); }
+    g.items.push(i);
+  });
+  $('toc-body').innerHTML=groups.map(g=>`
+    <div class="toc-g">
+      <h6>${esc(g.p)}<span class="cnt"></span></h6>
+      <ul>${g.items.map(i=>`
+        <li data-i="${i}">
+          <span class="tn">${i+1}</span>
+          <span class="tt">${esc(DECK[i].t)}</span>
+          ${DECK[i].star?'<span class="ts">★★★</span>':''}
+          <span class="td"></span>
+        </li>`).join('')}</ul>
+    </div>`).join('');
+  $('toc-body').addEventListener('click',e=>{
+    const li=e.target.closest('li');
+    if(li) jumpTo(+li.dataset.i);
+  });
+}
+
+function updateToc(done){
+  if(!$('toc-body').children.length) return;
+  const cur=deck()[idx];
+  document.querySelectorAll('#toc-body li').forEach(li=>{
+    const i=+li.dataset.i, s=(state[i]||{streak:0}).streak||0;
+    li.classList.toggle('cur', i===cur);
+    li.classList.toggle('done', s>=2);
+    li.classList.toggle('half', s>0&&s<2);
+    li.querySelector('.td').textContent = s>=2?'✓':(s>0?'◐':'');
+  });
+  document.querySelectorAll('#toc-body .toc-g').forEach(g=>{
+    const lis=[...g.querySelectorAll('li')];
+    g.querySelector('.cnt').textContent = lis.filter(l=>l.classList.contains('done')).length+' / '+lis.length;
+  });
+  const total=DECK.length, d=(done!==undefined)?done:DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  const half=DECK.filter((_,j)=>{const s=(state[j]||{streak:0}).streak||0;return s>0&&s<2;}).length;
+  $('tocSum').textContent=`已掌握 ${d} / ${total}　记住过一次 ${half}　未背 ${total-d-half}`;
+}
+
+function openToc(){ $('toc').classList.add('on'); $('tocMask').classList.add('on'); $('tocBtn').classList.add('on'); }
+function closeToc(){ $('toc').classList.remove('on'); $('tocMask').classList.remove('on'); $('tocBtn').classList.remove('on'); }
+function toggleToc(){ $('toc').classList.contains('on')?closeToc():openToc(); }
+
+function jumpTo(i){
+  if(filter!=='all'){
+    filter='all';
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  }
+  const p=deck().indexOf(i);
+  if(p>=0){ idx=p; flipped=false; render(); closeToc(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function flip(){ flipped=!flipped; $('card').classList.toggle('flip',flipped); }
+function go(d){ const l=deck(); idx=(idx+d+l.length)%l.length; flipped=false; render(); }
+function mark(ok){
+  const list=deck(), i=list[idx], st=state[i]||{streak:0,last:0};
+  st.streak = ok ? Math.min((st.streak||0)+1,4) : 0;
+  st.last=Date.now();
+  state[i]=st; localStorage.setItem(KEY_STORE,JSON.stringify(state));
+  if(filter==='learning'||filter==='mastered'){ idx=0; render(); }
+  else { go(1); }
+}
+
+$('f-a').addEventListener('click',e=>{
+  const el=e.target.closest('.cloze');
+  if(el) el.classList.toggle('on');
+});
+$('toggleAll').addEventListener('click',()=>{
+  const cs=[...document.querySelectorAll('#f-a .cloze')];
+  const allOn=cs.length&&cs.every(c=>c.classList.contains('on'));
+  cs.forEach(c=>c.classList.toggle('on',!allOn));
+  $('toggleAll').textContent=allOn?'全部显示':'全部隐藏';
+  $('toggleAll').classList.toggle('on',!allOn);
+});
+document.querySelectorAll('[data-m]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+document.querySelectorAll('[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f; idx=0;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+$('tocBtn').addEventListener('click',toggleToc);
+$('tocBtn2').addEventListener('click',toggleToc);
+$('tocX').addEventListener('click',closeToc);
+$('tocMask').addEventListener('click',closeToc);
+$('shuffle').addEventListener('click',()=>{
+  order=DECK.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  idx=0; render();
+});
+$('reset').addEventListener('click',()=>{
+  if(confirm('清空全部掌握进度？')){ state={}; localStorage.removeItem(KEY_STORE); idx=0; render(); }
+});
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('flip').addEventListener('click',flip);
+$('got').addEventListener('click',()=>mark(true));
+$('again').addEventListener('click',()=>mark(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key===' '){flip();e.preventDefault();}
+  else if(k==='f'){$('toggleAll').click();}
+  else if(k==='m'){mode = mode==='seg'?'key':'seg';document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===mode));render();}
+  else if(k==='g'){mark(true);}
+  else if(k==='r'){mark(false);}
+  else if(k==='s'){$('shuffle').click();}
+  else if(k==='t'){toggleToc();}
+  else if(e.key==='Escape'){closeToc();}
+});
+
+buildToc();
+render();
+</script>
+</body>
+</html>
