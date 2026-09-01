@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第七章 · 背诵抽认卡</title>
+<style>
+:root{
+  --bg:#12141a; --surface:#1a1d26; --surface-2:#21252f; --line:#2c313d;
+  --text:#e6e8ee; --muted:#98a0b0; --faint:#6c7488;
+  --accent:#1D9E75; --accent-soft:#5DCAA5; --accent-dim:rgba(93,202,165,.14);
+  --star:#EF9F27; --danger:#E24B4A;
+  --mask:#2b3240; --mask-hover:#394154;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; padding:24px 18px 60px;
+}
+.wrap{max-width:820px;margin:0 auto}
+
+header{margin-bottom:18px}
+h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+.sub{color:var(--faint);font-size:13px;margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  padding:5px 12px; border-radius:99px; font-size:13px; cursor:pointer;
+  transition:.15s; user-select:none;
+}
+.chip:hover{border-color:var(--faint);color:var(--text)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.spacer{flex:1}
+
+.progress{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{
+  margin-top:18px; perspective:2000px;
+}
+.faces{
+  position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.card.flip .faces{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 22px; min-height:360px;
+}
+.faces{display:grid}
+.front{transform:none}
+.back{transform:rotateY(180deg)}
+
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);margin-bottom:14px}
+.tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 9px;border-radius:6px;color:var(--muted)}
+.star{color:var(--star)}
+.q{font-size:19px;font-weight:600;line-height:1.6;margin-bottom:6px}
+.qhint{font-size:12px;color:var(--faint);margin-bottom:18px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--faint);color:var(--text)}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.tip{font-size:12px;color:var(--faint);margin-left:auto}
+
+.answer{font-size:16px;line-height:2.05;letter-spacing:.2px}
+.cloze{
+  background:var(--mask); color:transparent; border-radius:4px; cursor:pointer;
+  padding:1px 3px; transition:background .12s,color .12s;
+  box-decoration-break:clone; -webkit-box-decoration-break:clone;
+}
+.cloze:hover{background:var(--mask-hover)}
+.cloze.on{background:var(--accent-dim);color:var(--text)}
+.cloze.on:hover{background:rgba(93,202,165,.24)}
+
+.sec{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.sec h4{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:1px;margin-bottom:8px}
+.sec p{font-size:15px;line-height:1.9;color:var(--text)}
+.hook{color:var(--accent-soft)}
+.mnem{background:var(--accent-dim);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 14px;font-size:16px;line-height:1.95;color:var(--accent-soft);
+  font-weight:600;letter-spacing:.4px}
+.expand{margin-top:13px}
+.expand ol{list-style:none;counter-reset:ex}
+.expand li{position:relative;padding:8px 0 8px 33px;font-size:14.5px;line-height:1.95;color:var(--text);
+  border-bottom:1px dashed var(--line)}
+.expand li:last-child{border-bottom:none}
+.expand li::before{content:counter(ex);counter-increment:ex;position:absolute;left:0;top:11px;
+  width:21px;height:21px;border-radius:50%;background:var(--accent);color:#0b0e14;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+.expand li b{color:var(--accent-soft);font-weight:600}
+.plain{font-size:15.5px;line-height:2.0;color:var(--text)}
+
+nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.btn-lg{padding:9px 18px;font-size:14px}
+.btn-ok{border-color:var(--accent);color:var(--accent-soft)}
+.btn-ok:hover{background:var(--accent-dim)}
+.btn-bad{border-color:#5a3030;color:#e08b8b}
+.btn-bad:hover{background:rgba(226,75,74,.12)}
+
+.keys{margin-top:16px;font-size:12px;color:var(--faint);line-height:2}
+kbd{
+  background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+}
+details{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--faint)}
+details[open] summary:before{content:"▾ "}
+details h5{font-size:13px;color:var(--accent-soft);margin:14px 0 6px;font-weight:500}
+details li{font-size:13px;color:var(--muted);line-height:1.9;list-style:none;padding-left:2px}
+details li:before{content:"· ";color:var(--faint)}
+.due{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+.toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+.toc-mask.on{opacity:1;pointer-events:auto}
+.toc{
+  position:fixed;top:0;left:0;height:100%;width:min(430px,90vw);z-index:50;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,.2,.2,1);
+  overflow-y:auto;padding:22px 20px 50px;
+}
+.toc.on{transform:none}
+.toc-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.toc-head h3{font-size:16px;font-weight:600}
+.toc-x{margin-left:auto;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;padding:2px 7px;border-radius:6px}
+.toc-x:hover{background:var(--surface-2);color:var(--text)}
+.toc-sum{font-size:12px;color:var(--faint);margin-bottom:18px}
+.toc-g{margin-bottom:18px}
+.toc-g h6{
+  font-size:12px;font-weight:500;color:var(--accent-soft);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--line);
+}
+.toc-g h6 .cnt{margin-left:auto;color:var(--faint);font-size:11px}
+.toc-g ul{list-style:none}
+.toc-g li{
+  display:flex;align-items:baseline;gap:9px;padding:6px 9px;border-radius:8px;
+  font-size:13.5px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.toc-g li:hover{background:var(--surface-2);color:var(--text)}
+.toc-g li .tn{flex:none;width:22px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint)}
+.toc-g li .tt{flex:1;line-height:1.5}
+.toc-g li .ts{flex:none;font-size:9px;color:var(--star);letter-spacing:-.5px}
+.toc-g li .td{flex:none;width:14px;text-align:center;font-size:12px;color:var(--faint)}
+.toc-g li.half .td{color:var(--star)}
+.toc-g li.done .td{color:var(--accent)}
+.toc-g li.done .tt{color:var(--faint)}
+.toc-g li.cur{background:var(--accent-dim);color:var(--text)}
+.toc-g li.cur .tn{color:var(--accent-soft)}
+.toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="home-link" href="../index.html">← 章节导航</a>
+  <h1>第七章 · 背诵抽认卡</h1>
+  <div class="sub">x背诵资料正式版 · 12 个考点 · 重点 4 张 · 逐条口诀</div>
+  <div class="bar">
+    <span class="chip on" data-f="all">全部</span>
+    <span class="chip" data-f="star">重点 ★★★</span>
+    <span class="chip" data-f="learning">学习中</span>
+    <span class="chip" data-f="mastered">已掌握</span>
+    <span class="spacer"></span>
+    <span class="chip" id="tocBtn">目录</span>
+    <span class="chip" id="shuffle">打乱</span>
+    <span class="chip" id="reset">重置进度</span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</header>
+
+<div class="card" id="card">
+  <div class="faces">
+    <section class="face front">
+      <div class="meta">
+        <span class="tag" id="f-part"></span>
+        <span id="f-no"></span>
+        <span class="star" id="f-star"></span>
+        <span class="spacer"></span>
+        <span class="due" id="f-due"></span>
+      </div>
+      <div class="q" id="f-q"></div>
+      <div class="qhint">先口述或默写，再点色块逐句核对</div>
+      <div class="tools">
+        <button class="btn on" data-m="seg">逐句挖空</button>
+        <button class="btn" data-m="key">只挖关键</button>
+        <button class="btn" id="toggleAll">全部显示</button>
+        <span class="tip">点色块 → 显现；再点 → 盖回去</span>
+      </div>
+      <div class="answer" id="f-a"></div>
+    </section>
+
+    <section class="face back">
+      <div class="meta">
+        <span class="tag" id="b-part"></span>
+        <span id="b-no"></span>
+        <span class="star" id="b-star"></span>
+      </div>
+      <div class="q" id="b-q"></div>
+      <div class="sec">
+        <h4>记忆口诀</h4>
+        <div class="mnem" id="b-mnem"></div>
+        <div class="expand" id="b-expand"></div>
+      </div>
+      <div class="sec">
+        <h4>完整答案</h4>
+        <div class="plain" id="b-a"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav>
+  <button class="btn btn-lg" id="tocBtn2">目录</button>
+  <button class="btn btn-lg" id="prev">← 上一张</button>
+  <button class="btn btn-lg" id="flip">翻面</button>
+  <button class="btn btn-lg" id="next">下一张 →</button>
+  <span class="spacer"></span>
+  <button class="btn btn-lg btn-bad" id="again">再看看</button>
+  <button class="btn btn-lg btn-ok" id="got">记住了</button>
+</nav>
+
+<div class="keys">
+  <kbd>←</kbd> <kbd>→</kbd> 切换　<kbd>空格</kbd> 翻面　<kbd>F</kbd> 全部显示/隐藏　<kbd>M</kbd> 切换挖空模式　<kbd>G</kbd> 记住了　<kbd>R</kbd> 再看看　<kbd>T</kbd> 目录　<kbd>Esc</kbd> 关闭　<kbd>S</kbd> 打乱
+</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<aside class="toc" id="toc">
+  <div class="toc-head">
+    <h3>目录</h3>
+    <span class="toc-x" id="tocX">×</span>
+  </div>
+  <div class="toc-sum" id="tocSum"></div>
+  <div id="toc-body"></div>
+  <div class="toc-foot">
+    <span style="color:var(--accent)">✓</span> 已掌握（连续两次记住）<br>
+    <span style="color:var(--star)">◐</span> 记住过一次　·　空白＝还没背<br>
+    点任意一条直接跳过去，<kbd>T</kbd> 开关目录
+  </div>
+</aside>
+
+<details>
+  <summary>关于本卡组</summary>
+  <ul>
+    <li>来源：x背诵资料正式版.docx「第七章」，共 12 个考点，逐一成卡。</li>
+    <li>正面＝考点原文全文，逐句挖空，点色块显现、再点盖回。</li>
+    <li>背面「记忆口诀」为逐条编写的<b>由点及面</b>口诀：口诀里每个字对应一条，下方按 ①②③ 逐条展开成完整表述。<b>先背口诀，再对着编号把每条复述出来。</b></li>
+    <li>标注 <span style="color:#EF9F27">★★★</span> 的是本章篇幅最大的考点（篇幅排前 1/3，多为论述题量级）。</li>
+    <li>建议：正面用「逐句挖空」默写全文，翻面用「口诀＋展开」核对要点；考前用「只挖关键」速扫。</li>
+  </ul>
+</details>
+
+</div>
+
+<script>
+const DECK = [
+{p:"07 第七章",t:"考点64、如何理解坚持教育发展、科技创新、人才培养一体推进",star:0,
+ q:"考点64、如何理解坚持教育发展、科技创新、人才培养一体推进",
+ a:"建设教育强国、科技强国、人才强国具有内在一致性和相互支撑性。我国已进入全面建设社会主义现代化国家新征程，比以往任何时候都更加需要加快推进教育现代化，需要大幅提升科技整体水平，需要建设世界重要人才中心和创新高地。第一，中国共产党历来高度重视教育、科技、人才事业。（1）革命战争年代，党在革命根据地开展文化教育，提出中国应当建立自己的民族的、科学的、人民大众的新文化和新教育。（2）新中国成立后，我们党先后提出科学文化现代化、科学技术现代化等奋斗目标，我国教育、科学、文化事业取得很大发展。（3）改革开放以后，党坚持教育为本，提出“科学技术是第一生产力”的论断，不断完善国家创新体系、建设创新型国家。（4）进入新时代，党提出创新是第一动力，全面实施创新驱动发展战略，推动教育、科技、人才事业取得历史性成就。第二，我国建设教育强国、科技强国、人才强国的成就。经过长期努力，（1）我国已建成世界上规模最大的教育体系，教育现代化发展总体水平跨入世界中上国家行列，教育普及水平实现历史性跨越，教育面貌发生格局性变化。（2）我国进入创新型国家行列，基础研究和原始创新不断加强， 一些关键核心技术实现突破，科技事业实现了历史性、整体性、格局性重大变化。（3）我国已经发展成为全球规模最宏大、门类最齐全的人才资源大国，人才效能持续提升，人才比较优势稳步增强。第三，建设教育强国、科技强国、人才强国的要求。（1）当前，全球科技创新进入空前密集活跃期，新一轮科技革命和产业变革正在重构全球创新版图、教育、科技、人才在综合国力竞争中的关键地位更加凸显。（2）我国正进入高质量发展阶段，面临质量变革、效率变革、动力变革的繁重任务，迫切需要教育、科技、人才提供新的动能。（3）必须顺应国际国内发展的新趋势，深入实施科教兴国战略、人才强国战略、创新驱动发展战略，更好在激烈的国际竞争中赢得主动、赢得优势。",
+ m:"「历·成·要」＝历史历程／重大成就／时代要求；历程四时期「革·建·改·新」；成就三条「教·科·人」",
+ e:"①总→建设教育强国、科技强国、人才强国具有内在一致性和相互支撑性。我国已进入全面建设社会主义现代化国家新征程，必须一体推进教育发展、科技创新、人才培养②历→中国共产党历来高度重视教育、科技、人才事业（口诀「革建改新」）：（1）革命战争年代，党在革命根据地开展文化教育，提出建立民族的、科学的、人民大众的新文化（2）新中国成立后，我们党先后提出科学文化现代化、科学技术现代化等奋斗目标（3）改革开放以后，党坚持教育为本，提出“科学技术是第一生产力”的论断，不断完善国家创新体系（4）进入新时代，党提出创新是第一动力，全面实施创新驱动发展战略③成→建设教育强国、科技强国、人才强国的成就（口诀「教科人」）：（1）我国已建成世界上规模最大的教育体系，教育现代化发展总体水平跨入世界中上国家行列（2）我国进入创新型国家行列，基础研究和原始创新不断加强，一些关键核心技术实现突破（3）我国已经发展成为全球规模最宏大、门类最齐全的人才资源大国，人才效能持续提升④要→建设教育强国、科技强国、人才强国的要求：（1）当前全球科技创新进入空前密集活跃期，新一轮科技革命和产业变革正在重构全球创新版图（2）我国正进入高质量发展阶段，面临质量变革、效率变革、动力变革的繁重任务，迫切需要教育、科技、人才提供支撑",
+ h:"口诀：「历·成·要」＝历史历程／重大成就／时代要求；历程四时期「革·建·改·新」；成就三条「教·科·人」　｜　由点及面：①总→建设教育强国、科技强国、人才强国具有内在一致性和相互支撑性。我国已进入全面建设社会主义现代化国家新征程，必须一体推进教育发展、科技创新、人才培养②历→中国共产党历来高度重视教育、科技、人才事业（口诀「革建改新」）：（1）革命战争年代，党在革命根据地开展文化教育，提出建立民族的、科学的、人民大众的新文化（2）新中国成立后，我们党先后提出科学文化现代化、科学技术现代化等奋斗目标（3）改革开放以后，党坚持教育为本，提出“科学技术是第一生产力”的论断，不断完善国家创新体系（4）进入新时代，党提出创新是第一动力，全面实施创新驱动发展战略③成→建设教育强国、科技强国、人才强国的成就（口诀「教科人」）：（1）我国已建成世界上规模最大的教育体系，教育现代化发展总体水平跨入世界中上国家行列（2）我国进入创新型国家行列，基础研究和原始创新不断加强，一些关键核心技术实现突破（3）我国已经发展成为全球规模最宏大、门类最齐全的人才资源大国，人才效能持续提升④要→建设教育强国、科技强国、人才强国的要求：（1）当前全球科技创新进入空前密集活跃期，新一轮科技革命和产业变革正在重构全球创新版图（2）我国正进入高质量发展阶段，面临质量变革、效率变革、动力变革的繁重任务，迫切需要教育、科技、人才提供支撑",
+ k:["我国进入创新型国家行列","科学技术是第一生产力","文化事业取得很大发展","人才提供新的动能","我国建设教育强国","建设创新型国家","人才强国的成就","格局性重大变化"]},
+
+{p:"07 第七章",t:"考点65、深入实施科教兴国战略、人才强国战略、创新驱动发展战略",star:0,
+ q:"考点65、深入实施科教兴国战略、人才强国战略、创新驱动发展战略",
+ a:"实施科教兴国战略、人才强国战略、创新驱动发展战略，是增强综合国力、满足人民群众美好生活需要的必然要求，是建设教育强国、科技强国、人才强国的重大举措，对于全面建设社会主义现代化国家具有重要战略意义。三者既相互融合又各有侧重，要加强统筹、有效联动、系统集成，更好塑造我国发展新优势。第一，科教兴国战略，就是要全面落实科学技术是第一生产力的思想，坚持教育优先发展，把科技和教育作为经济社会发展的重中之重，促进教育同经济、科技的密切结合，把经济建设转到依靠科技进步和提高劳动者素质的轨道上来，为实现经济发展提供科技支撑和人才保障。科教兴国是我国的基本国策。第二，人才强国战略，就是要牢固树立人才资源是第一资源的理念，把人才队伍建设提升到国家战略的高度，营造良好人才创新生态环境，充分发挥各类人才的积极性、主动性和创造性，开创人才辈出、人尽其才的新局面，把我国由人口大国转化为人才资源强国。人才强国战略是国家和民族长远发展大计。第三，创新驱动发展战略，就是要坚持创新是第一动力，把创新驱动落实到现代化建设整个进程和各个方面，以创新推动经济转型发展，全面提升创新能力和效率，把创新发展主动权牢牢掌握在自己手中。创新在国家发展全局中居于核心位置。",
+ m:"三大战略「科·人·创」＝科教兴国、人才强国、创新驱动；核心论断三个“第一”「第一生产力·第一资源·第一动力」",
+ e:"①总→实施科教兴国战略、人才强国战略、创新驱动发展战略，是增强综合国力、满足人民群众美好生活需要的必然要求②科→科教兴国战略，就是要全面落实科学技术是第一生产力的思想，坚持教育优先发展，把科技和教育作为经济社会发展的重要支撑③人→人才强国战略，就是要牢固树立人才资源是第一资源的理念，把人才队伍建设提升到国家战略的高度，营造人才成长发展的良好环境④创→创新驱动发展战略，就是要坚持创新是第一动力，把创新驱动落实到现代化建设整个进程和各个方面，以创新引领高质量发展",
+ h:"口诀：三大战略「科·人·创」＝科教兴国、人才强国、创新驱动；核心论断三个“第一”「第一生产力·第一资源·第一动力」　｜　由点及面：①总→实施科教兴国战略、人才强国战略、创新驱动发展战略，是增强综合国力、满足人民群众美好生活需要的必然要求②科→科教兴国战略，就是要全面落实科学技术是第一生产力的思想，坚持教育优先发展，把科技和教育作为经济社会发展的重要支撑③人→人才强国战略，就是要牢固树立人才资源是第一资源的理念，把人才队伍建设提升到国家战略的高度，营造人才成长发展的良好环境④创→创新驱动发展战略，就是要坚持创新是第一动力，把创新驱动落实到现代化建设整个进程和各个方面，以创新引领高质量发展",
+ k:["创新驱动发展战略","实施科教兴国战略","人才强国战略","科教兴国战略","科技强国","有效联动"]},
+
+{p:"07 第七章",t:"考点66、如何坚持教育优先发展、科技自立自强、人才引领驱动",star:0,
+ q:"考点66、如何坚持教育优先发展、科技自立自强、人才引领驱动",
+ a:"推进教育、科技、人才事业发展，要紧紧围绕全面建设社会主义现代化国家战略需求，尊重教育、科技、人才事业发展客观规律，坚持教育优先发展、科技自立自强、人才引领驱动。第一，坚持教育优先发展。教育优先发展是推动党和国家各项事业发展的重要先手棋。要牢固树立抓教育就是抓发展、谋教育就是谋未来的理念，坚持教育在国家现代化全局中超前布局、优先部署，推动健全优先发展教育事业的体制机制，使我国教育越办越好、越办越强。第二，坚持科技自立自强。科技自立自强是决定我国生存和发展的基础能力，对于更好掌握全球经济科技竞争先机具有战略意义。要坚持把国家和民族发展放在自己力量的基点上，坚持把科技自立自强作为国家发展的战略支撑，加快建立保障高水平科技自立自强的制度体系，要以更加开放的思维和举措推进国际科技交流合作，在开放合作中提升自身科技创新能力。第三，坚持人才引领驱动。人才引领驱动是经济社会发展和国家现代化的基本规律，对于应对激烈国际竞争、发挥我国发展潜在力量和后发优势具有基础性战略意义。要坚持把人才资源开发放在最优先位置，激发各类人才创新活力，形成人才国际竞争的比较优势，建设全球人才高地。",
+ m:"「教·科·人」＝教育优先发展、科技自立自强、人才引领驱动；定位「先手棋·基础能力·基本规律」",
+ e:"①总→推进教育、科技、人才事业发展，要紧紧围绕全面建设社会主义现代化国家战略需求，尊重教育、科技、人才事业发展规律②教→坚持教育优先发展。教育优先发展是推动党和国家各项事业发展的重要先手棋，要牢固树立抓教育就是抓发展的理念③科→坚持科技自立自强。科技自立自强是决定我国生存和发展的基础能力，对于更好掌握全球经济科技竞争先机具有重要意义④人→坚持人才引领驱动。人才引领驱动是经济社会发展和国家现代化的基本规律，对于应对激烈国际竞争、发挥人才第一资源作用具有决定性意义",
+ h:"口诀：「教·科·人」＝教育优先发展、科技自立自强、人才引领驱动；定位「先手棋·基础能力·基本规律」　｜　由点及面：①总→推进教育、科技、人才事业发展，要紧紧围绕全面建设社会主义现代化国家战略需求，尊重教育、科技、人才事业发展规律②教→坚持教育优先发展。教育优先发展是推动党和国家各项事业发展的重要先手棋，要牢固树立抓教育就是抓发展的理念③科→坚持科技自立自强。科技自立自强是决定我国生存和发展的基础能力，对于更好掌握全球经济科技竞争先机具有重要意义④人→坚持人才引领驱动。人才引领驱动是经济社会发展和国家现代化的基本规律，对于应对激烈国际竞争、发挥人才第一资源作用具有决定性意义",
+ k:["坚持教育优先发展","坚持科技自立自强","坚持人才引领驱动","科技自立自强","人才引领驱动","推进教育","越办越强","科技"]},
+
+{p:"07 第七章",t:"考点67、如何理解教育是民族振兴、社会进步的基石",star:0,
+ q:"考点67、如何理解教育是民族振兴、社会进步的基石",
+ a:"教育是国之大计、党之大计，是功在当代、利在千秋的德政工程，对提高人民综合素质、促进人的全面发展、增强中华民族创新创造活力、 实现中华民族伟大复兴具有决定性意义。教育兴则国家兴，教育强则国家强，只有把教育搞上去，才能培养高素质人才，才能从根本上增强国家的综合国力，才能使一个国家、 一个民族在激烈的国际竞争中取得战略主动。第一，必须坚持教育为人民服务，为中国共产党治国理政服务，为巩固和发展中国特色社会主义制度服务，为改革开放和社会主义现代化建设服务，更好推动实现教育同党和国家事业发展要求相适应、同人民群众期待相契合、同我国综合国力和国际地位相匹配，以教育现代化推动社会主义现代化建设。第二，办好中国特色社会主义教育，必须坚持党对教育工作的全面领导，坚持党的教育方针，坚持社会主义办学方向。坚持党对教育工作的全面领导是办好教育的根本保证；党的教育方针是教育事业发展的根本遵循；必须始终坚持马克思主义指导地位，把立德树人作为教育的根本任务，牢牢掌握思想政治工作主导权，确保教育始终沿着社会主义方向发展。第三，办好中国特色社会主义教育，必须坚持扎根中国大地办教育。必须立足中国国情、遵循教育规律，发展具有中国特色、世界水平的现代教育，走出一条扎根中国、融通中外，立足时代、面向未来的中国特色社会主义教育发展道路，促进中国特色社会主义教育事业蓬勃发展。",
+ m:"「四为·三坚·扎根」；四个服务「民·政·制·开」＝为人民服务、为中国共产党治国理政服务、为巩固和发展中国特色社会主义制度服务、为改革开放和社会主义现代化建设服务",
+ e:"①总→教育是国之大计、党之大计，是功在当代、利在千秋的德政工程，对提高人民综合素质、促进人的全面发展、增强中华民族创新创造活力具有决定性意义②四为→必须坚持教育为人民服务，为中国共产党治国理政服务，为巩固和发展中国特色社会主义制度服务，为改革开放和社会主义现代化建设服务（口诀「民政制开」）③三坚→办好中国特色社会主义教育，必须坚持党对教育工作的全面领导，坚持党的教育方针，坚持社会主义办学方向④扎根→办好中国特色社会主义教育，必须坚持扎根中国大地办教育。必须立足中国国情、遵循教育规律，发展具有中国特色、世界水平的现代教育",
+ h:"口诀：「四为·三坚·扎根」；四个服务「民·政·制·开」＝为人民服务、为中国共产党治国理政服务、为巩固和发展中国特色社会主义制度服务、为改革开放和社会主义现代化建设服务　｜　由点及面：①总→教育是国之大计、党之大计，是功在当代、利在千秋的德政工程，对提高人民综合素质、促进人的全面发展、增强中华民族创新创造活力具有决定性意义②四为→必须坚持教育为人民服务，为中国共产党治国理政服务，为巩固和发展中国特色社会主义制度服务，为改革开放和社会主义现代化建设服务（口诀「民政制开」）③三坚→办好中国特色社会主义教育，必须坚持党对教育工作的全面领导，坚持党的教育方针，坚持社会主义办学方向④扎根→办好中国特色社会主义教育，必须坚持扎根中国大地办教育。必须立足中国国情、遵循教育规律，发展具有中国特色、世界水平的现代教育",
+ k:["办好中国特色社会主义教育","必须坚持教育为人民服务","党之大计，是功在当代","同人民群众期待相契合","融通中外，立足时代","促进人的全面发展","必须立足中国国情","教育是国之大计"]},
+
+{p:"07 第七章",t:"考点68、如何落实立德树人根本任务",star:0,
+ q:"考点68、如何落实立德树人根本任务",
+ a:"育人的根本在于立德。落实立德树人根本任务，必须着力解决好培养什么人、怎样培养人、为谁培养人的问题，这是教育的根本问题，也是建设教育强国的核心课题。第一，着力解决好培养什么人的问题。人才培养是育人和育才相统一的过程，教育传授给学生的不仅是知识，更重要的是价值观塑造、能力锻造、人格养成。教育无论发展到什么程度，第一位的是立德树人，引导学生树立正确的世界观、人生观、价值观，全面发展、学有所长，培养出党和国家需要、对社会有用的人。第二，着力解决好怎样培养人的问题。要坚持系统思维，整体规划育人各个环节，整合利用各种资源，统筹协调各方力量，发挥家庭、学校、社会协同育人机制的作用，实现全员育人、全过程育人、全方位育人。思想政治理论课是落实立德树人根本任务的关键课程，要坚持不懈传播马克思主义科学理论，用党的创新理论武装学生，不断提高学生思想水平、政治觉悟、道德品质。第三，着力解决好为谁培养人的问题。古今中外，关于教育的思想流派繁多、理论观点各异，但在教育必须培养社会发展所需要的人这一点上是共通的，每个国家都是按照自己的政治要求来培养人的。社会主义发展的历史经验表明，培养理想信念坚定的社会主义建设者和接班人，是巩固和发展社会主义制度、推动社会主义事业顺利发展的基本前提。",
+ m:"三个根本问题「什·怎·谁」＝培养什么人、怎样培养人、为谁培养人",
+ e:"①总→育人的根本在于立德。落实立德树人根本任务，必须着力解决好培养什么人、怎样培养人、为谁培养人的问题，这是教育的根本问题②什→着力解决好培养什么人的问题。人才培养是育人和育才相统一的过程，教育传授给学生的不仅是知识，更重要的是塑造品德、涵养精神，要培养德智体美劳全面发展的社会主义建设者和接班人③怎→着力解决好怎样培养人的问题。要坚持系统思维，整体规划育人各个环节，整合利用各种资源，统筹协调各方力量④谁→着力解决好为谁培养人的问题。古今中外关于教育的思想流派繁多、理论观点各异，但教育必须培养社会发展所需要的人，归根到底是为党育人、为国育才",
+ h:"口诀：三个根本问题「什·怎·谁」＝培养什么人、怎样培养人、为谁培养人　｜　由点及面：①总→育人的根本在于立德。落实立德树人根本任务，必须着力解决好培养什么人、怎样培养人、为谁培养人的问题，这是教育的根本问题②什→着力解决好培养什么人的问题。人才培养是育人和育才相统一的过程，教育传授给学生的不仅是知识，更重要的是塑造品德、涵养精神，要培养德智体美劳全面发展的社会主义建设者和接班人③怎→着力解决好怎样培养人的问题。要坚持系统思维，整体规划育人各个环节，整合利用各种资源，统筹协调各方力量④谁→着力解决好为谁培养人的问题。古今中外关于教育的思想流派繁多、理论观点各异，但教育必须培养社会发展所需要的人，归根到底是为党育人、为国育才",
+ k:["育人的根本在于立德","价值观，全面发展","对社会有用的人","怎样培养人","全过程育人","全方位育人","能力锻造","人格养成"]},
+
+{p:"07 第七章",t:"考点69、如何办好人民满意的教育",star:0,
+ q:"考点69、如何办好人民满意的教育",
+ a:"人民满意是发展教育的根本尺度。加快建设教育强国，最终是办好人民满意的教育。要坚持以人民为中心发展教育，努力让每个人享有受教育的机会，获得发展自身、奉献社会、造福人民的能力，增强人民的教育获得感，不断满足人民对更好教育的期盼。第一，大力促进教育公平。教育公平是社会公平的重要基础，只有不断促进教育发展成果更多更公平惠及全体人民，才能使每个人的成长成才道路更加宽广。第二，加快建设高质量教育体系。高质量发展是各级各类教育的生命线。要把基础教育作为基点，夯实学生知识基础，激发学生崇尚科学、探索未知的兴趣，培养其探索性、创新性思维品质。第三，提升教育服务经济社会发展能力。服务高质量发展是建设教育强国的重要任务，要以教育高质量发展赋能经济社会可持续发展，进一步加强科学教育、工程教育，加强拔尖创新人才自主培养，为解决我国关键核心技术攻关提供人才支撑。第四，坚持深化教育改革创新。从教育大国到教育强国是一个系统性跃升和质变，必须以改革创新为动力，主动超前布局、有力应对变局、奋力开拓新局。第五，坚持把教师队伍建设作为基础工作。教育大计，教师为本。强教必先强师，要把加强教师队伍建设作为建设教育强国最重要的基础工作来抓，健全中国特色教师教育体系，大力培养造就一支师德高尚、业务精湛、结构合理、充满活力的高素质专业化教师队伍。",
+ m:"五方法「公·质·服·改·师」＝促进教育公平／建设高质量教育体系／提升服务经济社会发展能力／深化教育改革创新／加强教师队伍建设（助记：公平质量，服务改革，教师为本）",
+ e:"①总→人民满意是发展教育的根本尺度。加快建设教育强国，最终是办好人民满意的教育，要坚持以人民为中心发展教育②公→大力促进教育公平。教育公平是社会公平的重要基础，只有不断促进教育发展成果更多更公平惠及全体人民，才能办好人民满意的教育③质→加快建设高质量教育体系。高质量发展是各级各类教育的生命线，要把基础教育作为基点，夯实学生知识基础④服→提升教育服务经济社会发展能力。服务高质量发展是建设教育强国的重要任务，要以教育高质量发展赋能经济社会高质量发展⑤改→坚持深化教育改革创新。从教育大国到教育强国是一个系统性跃升和质变，必须以改革创新为动力⑥师→坚持把教师队伍建设作为基础工作。教育大计，教师为本；强教必先强师，要把加强教师队伍建设作为建设教育强国最重要的基础工作",
+ h:"口诀：五方法「公·质·服·改·师」＝促进教育公平／建设高质量教育体系／提升服务经济社会发展能力／深化教育改革创新／加强教师队伍建设（助记：公平质量，服务改革，教师为本）　｜　由点及面：①总→人民满意是发展教育的根本尺度。加快建设教育强国，最终是办好人民满意的教育，要坚持以人民为中心发展教育②公→大力促进教育公平。教育公平是社会公平的重要基础，只有不断促进教育发展成果更多更公平惠及全体人民，才能办好人民满意的教育③质→加快建设高质量教育体系。高质量发展是各级各类教育的生命线，要把基础教育作为基点，夯实学生知识基础④服→提升教育服务经济社会发展能力。服务高质量发展是建设教育强国的重要任务，要以教育高质量发展赋能经济社会高质量发展⑤改→坚持深化教育改革创新。从教育大国到教育强国是一个系统性跃升和质变，必须以改革创新为动力⑥师→坚持把教师队伍建设作为基础工作。教育大计，教师为本；强教必先强师，要把加强教师队伍建设作为建设教育强国最重要的基础工作",
+ k:["加快建设高质量教育体系","坚持深化教育改革创新","大力促进教育公平","创新性思维品质","有力应对变局","奋力开拓新局","奉献社会","业务精湛"]},
+
+{p:"07 第七章",t:"考点70、如何理解科技强则国家强",star:0,
+ q:"考点70、如何理解科技强则国家强",
+ a:"科技兴则民族兴，科技强则国家强。科学技术从来没有像今天这样深刻影响着国家前途命运，从来没有像今天这样深刻影响着人民生活福祉。中国要强盛、民族要复兴，就一定要大力发展科学技术，加快实现高水平科技自立自强，努力成为世界主要科学中心和创新高地。第一，实现高水平科技自立自强是国家强盛和民族复兴的战略基石。当今世界正经历百年未有之大变局，科技创新是其中一个关键变量。全面建成社会主义现代化强国关键看科技自立自强，这是促进发展大局的根本支撑，如果科技创新搞不上去，发展动力就不可能实现转换，我们在全球经济竞争中就会处于下风。必须把科技的命脉牢牢掌握在自己手中，赢得国际竞争新优势。第二，实现高水平科技自立自强是应对风险挑战和维护国家利益的必然选择。当前，国际环境错综复杂，世界经济陷入低迷，必须坚持科技自立自强，增强抗压能力、应变能力、对冲能力和反制能力。我国科技发展正处在将强未强、不进则退的关键阶段，只有加快实现高水平科技自立自强，我国的现代化进程才不会被迟滞甚至打断。第三，实现高水平科技自立自强是构建新发展格局、推动高质量发展、满足人民美好生活需要的内在要求。构建新发展格局，畅通国内大循环和国内国际双循环，要求以强大科技作支撑，保障产业链供应链安全稳定；推动高质量发展，要求以强大科技作支撑，提供新的发展空间、关键着力点和主要支撑体系；实现人民高品质生活，要求以强大科技作支撑，满足人民多样化多层次的美好生活需要。",
+ m:"三条重要性「基·择·要」＝国家强盛和民族复兴的战略基石／应对风险挑战和维护国家利益的必然选择／构建新发展格局推动高质量发展的内在要求",
+ e:"①总→科技兴则民族兴，科技强则国家强。科学技术从来没有像今天这样深刻影响着国家前途命运，从来没有像今天这样深刻影响着人民生活福祉②基→实现高水平科技自立自强是国家强盛和民族复兴的战略基石。当今世界正经历百年未有之大变局，科技创新成为国际战略博弈的主要战场③择→实现高水平科技自立自强是应对风险挑战和维护国家利益的必然选择。当前国际环境错综复杂，世界经济复苏乏力，关键核心技术受制于人就会受制于人④要→实现高水平科技自立自强是构建新发展格局、推动高质量发展、满足人民美好生活需要的内在要求",
+ h:"口诀：三条重要性「基·择·要」＝国家强盛和民族复兴的战略基石／应对风险挑战和维护国家利益的必然选择／构建新发展格局推动高质量发展的内在要求　｜　由点及面：①总→科技兴则民族兴，科技强则国家强。科学技术从来没有像今天这样深刻影响着国家前途命运，从来没有像今天这样深刻影响着人民生活福祉②基→实现高水平科技自立自强是国家强盛和民族复兴的战略基石。当今世界正经历百年未有之大变局，科技创新成为国际战略博弈的主要战场③择→实现高水平科技自立自强是应对风险挑战和维护国家利益的必然选择。当前国际环境错综复杂，世界经济复苏乏力，关键核心技术受制于人就会受制于人④要→实现高水平科技自立自强是构建新发展格局、推动高质量发展、满足人民美好生活需要的内在要求",
+ k:["对冲能力和反制能力","推动高质量发展","科技兴则民族兴","中国要强盛","应变能力"]},
+
+{p:"07 第七章",t:"考点71、如何打赢关键核心技术攻坚战",star:0,
+ q:"考点71、如何打赢关键核心技术攻坚战",
+ a:"关键核心技术是国之重器，只有把最关键最核心的技术掌握在自己手中，才能从根本上保障国家经济安全、国防安全和其他安全。必须激发各方面创新主体活力，发挥新型举国体制优势，加快解决“卡脖子”问题，确保关键核心技术自主可控。第一，关键核心技术必须掌握在自己手中。关键核心技术是要不来、买不来、讨不来的。核心技术受制于人是我们最大的隐患，尤其是在激烈的国际竞争面前，在单边主义、保护主义上升的大背景下，不掌握核心技术，我们就会被“卡脖子”“牵鼻子”。第二，打赢关键核心技术攻坚战，必须深入推进科技体制改革。科技领域的改革最紧迫的是要破除体制机制障碍，最大限度解放和激发科技作为第一生产力所蕴藏的巨大潜能。多年来，我国一直存在着科技成果向现实生产力转化不力、不顺、不畅的痼疾，其中一个重要症结就在于科技创新链条上存在着诸多体制机制关卡，创新和转化各个环节衔接不够紧密。第三，发挥新型举国体制优势开展科技攻关。我国发挥新型举国体制优势，一大批重大创新工程取得突破性进展，“神舟”飞天、“蛟龙”入海、“嫦娥”奔月、“墨子”传信、等成就令世人为之惊叹。推动有效市场和有为政府更好结合，充分发挥市场在资源配置中的决定性作用，通过市场需求引导创新资源有效配置，形成推进科技创新的强大合力。",
+ m:"三方法「握·改·举」＝关键核心技术掌握在自己手中／深入推进科技体制改革／发挥新型举国体制优势；三个“不来”「要不来·买不来·讨不来」",
+ e:"①总→关键核心技术是国之重器，只有把最关键最核心的技术掌握在自己手中，才能从根本上保障国家经济安全、国防安全和其他安全②握→关键核心技术必须掌握在自己手中。关键核心技术是要不来、买不来、讨不来的（口诀“三个不来”），核心技术受制于人是我们最大的隐患③改→打赢关键核心技术攻坚战，必须深入推进科技体制改革。科技领域的改革最紧迫的是要破除体制机制障碍，最大限度解放和激发科技作为第一生产力所蕴藏的巨大潜能④举→发挥新型举国体制优势开展科技攻关。我国发挥新型举国体制优势，一大批重大创新工程取得突破性进展",
+ h:"口诀：三方法「握·改·举」＝关键核心技术掌握在自己手中／深入推进科技体制改革／发挥新型举国体制优势；三个“不来”「要不来·买不来·讨不来」　｜　由点及面：①总→关键核心技术是国之重器，只有把最关键最核心的技术掌握在自己手中，才能从根本上保障国家经济安全、国防安全和其他安全②握→关键核心技术必须掌握在自己手中。关键核心技术是要不来、买不来、讨不来的（口诀“三个不来”），核心技术受制于人是我们最大的隐患③改→打赢关键核心技术攻坚战，必须深入推进科技体制改革。科技领域的改革最紧迫的是要破除体制机制障碍，最大限度解放和激发科技作为第一生产力所蕴藏的巨大潜能④举→发挥新型举国体制优势开展科技攻关。我国发挥新型举国体制优势，一大批重大创新工程取得突破性进展",
+ k:["关键核心技术是国之重器","打赢关键核心技术攻坚战","关键核心技术是要不来","等成就令世人为之惊叹","国防安全和其他安全","“蛟龙”入海","“嫦娥”奔月","“墨子”传信"]},
+
+{p:"07 第七章",t:"考点72、如何增强自主创新能力",star:1,
+ q:"考点72、如何增强自主创新能力",
+ a:"自力更生是中华民族自立于世界民族之林的奋斗基点，自主创新是我们攀登世界科技高峰的必由之路。自主创新，就是从增强国家创新能力出发，加强原始创新、集成创新和开放创新，确保国家拥有自主可控的科技创新能力。抓住了自主创 新，就抓住了科学技术发展的战略基点，就抓住了结构调整和增长方式转变的中心环节，就抓住了把握战略机遇期、实现经济长期稳定较快发展的关键。第一，基础研究是科技创新的源头。基础研究处于从研究到应用、再到生产的科研链条起始端，地基打得牢，科技事业大厦才能建得高。加强基础研究是科技自立自强的必然要求，是从未知到已知、从不确定性到确定性的必然选择。要不断强化自主创新成果的源头供给，努力取得基础性、战略性、原创性的重大成果，以科技创新开辟发展新领域新赛道，塑造发展新动能新优势。第二，国家战略科技力量是世界科技强国竞争的着力点。国家实验室、国家科研机构、高水平研究型大学、科技领军企业都是国家战略科技力量的重要组成部分。要优化国家战略科技力量定位和布局，建立国家战略科技力量履职尽责、优势互补的协作机制，增强体系化创新能力。",
+ m:"两要求「基·战」＝基础研究是科技创新的源头／国家战略科技力量是竞争着力点；战略科技力量四支「室·所·学·企」＝国家实验室、国家科研机构、高水平研究型大学、科技领军企业",
+ e:"①总→自力更生是中华民族自立于世界民族之林的奋斗基点，自主创新是我们攀登世界科技高峰的必由之路②基→基础研究是科技创新的源头。基础研究处于从研究到应用、再到生产的科研链条起始端，地基打得牢，科技事业大厦才能建得高③战→国家战略科技力量是世界科技强国竞争的着力点。国家实验室、国家科研机构、高水平研究型大学、科技领军企业是国家战略科技力量的重要组成部分（口诀「室所学企」），要形成强大的战略科技力量合力",
+ h:"口诀：两要求「基·战」＝基础研究是科技创新的源头／国家战略科技力量是竞争着力点；战略科技力量四支「室·所·学·企」＝国家实验室、国家科研机构、高水平研究型大学、科技领军企业　｜　由点及面：①总→自力更生是中华民族自立于世界民族之林的奋斗基点，自主创新是我们攀登世界科技高峰的必由之路②基→基础研究是科技创新的源头。基础研究处于从研究到应用、再到生产的科研链条起始端，地基打得牢，科技事业大厦才能建得高③战→国家战略科技力量是世界科技强国竞争的着力点。国家实验室、国家科研机构、高水平研究型大学、科技领军企业是国家战略科技力量的重要组成部分（口诀「室所学企」），要形成强大的战略科技力量合力",
+ k:["基础研究是科技创新的源头","高水平研究型大学","国家科研机构","国家实验室","战略性"]},
+
+{p:"07 第七章",t:"考点73、如何理解培养人才是国家和民族长远发展大计",star:1,
+ q:"考点73、如何理解培养人才是国家和民族长远发展大计",
+ a:"千秋基业，人才为先。国家发展靠人才，民族振兴靠人才。实施人才强国战略，建设规模宏大、结构合理、素质优良的人才队伍，是我国社会主义现代化建设的必然选择。第一，人才是人力资源中能力和素质较高的劳动者，在国家发展中具有重要战略地位。当今世界，各国高度重视人才竞争，竞相将增强人才竞争优势上升为国家战略，构建国家核心竞争力。我们必须增强忧患意识，更加重视人才队伍建设，加快建立人才资源竞争优势。第二，加快人才队伍建设是推动国家发展、实现民族复兴的必然要求。党的十八大以来，以习近平同志为核心的党中央深刻把握人才工作规律，作出全方位培养、引进、使用人才的重大部署，有力地推动了人才队伍快速壮大、人才效能持续增强、人才比较优势稳步增强，为实施创新驱动发展战略、建设创新型国家发挥了重要支撑作用。",
+ m:"两条重要性「位·求」＝人才在国家发展中具有重要战略地位／加快人才队伍建设是推动国家发展实现民族复兴的必然要求",
+ e:"①总→千秋基业，人才为先。国家发展靠人才，民族振兴靠人才。实施人才强国战略，建设规模宏大、结构合理、素质优良的人才队伍，是国家和民族长远发展大计②位→人才是人力资源中能力和素质较高的劳动者，在国家发展中具有重要战略地位。当今世界，各国高度重视人才培养和引进，人才竞争已经成为综合国力竞争的核心③求→加快人才队伍建设是推动国家发展、实现民族复兴的必然要求。党的十八大以来，以习近平同志为核心的党中央作出人才是实现民族振兴、赢得国际竞争主动的战略资源的重大判断",
+ h:"口诀：两条重要性「位·求」＝人才在国家发展中具有重要战略地位／加快人才队伍建设是推动国家发展实现民族复兴的必然要求　｜　由点及面：①总→千秋基业，人才为先。国家发展靠人才，民族振兴靠人才。实施人才强国战略，建设规模宏大、结构合理、素质优良的人才队伍，是国家和民族长远发展大计②位→人才是人力资源中能力和素质较高的劳动者，在国家发展中具有重要战略地位。当今世界，各国高度重视人才培养和引进，人才竞争已经成为综合国力竞争的核心③求→加快人才队伍建设是推动国家发展、实现民族复兴的必然要求。党的十八大以来，以习近平同志为核心的党中央作出人才是实现民族振兴、赢得国际竞争主动的战略资源的重大判断",
+ k:["人才效能持续增强","结构合理","千秋基业","引进"]},
+
+{p:"07 第七章",t:"考点74、如何培养造就大批德才兼备的高素质人才",star:1,
+ q:"考点74、如何培养造就大批德才兼备的高素质人才",
+ a:"实现中华民族伟大复兴，人才越多越好，本事越大越好。必须充分认识人才对党和国家事业发展的极端重要性，加快人才队伍建设，完善人才战略布局，提高人才自主培养能力，抓好国家战略人才力量储备，建设世界重要人才中心和创新高地。第一，全面建设社会主义现代化国家任务非常艰巨，涉及的领域空前广泛，需要经济、政治、文化、社会、生态、科技、教育、军事、外交等多方面、各层次的高素质人才。第二，走好人才自主培养之路。中国是一个大国，对人才数量、质量、结构的需求是全方位的，满足这样庞大的人才需求必须主要依靠自己培养，提高人才供给自主可控能力。第三，加快建设世界重要人才中心和创新高地。我国正处于政治最稳定、经济最繁荣、创新最活跃的时期，党的坚强领导和我国社会主义制度的政治优势，基础研究和应用基础研究实现重大突破，面向国家重大需求的战略高技术研究取得重要成果，应用研究引领产业向中高端迈进，为加快建设世界重要人才中心和创新高地创造了有利条件。",
+ m:"三要求「广·自·高」＝需要各方面广泛人才／走好人才自主培养之路／加快建设世界重要人才中心和创新高地",
+ e:"①总→实现中华民族伟大复兴，人才越多越好，本事越大越好。必须充分认识人才对党和国家事业发展的极端重要性②广→全面建设社会主义现代化国家任务非常艰巨，涉及的领域空前广泛，需要经济、政治、文化、社会、生态、党的建设等各方面人才③自→走好人才自主培养之路。中国是一个大国，对人才数量、质量、结构的需求是全方位的，满足这样庞大的人才需求必须主要依靠自己培养④高→加快建设世界重要人才中心和创新高地。我国正处于政治最稳定、经济最繁荣、创新最活跃的时期，党的坚强领导和社会主义制度优势为人才发展提供了根本保障",
+ h:"口诀：三要求「广·自·高」＝需要各方面广泛人才／走好人才自主培养之路／加快建设世界重要人才中心和创新高地　｜　由点及面：①总→实现中华民族伟大复兴，人才越多越好，本事越大越好。必须充分认识人才对党和国家事业发展的极端重要性②广→全面建设社会主义现代化国家任务非常艰巨，涉及的领域空前广泛，需要经济、政治、文化、社会、生态、党的建设等各方面人才③自→走好人才自主培养之路。中国是一个大国，对人才数量、质量、结构的需求是全方位的，满足这样庞大的人才需求必须主要依靠自己培养④高→加快建设世界重要人才中心和创新高地。我国正处于政治最稳定、经济最繁荣、创新最活跃的时期，党的坚强领导和社会主义制度优势为人才发展提供了根本保障",
+ k:["我国正处于政治最稳定","实现中华民族伟大复兴","走好人才自主培养之路","各层次的高素质人才","外交等多方面","经济最繁荣","政治","文化"]},
+
+{p:"07 第七章",t:"考点75、把各方面优秀人才集聚到党和国家事业中来",star:1,
+ q:"考点75、把各方面优秀人才集聚到党和国家事业中来",
+ a:"建设人才强国，要坚持人才引领发展的战略地位，深化人才发展体制机制改革，营造识才爱才敬才用才的环境，把各方面优秀人才集聚到党和国家事业中来。第一，坚持党对人才工作的全面领导是做好人才工作的根本保证。坚持党对人才工作的全面领导，是我国人才体系的鲜明政治优势，也是建设人才强国的“纲”和“本”。只有在党的领导下，培养造就大批德才兼备的高素质人才，才能确保人才强国建设沿着正确的方向前进。第二，坚持深化人才发展体制机制改革是做好人才工作的重要保障。完善人才培养机制，遵循社会主义市场经济规律和人才成长规律，以国家发展需要和社会需求为导向，以培养人才创新精神和创新能力为重点，培养造就大批德才兼备的高素质人才。第三，坚持营造识才爱才敬才用才的环境是做好人才工作的社会条件。环境好，人才聚、事业兴；环境差，人才散、事业衰。必须积极营造尊重人才、求贤若渴的社会环境，公正平等、竞争择优的制度环境，待遇适当、保障有力的生活环境，为人才心无旁骛钻研业务创造良好条件。",
+ m:"三方法「领·制·境」＝坚持党管人才（根本保证）／深化人才发展体制机制改革（重要保障）／营造识才爱才敬才用才的环境（社会条件）",
+ e:"①总→建设人才强国，要坚持人才引领发展的战略地位，深化人才发展体制机制改革，营造识才爱才敬才用才的环境，把各方面优秀人才集聚到党和国家事业中来②领→坚持党对人才工作的全面领导是做好人才工作的根本保证。坚持党对人才工作的全面领导，是我国人才体系的鲜明政治优势③制→坚持深化人才发展体制机制改革是做好人才工作的重要保障。要完善人才培养机制，遵循社会主义市场经济规律和人才成长规律，破除束缚人才发展的体制机制障碍④境→坚持营造识才爱才敬才用才的环境是做好人才工作的社会条件。环境好，人才聚、事业兴；环境差，人才散、事业衰",
+ h:"口诀：三方法「领·制·境」＝坚持党管人才（根本保证）／深化人才发展体制机制改革（重要保障）／营造识才爱才敬才用才的环境（社会条件）　｜　由点及面：①总→建设人才强国，要坚持人才引领发展的战略地位，深化人才发展体制机制改革，营造识才爱才敬才用才的环境，把各方面优秀人才集聚到党和国家事业中来②领→坚持党对人才工作的全面领导是做好人才工作的根本保证。坚持党对人才工作的全面领导，是我国人才体系的鲜明政治优势③制→坚持深化人才发展体制机制改革是做好人才工作的重要保障。要完善人才培养机制，遵循社会主义市场经济规律和人才成长规律，破除束缚人才发展的体制机制障碍④境→坚持营造识才爱才敬才用才的环境是做好人才工作的社会条件。环境好，人才聚、事业兴；环境差，人才散、事业衰",
+ k:["必须积极营造尊重人才","环境好，人才聚","环境差，人才散","建设人才强国","事业兴","事业衰"]}
+];
+
+const KEY_STORE='bs-mn-07_第七章-v1';
+let state=JSON.parse(localStorage.getItem(KEY_STORE)||'{}');
+let filter='all', mode='seg', order=DECK.map((_,i)=>i), idx=0, flipped=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function deck(){
+  let list=order.filter(i=>{
+    const c=DECK[i], st=state[i]||{};
+    if(filter==='star') return c.star===1;
+    if(filter==='learning') return (st.streak||0)<2;
+    if(filter==='mastered') return (st.streak||0)>=2;
+    return true;
+  });
+  return list.length?list:[0];
+}
+
+function segsOf(text){
+  const raw=text.match(/[^。，；、？！]+[。，；、？！]?/g)||[text];
+  return raw.map(s=>s.trim()).filter(Boolean);
+}
+function renderSeg(text){
+  return segsOf(text).map(s=>
+    s.replace(/\s/g,'').length>=2?`<span class="cloze">${esc(s)}</span>`:esc(s)
+  ).join('');
+}
+function renderKey(text,terms){
+  const ts=[...new Set(terms||[])].sort((a,b)=>b.length-a.length);
+  let out=esc(text);
+  ts.forEach(t=>{
+    const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+    out=out.replace(re,m=>`<span class="cloze">${m}</span>`);
+  });
+  return out;
+}
+
+function render(){
+  const list=deck();
+  if(idx>=list.length) idx=0;
+  if(idx<0) idx=list.length-1;
+  const i=list[idx], c=DECK[i], st=state[i]||{streak:0};
+  const star=c.star?'★★★':'';
+  const no=`卡 ${i+1} / ${DECK.length}`;
+
+  ['f','b'].forEach(f=>{
+    $(f+'-part').textContent=c.p;
+    $(f+'-no').textContent=no;
+    $(f+'-star').textContent=star;
+  });
+  $('f-q').textContent=c.q;
+  $('b-q').textContent=c.q;
+  $('b-mnem').textContent=c.m||'';
+  const ex=(c.e||'').split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).filter(s=>s.trim());
+  $('b-expand').innerHTML=ex.length?('<ol>'+ex.map(function(s){
+    const t=s.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]/,'').trim();
+    const k=t.indexOf('→');
+    return '<li>'+(k>0?'<b>'+esc(t.slice(0,k))+'</b>　'+esc(t.slice(k+1)):esc(t))+'</li>';
+  }).join('')+'</ol>'):'';
+  $('b-a').innerHTML=esc(c.a);
+  $('f-a').innerHTML = mode==='seg' ? renderSeg(c.a) : renderKey(c.a,c.k);
+
+  const days=['第 1 天','第 3 天','第 7 天','第 15 天'];
+  const s=st.streak||0;
+  $('f-due').textContent = s>=2 ? '已毕业' : '下次复习 '+(days[Math.min(s,3)]||'第 15 天');
+
+  $('toggleAll').textContent='全部显示';
+  $('toggleAll').classList.remove('on');
+
+  const done=DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  $('prog').style.width=(done/DECK.length*100)+'%';
+  $('card').classList.toggle('flip',flipped);
+  updateToc(done);
+}
+
+function buildToc(){
+  const groups=[];
+  DECK.forEach((c,i)=>{
+    let g=groups.find(x=>x.p===c.p);
+    if(!g){ g={p:c.p,items:[]}; groups.push(g); }
+    g.items.push(i);
+  });
+  $('toc-body').innerHTML=groups.map(g=>`
+    <div class="toc-g">
+      <h6>${esc(g.p)}<span class="cnt"></span></h6>
+      <ul>${g.items.map(i=>`
+        <li data-i="${i}">
+          <span class="tn">${i+1}</span>
+          <span class="tt">${esc(DECK[i].t)}</span>
+          ${DECK[i].star?'<span class="ts">★★★</span>':''}
+          <span class="td"></span>
+        </li>`).join('')}</ul>
+    </div>`).join('');
+  $('toc-body').addEventListener('click',e=>{
+    const li=e.target.closest('li');
+    if(li) jumpTo(+li.dataset.i);
+  });
+}
+
+function updateToc(done){
+  if(!$('toc-body').children.length) return;
+  const cur=deck()[idx];
+  document.querySelectorAll('#toc-body li').forEach(li=>{
+    const i=+li.dataset.i, s=(state[i]||{streak:0}).streak||0;
+    li.classList.toggle('cur', i===cur);
+    li.classList.toggle('done', s>=2);
+    li.classList.toggle('half', s>0&&s<2);
+    li.querySelector('.td').textContent = s>=2?'✓':(s>0?'◐':'');
+  });
+  document.querySelectorAll('#toc-body .toc-g').forEach(g=>{
+    const lis=[...g.querySelectorAll('li')];
+    g.querySelector('.cnt').textContent = lis.filter(l=>l.classList.contains('done')).length+' / '+lis.length;
+  });
+  const total=DECK.length, d=(done!==undefined)?done:DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  const half=DECK.filter((_,j)=>{const s=(state[j]||{streak:0}).streak||0;return s>0&&s<2;}).length;
+  $('tocSum').textContent=`已掌握 ${d} / ${total}　记住过一次 ${half}　未背 ${total-d-half}`;
+}
+
+function openToc(){ $('toc').classList.add('on'); $('tocMask').classList.add('on'); $('tocBtn').classList.add('on'); }
+function closeToc(){ $('toc').classList.remove('on'); $('tocMask').classList.remove('on'); $('tocBtn').classList.remove('on'); }
+function toggleToc(){ $('toc').classList.contains('on')?closeToc():openToc(); }
+
+function jumpTo(i){
+  if(filter!=='all'){
+    filter='all';
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  }
+  const p=deck().indexOf(i);
+  if(p>=0){ idx=p; flipped=false; render(); closeToc(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function flip(){ flipped=!flipped; $('card').classList.toggle('flip',flipped); }
+function go(d){ const l=deck(); idx=(idx+d+l.length)%l.length; flipped=false; render(); }
+function mark(ok){
+  const list=deck(), i=list[idx], st=state[i]||{streak:0,last:0};
+  st.streak = ok ? Math.min((st.streak||0)+1,4) : 0;
+  st.last=Date.now();
+  state[i]=st; localStorage.setItem(KEY_STORE,JSON.stringify(state));
+  if(filter==='learning'||filter==='mastered'){ idx=0; render(); }
+  else { go(1); }
+}
+
+$('f-a').addEventListener('click',e=>{
+  const el=e.target.closest('.cloze');
+  if(el) el.classList.toggle('on');
+});
+$('toggleAll').addEventListener('click',()=>{
+  const cs=[...document.querySelectorAll('#f-a .cloze')];
+  const allOn=cs.length&&cs.every(c=>c.classList.contains('on'));
+  cs.forEach(c=>c.classList.toggle('on',!allOn));
+  $('toggleAll').textContent=allOn?'全部显示':'全部隐藏';
+  $('toggleAll').classList.toggle('on',!allOn);
+});
+document.querySelectorAll('[data-m]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+document.querySelectorAll('[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f; idx=0;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+$('tocBtn').addEventListener('click',toggleToc);
+$('tocBtn2').addEventListener('click',toggleToc);
+$('tocX').addEventListener('click',closeToc);
+$('tocMask').addEventListener('click',closeToc);
+$('shuffle').addEventListener('click',()=>{
+  order=DECK.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  idx=0; render();
+});
+$('reset').addEventListener('click',()=>{
+  if(confirm('清空全部掌握进度？')){ state={}; localStorage.removeItem(KEY_STORE); idx=0; render(); }
+});
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('flip').addEventListener('click',flip);
+$('got').addEventListener('click',()=>mark(true));
+$('again').addEventListener('click',()=>mark(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key===' '){flip();e.preventDefault();}
+  else if(k==='f'){$('toggleAll').click();}
+  else if(k==='m'){mode = mode==='seg'?'key':'seg';document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===mode));render();}
+  else if(k==='g'){mark(true);}
+  else if(k==='r'){mark(false);}
+  else if(k==='s'){$('shuffle').click();}
+  else if(k==='t'){toggleToc();}
+  else if(e.key==='Escape'){closeToc();}
+});
+
+buildToc();
+render();
+</script>
+</body>
+</html>
