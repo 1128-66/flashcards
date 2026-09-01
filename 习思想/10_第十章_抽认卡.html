@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第十章 · 背诵抽认卡</title>
+<style>
+:root{
+  --bg:#12141a; --surface:#1a1d26; --surface-2:#21252f; --line:#2c313d;
+  --text:#e6e8ee; --muted:#98a0b0; --faint:#6c7488;
+  --accent:#1D9E75; --accent-soft:#5DCAA5; --accent-dim:rgba(93,202,165,.14);
+  --star:#EF9F27; --danger:#E24B4A;
+  --mask:#2b3240; --mask-hover:#394154;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; padding:24px 18px 60px;
+}
+.wrap{max-width:820px;margin:0 auto}
+
+header{margin-bottom:18px}
+h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+.sub{color:var(--faint);font-size:13px;margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  padding:5px 12px; border-radius:99px; font-size:13px; cursor:pointer;
+  transition:.15s; user-select:none;
+}
+.chip:hover{border-color:var(--faint);color:var(--text)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.spacer{flex:1}
+
+.progress{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{
+  margin-top:18px; perspective:2000px;
+}
+.faces{
+  position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.card.flip .faces{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 22px; min-height:360px;
+}
+.faces{display:grid}
+.front{transform:none}
+.back{transform:rotateY(180deg)}
+
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);margin-bottom:14px}
+.tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 9px;border-radius:6px;color:var(--muted)}
+.star{color:var(--star)}
+.q{font-size:19px;font-weight:600;line-height:1.6;margin-bottom:6px}
+.qhint{font-size:12px;color:var(--faint);margin-bottom:18px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--faint);color:var(--text)}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.tip{font-size:12px;color:var(--faint);margin-left:auto}
+
+.answer{font-size:16px;line-height:2.05;letter-spacing:.2px}
+.cloze{
+  background:var(--mask); color:transparent; border-radius:4px; cursor:pointer;
+  padding:1px 3px; transition:background .12s,color .12s;
+  box-decoration-break:clone; -webkit-box-decoration-break:clone;
+}
+.cloze:hover{background:var(--mask-hover)}
+.cloze.on{background:var(--accent-dim);color:var(--text)}
+.cloze.on:hover{background:rgba(93,202,165,.24)}
+
+.sec{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.sec h4{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:1px;margin-bottom:8px}
+.sec p{font-size:15px;line-height:1.9;color:var(--text)}
+.hook{color:var(--accent-soft)}
+.mnem{background:var(--accent-dim);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 14px;font-size:16px;line-height:1.95;color:var(--accent-soft);
+  font-weight:600;letter-spacing:.4px}
+.expand{margin-top:13px}
+.expand ol{list-style:none;counter-reset:ex}
+.expand li{position:relative;padding:8px 0 8px 33px;font-size:14.5px;line-height:1.95;color:var(--text);
+  border-bottom:1px dashed var(--line)}
+.expand li:last-child{border-bottom:none}
+.expand li::before{content:counter(ex);counter-increment:ex;position:absolute;left:0;top:11px;
+  width:21px;height:21px;border-radius:50%;background:var(--accent);color:#0b0e14;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+.expand li b{color:var(--accent-soft);font-weight:600}
+.plain{font-size:15.5px;line-height:2.0;color:var(--text)}
+
+nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.btn-lg{padding:9px 18px;font-size:14px}
+.btn-ok{border-color:var(--accent);color:var(--accent-soft)}
+.btn-ok:hover{background:var(--accent-dim)}
+.btn-bad{border-color:#5a3030;color:#e08b8b}
+.btn-bad:hover{background:rgba(226,75,74,.12)}
+
+.keys{margin-top:16px;font-size:12px;color:var(--faint);line-height:2}
+kbd{
+  background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+}
+details{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--faint)}
+details[open] summary:before{content:"▾ "}
+details h5{font-size:13px;color:var(--accent-soft);margin:14px 0 6px;font-weight:500}
+details li{font-size:13px;color:var(--muted);line-height:1.9;list-style:none;padding-left:2px}
+details li:before{content:"· ";color:var(--faint)}
+.due{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+.toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+.toc-mask.on{opacity:1;pointer-events:auto}
+.toc{
+  position:fixed;top:0;left:0;height:100%;width:min(430px,90vw);z-index:50;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,.2,.2,1);
+  overflow-y:auto;padding:22px 20px 50px;
+}
+.toc.on{transform:none}
+.toc-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.toc-head h3{font-size:16px;font-weight:600}
+.toc-x{margin-left:auto;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;padding:2px 7px;border-radius:6px}
+.toc-x:hover{background:var(--surface-2);color:var(--text)}
+.toc-sum{font-size:12px;color:var(--faint);margin-bottom:18px}
+.toc-g{margin-bottom:18px}
+.toc-g h6{
+  font-size:12px;font-weight:500;color:var(--accent-soft);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--line);
+}
+.toc-g h6 .cnt{margin-left:auto;color:var(--faint);font-size:11px}
+.toc-g ul{list-style:none}
+.toc-g li{
+  display:flex;align-items:baseline;gap:9px;padding:6px 9px;border-radius:8px;
+  font-size:13.5px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.toc-g li:hover{background:var(--surface-2);color:var(--text)}
+.toc-g li .tn{flex:none;width:22px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint)}
+.toc-g li .tt{flex:1;line-height:1.5}
+.toc-g li .ts{flex:none;font-size:9px;color:var(--star);letter-spacing:-.5px}
+.toc-g li .td{flex:none;width:14px;text-align:center;font-size:12px;color:var(--faint)}
+.toc-g li.half .td{color:var(--star)}
+.toc-g li.done .td{color:var(--accent)}
+.toc-g li.done .tt{color:var(--faint)}
+.toc-g li.cur{background:var(--accent-dim);color:var(--text)}
+.toc-g li.cur .tn{color:var(--accent-soft)}
+.toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="home-link" href="../index.html">← 章节导航</a>
+  <h1>第十章 · 背诵抽认卡</h1>
+  <div class="sub">x背诵资料正式版 · 12 个考点 · 重点 4 张 · 逐条口诀</div>
+  <div class="bar">
+    <span class="chip on" data-f="all">全部</span>
+    <span class="chip" data-f="star">重点 ★★★</span>
+    <span class="chip" data-f="learning">学习中</span>
+    <span class="chip" data-f="mastered">已掌握</span>
+    <span class="spacer"></span>
+    <span class="chip" id="tocBtn">目录</span>
+    <span class="chip" id="shuffle">打乱</span>
+    <span class="chip" id="reset">重置进度</span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</header>
+
+<div class="card" id="card">
+  <div class="faces">
+    <section class="face front">
+      <div class="meta">
+        <span class="tag" id="f-part"></span>
+        <span id="f-no"></span>
+        <span class="star" id="f-star"></span>
+        <span class="spacer"></span>
+        <span class="due" id="f-due"></span>
+      </div>
+      <div class="q" id="f-q"></div>
+      <div class="qhint">先口述或默写，再点色块逐句核对</div>
+      <div class="tools">
+        <button class="btn on" data-m="seg">逐句挖空</button>
+        <button class="btn" data-m="key">只挖关键</button>
+        <button class="btn" id="toggleAll">全部显示</button>
+        <span class="tip">点色块 → 显现；再点 → 盖回去</span>
+      </div>
+      <div class="answer" id="f-a"></div>
+    </section>
+
+    <section class="face back">
+      <div class="meta">
+        <span class="tag" id="b-part"></span>
+        <span id="b-no"></span>
+        <span class="star" id="b-star"></span>
+      </div>
+      <div class="q" id="b-q"></div>
+      <div class="sec">
+        <h4>记忆口诀</h4>
+        <div class="mnem" id="b-mnem"></div>
+        <div class="expand" id="b-expand"></div>
+      </div>
+      <div class="sec">
+        <h4>完整答案</h4>
+        <div class="plain" id="b-a"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav>
+  <button class="btn btn-lg" id="tocBtn2">目录</button>
+  <button class="btn btn-lg" id="prev">← 上一张</button>
+  <button class="btn btn-lg" id="flip">翻面</button>
+  <button class="btn btn-lg" id="next">下一张 →</button>
+  <span class="spacer"></span>
+  <button class="btn btn-lg btn-bad" id="again">再看看</button>
+  <button class="btn btn-lg btn-ok" id="got">记住了</button>
+</nav>
+
+<div class="keys">
+  <kbd>←</kbd> <kbd>→</kbd> 切换　<kbd>空格</kbd> 翻面　<kbd>F</kbd> 全部显示/隐藏　<kbd>M</kbd> 切换挖空模式　<kbd>G</kbd> 记住了　<kbd>R</kbd> 再看看　<kbd>T</kbd> 目录　<kbd>Esc</kbd> 关闭　<kbd>S</kbd> 打乱
+</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<aside class="toc" id="toc">
+  <div class="toc-head">
+    <h3>目录</h3>
+    <span class="toc-x" id="tocX">×</span>
+  </div>
+  <div class="toc-sum" id="tocSum"></div>
+  <div id="toc-body"></div>
+  <div class="toc-foot">
+    <span style="color:var(--accent)">✓</span> 已掌握（连续两次记住）<br>
+    <span style="color:var(--star)">◐</span> 记住过一次　·　空白＝还没背<br>
+    点任意一条直接跳过去，<kbd>T</kbd> 开关目录
+  </div>
+</aside>
+
+<details>
+  <summary>关于本卡组</summary>
+  <ul>
+    <li>来源：x背诵资料正式版.docx「第十章」，共 12 个考点，逐一成卡。</li>
+    <li>正面＝考点原文全文，逐句挖空，点色块显现、再点盖回。</li>
+    <li>背面「记忆口诀」为逐条编写的<b>由点及面</b>口诀：口诀里每个字对应一条，下方按 ①②③ 逐条展开成完整表述。<b>先背口诀，再对着编号把每条复述出来。</b></li>
+    <li>标注 <span style="color:#EF9F27">★★★</span> 的是本章篇幅最大的考点（篇幅排前 1/3，多为论述题量级）。</li>
+    <li>建议：正面用「逐句挖空」默写全文，翻面用「口诀＋展开」核对要点；考前用「只挖关键」速扫。</li>
+  </ul>
+</details>
+
+</div>
+
+<script>
+const DECK = [
+{p:"10 第十章",t:"考点97、如何理解文化繁荣兴盛是实现中华民族伟大复兴的必然要求",star:0,
+ q:"考点97、如何理解文化繁荣兴盛是实现中华民族伟大复兴的必然要求",
+ a:"国家强大、民族兴盛、社会发展，不仅需要高度发达的物质文明， 也需要高度繁荣的精神文明。习近平强调：“没有先进文化的积极引领，没有人民精神世界的极大丰富，没有民族精神力量的不断增强， 一个国家、 一个民族不可能屹立于世界民族之林。”第一，文化繁荣兴盛是实现中华民族伟大复兴的精神支撑。只有推动文化繁荣兴盛，才能充分发挥文化在价值塑造、共识凝聚方面的重要作用，为全面推进中华民族伟大复兴 提供更为主动、更为强大的精神力量。第二，文化繁荣兴盛是建设社会主义现代化强国的应有之义。只有推动文化繁荣兴盛，才能为推进中国式现代化建设、实现第二个百年奋斗目标提供思想保证、舆论 支持、精神动力和文化条件。第三，文化繁荣兴盛是满足人民日益增长的美好生活需要的内在要求。只有推动文化繁荣兴盛，才能更好满足人民群众多样化、多层次、多方面的精神文化需求，增强人民精神力量，促进人的全面发展。第四，文化繁荣兴盛是在世界文化激荡中站稳脚跟的前提基础。只有推动文化繁荣兴盛，才能形成与我国综合国力和国际地位相适应的国家文化软实力，增强中华文化影响力和吸引力。",
+ m:"四条重要性「撑·义·需·基」＝实现民族复兴的精神支撑／建设社会主义现代化强国的应有之义／满足人民美好生活需要的内在要求／在世界文化激荡中站稳脚跟的前提基础",
+ e:"①总→国家强大、民族兴盛、社会发展，不仅需要高度发达的物质文明，也需要高度繁荣的精神文明②撑→文化繁荣兴盛是实现中华民族伟大复兴的精神支撑。只有推动文化繁荣兴盛，才能充分发挥文化在价值塑造、精神引领方面的重要作用③义→文化繁荣兴盛是建设社会主义现代化强国的应有之义。只有推动文化繁荣兴盛，才能为推进中国式现代化建设注入强大精神力量④需→文化繁荣兴盛是满足人民日益增长的美好生活需要的内在要求。只有推动文化繁荣兴盛，才能更好满足人民多样化、多层次、多方面的精神文化需求⑤基→文化繁荣兴盛是在世界文化激荡中站稳脚跟的前提基础。只有推动文化繁荣兴盛，才能形成与我国综合国力和国际地位相称的文化影响力",
+ h:"口诀：四条重要性「撑·义·需·基」＝实现民族复兴的精神支撑／建设社会主义现代化强国的应有之义／满足人民美好生活需要的内在要求／在世界文化激荡中站稳脚跟的前提基础　｜　由点及面：①总→国家强大、民族兴盛、社会发展，不仅需要高度发达的物质文明，也需要高度繁荣的精神文明②撑→文化繁荣兴盛是实现中华民族伟大复兴的精神支撑。只有推动文化繁荣兴盛，才能充分发挥文化在价值塑造、精神引领方面的重要作用③义→文化繁荣兴盛是建设社会主义现代化强国的应有之义。只有推动文化繁荣兴盛，才能为推进中国式现代化建设注入强大精神力量④需→文化繁荣兴盛是满足人民日益增长的美好生活需要的内在要求。只有推动文化繁荣兴盛，才能更好满足人民多样化、多层次、多方面的精神文化需求⑤基→文化繁荣兴盛是在世界文化激荡中站稳脚跟的前提基础。只有推动文化繁荣兴盛，才能形成与我国综合国力和国际地位相称的文化影响力",
+ k:["更为强大的精神力量","精神动力和文化条件","舆论 支持","国家强大","民族兴盛","多层次"]},
+
+{p:"10 第十章",t:"考点98、坚定中国特色社会主义文化自信",star:0,
+ q:"考点98、坚定中国特色社会主义文化自信",
+ a:"文化自信是更基础、更广泛、更深厚的自信，是一个国家、 一个民族发展中最基本、最深沉、最持久的力量。建设社会主义文化强国、推动社会主义文化繁荣兴盛，关键在于坚定中国特色社会主义文化自信。第一，中华优秀传统文化是我们坚定文化自信的深厚基础。中华民族创造的优秀传统文化是民族的根脉，根植在中国人内心，形成了中国人看待世界、看待社会、看待人生的独特价值体系、文化内涵和精神品质，这是我们区别于其他国家和民族的根本特征，也铸就了中华民族一以贯之的文化自信。第二，党带领人民在伟大斗争中孕育的革命文化和社会主义先进文化是我们坚定文化自信的坚强基石。我们党领导各族人民在进行革命、建设和改革的历史实践中，创造了鲜明独特、奋发向上的革命文化和社会主义先进文化，是激励人民投身革命和社会主义建设的强大精神力量，是我们文化发展的基础和优势。第三，中国特色社会主义伟大实践是我们坚定文化自信的现实基础。文化自信不仅来自于文化的积淀传承与创新发展，更来自于中国特色社会主义的伟大实践，来自于中华民族伟大复兴的光明前景。坚定文化自信，首要任务就是立足中华民族伟大历史实践和当代实践，用中国道理总结好中国经验，把中国经验提升为中国理论，既不盲从各种教条，也不照搬外国理论，实现精神上的独立自主。",
+ m:"三来源「传·革·践」＝中华优秀传统文化是深厚基础／革命文化和社会主义先进文化是坚强基石／中国特色社会主义伟大实践是现实基础；定位三个“更”＝更基础更广泛更深厚的自信、更基本更深沉更持久的力量",
+ e:"①总→文化自信是更基础、更广泛、更深厚的自信，是一个国家、一个民族发展中最基本、最深沉、最持久的力量。坚定文化自信，事关国运兴衰、文化安全和民族精神的独立性②传→中华优秀传统文化是我们坚定文化自信的深厚基础。中华民族创造的优秀传统文化是民族的根脉，根植在中国人内心深处③革→党带领人民在伟大斗争中孕育的革命文化和社会主义先进文化是我们坚定文化自信的坚强基石。我们党领导人民在革命、建设、改革中创造的先进文化，是激励人民奋勇前进的强大精神力量④践→中国特色社会主义伟大实践是我们坚定文化自信的现实基础。文化自信不仅来自于文化的积淀传承与创新发展，更来自于中国特色社会主义的伟大实践",
+ h:"口诀：三来源「传·革·践」＝中华优秀传统文化是深厚基础／革命文化和社会主义先进文化是坚强基石／中国特色社会主义伟大实践是现实基础；定位三个“更”＝更基础更广泛更深厚的自信、更基本更深沉更持久的力量　｜　由点及面：①总→文化自信是更基础、更广泛、更深厚的自信，是一个国家、一个民族发展中最基本、最深沉、最持久的力量。坚定文化自信，事关国运兴衰、文化安全和民族精神的独立性②传→中华优秀传统文化是我们坚定文化自信的深厚基础。中华民族创造的优秀传统文化是民族的根脉，根植在中国人内心深处③革→党带领人民在伟大斗争中孕育的革命文化和社会主义先进文化是我们坚定文化自信的坚强基石。我们党领导人民在革命、建设、改革中创造的先进文化，是激励人民奋勇前进的强大精神力量④践→中国特色社会主义伟大实践是我们坚定文化自信的现实基础。文化自信不仅来自于文化的积淀传承与创新发展，更来自于中国特色社会主义的伟大实践",
+ k:["坚定中国特色社会主义文化自信","一个民族发展中最基本","建设社会主义文化强国","文化自信是更基础","最持久的力量","看待社会","更广泛","最深沉"]},
+
+{p:"10 第十章",t:"考点99、如何坚持中国特色社会主义文化发展道路",star:0,
+ q:"考点99、如何坚持中国特色社会主义文化发展道路",
+ a:"中国特色社会主义文化发展道路，是推动社会主义文化繁荣兴盛的唯一正确道路。全面建设社会主义现代化国家，必须坚持中国特色社会主义文化发展道路，发展面向现代化、面向世界、面向未来的，民族的科学的大众的社会主义文化，激发全民族文化创新创造活力，增强实现中华民族伟大复兴的精神力量。第一，坚持举旗帜、聚民心、育新人、兴文化、展形象。举旗帜，就是要高举马克思主义、中国特色社会主义的旗帜；聚民心，就是要唱响主旋律，壮大正能量，朝着党中央确定的宏伟目标团结一心向前进；育新人，就是要坚持立德树人、以文化人，建设社会主义精神文明，培养能够担当民族复兴大任的时代新人。第二，坚持“二为”方向、“双百”方针。坚持为人民服务、为社会主义服务的根本方向，是决定社会主义文化事业前途命运的关键。坚持百花齐放、百家争鸣，是繁荣发展社会主义文化的重要方针。第三，激发全民族文化创新创造活力。中国特色社会主义文化发展道路是改革创新之路，必须在全社会营造鼓励文化创造的良好氛围，让蕴藏于人民中的文化创造活力得到充分发挥。",
+ m:"三方法「旗·双·活」＝坚持举旗帜聚民心育新人兴文化展形象／坚持“二为”方向和“双百”方针／激发全民族文化创新创造活力；五大使命任务「旗·心·人·文·象」",
+ e:"①总→中国特色社会主义文化发展道路，是推动社会主义文化繁荣兴盛的唯一正确道路②旗→坚持举旗帜、聚民心、育新人、兴文化、展形象（口诀「旗心人文象」）。举旗帜，就是要高举马克思主义、中国特色社会主义的旗帜③双→坚持“二为”方向、“双百”方针。坚持为人民服务、为社会主义服务的根本方向，是决定社会主义文化事业前途命运的关键；坚持百花齐放、百家争鸣，是繁荣发展社会主义文化的重要方针④活→激发全民族文化创新创造活力。中国特色社会主义文化发展道路是改革创新之路，必须在全社会营造鼓励文化创新的良好氛围",
+ h:"口诀：三方法「旗·双·活」＝坚持举旗帜聚民心育新人兴文化展形象／坚持“二为”方向和“双百”方针／激发全民族文化创新创造活力；五大使命任务「旗·心·人·文·象」　｜　由点及面：①总→中国特色社会主义文化发展道路，是推动社会主义文化繁荣兴盛的唯一正确道路②旗→坚持举旗帜、聚民心、育新人、兴文化、展形象（口诀「旗心人文象」）。举旗帜，就是要高举马克思主义、中国特色社会主义的旗帜③双→坚持“二为”方向、“双百”方针。坚持为人民服务、为社会主义服务的根本方向，是决定社会主义文化事业前途命运的关键；坚持百花齐放、百家争鸣，是繁荣发展社会主义文化的重要方针④活→激发全民族文化创新创造活力。中国特色社会主义文化发展道路是改革创新之路，必须在全社会营造鼓励文化创新的良好氛围",
+ k:["坚持“二为”方向","坚持为人民服务","“双百”方针","坚持百花齐放","坚持举旗帜","面向世界","聚民心","育新人"]},
+
+{p:"10 第十章",t:"考点100、坚持马克思主义在意识形态领域指导地位的根本制度",star:0,
+ q:"考点100、坚持马克思主义在意识形态领域指导地位的根本制度",
+ a:"马克思主义是我们立党立国、兴党兴国的根本指导思想。坚持马克思主义在意识形态领域指导地位的制度是中国特色社会主义制度体系的一项根本制度，是坚持和加强党对宣传思想文化工作全面领导的本质要求，是发展社会主义先进文化的有力保障。第一，坚持马克思主义在意识形态领域指导地位的根本制度是历史的结论。马克思主义深刻揭示了人类社会发展规律，是来自人民、为了人民、造福人民的思想体系，是指引人民认识世界、改造世界的行动指南。第二，坚持马克思主义在意识形态领域指导地位的根本制度，是坚持和巩固我国社会主义制度、保证我国文化建设正确方向的必然要求。第三，新时代新征程，坚持马克思主义在意识形态领域指导地位的根本制度，（1）必须牢牢掌握党对意识形态工作领导权，把意识形态阵地建设和管理工作摆在重要位置；（2）要切实把坚持以马克思主义为指导体现到理论武装、舆论引导、思想道德建设、文化文艺等各方面，使全体人民在理想信念、价值理念、道德观念上紧紧团结在一起。",
+ m:"「史·制·法」＝是历史的结论／是巩固社会主义制度的必然要求／掌握领导权并体现到各方面；方法「权·面」",
+ e:"①总→马克思主义是我们立党立国、兴党兴国的根本指导思想。坚持马克思主义在意识形态领域指导地位的制度是中国特色社会主义制度的一项根本制度②史→坚持这一根本制度是历史的结论。马克思主义深刻揭示了人类社会发展规律，是经过实践检验的科学真理③制→坚持这一根本制度，是坚持和巩固我国社会主义制度、保证我国文化建设正确方向的必然要求④法→新时代新征程坚持这一根本制度：（1）必须牢牢掌握党对意识形态工作领导权，把意识形态阵地建设和管理工作摆在重要位置（2）要切实把坚持以马克思主义为指导体现到理论武装、舆论引导、思想道德建设、文化文艺等各方面，使全体人民在思想上精神上紧紧团结在一起",
+ h:"口诀：「史·制·法」＝是历史的结论／是巩固社会主义制度的必然要求／掌握领导权并体现到各方面；方法「权·面」　｜　由点及面：①总→马克思主义是我们立党立国、兴党兴国的根本指导思想。坚持马克思主义在意识形态领域指导地位的制度是中国特色社会主义制度的一项根本制度②史→坚持这一根本制度是历史的结论。马克思主义深刻揭示了人类社会发展规律，是经过实践检验的科学真理③制→坚持这一根本制度，是坚持和巩固我国社会主义制度、保证我国文化建设正确方向的必然要求④法→新时代新征程坚持这一根本制度：（1）必须牢牢掌握党对意识形态工作领导权，把意识形态阵地建设和管理工作摆在重要位置（2）要切实把坚持以马克思主义为指导体现到理论武装、舆论引导、思想道德建设、文化文艺等各方面，使全体人民在思想上精神上紧紧团结在一起",
+ k:["马克思主义是我们立党立国","改造世界的行动指南","思想道德建设","新时代新征程","为了人民","舆论引导","价值理念"]},
+
+{p:"10 第十章",t:"考点101、如何大力加强马克思主义理论建设",star:0,
+ q:"考点101、如何大力加强马克思主义理论建设",
+ a:"加强马克思主义理论建设，是不断巩固马克思主义在意识形态领域的指导地位、不断巩固全党全国人民团结奋斗的共同思想基础的必然要求。要加强马克思主义理论学习宣传教育，深化马克思主义理论研究和建设，加快构建中国特色哲学社会科学，为党和国家事业发展提供坚实的思想保证、精神力量和理论支撑。第一，坚持用马克思主义特别是中国化时代化的马克思主义武装全党、教育人民、指导实践。马克思主义始终是随着时代、实践、认识发展而发展的，习近平新时代中国特色社会主义思想是马克思主义中国化时代化最新成果，是当今时代最现实、最鲜活的马克思主义。第二，深化马克思主义理论研究和建设。推进理论的体系化、学理化，是深化理论创新的内在要求和重要途径，是马克思主义理论研究和建设的重要任务。第三，加快构建中国特色哲学社会科学。哲学社会科学是人们认识世界、改造世界的重要工具，是推动历史发展和社会进步的重要力量。坚持以马克思主义为指导，是当代中国哲学社会科学区别于其他哲学社会科学的根本标志。",
+ m:"三方法「武·研·哲」＝用马克思主义武装全党教育人民指导实践／深化马克思主义理论研究和建设／加快构建中国特色哲学社会科学",
+ e:"①总→加强马克思主义理论建设，是不断巩固马克思主义在意识形态领域的指导地位、不断巩固全党全国人民团结奋斗共同思想基础的必然要求②武→坚持用马克思主义特别是中国化时代化的马克思主义武装全党、教育人民、指导实践。马克思主义始终是随着时代、实践和科学的发展而不断发展的开放的理论③研→深化马克思主义理论研究和建设。推进理论的体系化、学理化，是深化理论创新的内在要求和重要途径④哲→加快构建中国特色哲学社会科学。哲学社会科学是人们认识世界、改造世界的重要工具，是推动历史发展和社会进步的重要力量",
+ h:"口诀：三方法「武·研·哲」＝用马克思主义武装全党教育人民指导实践／深化马克思主义理论研究和建设／加快构建中国特色哲学社会科学　｜　由点及面：①总→加强马克思主义理论建设，是不断巩固马克思主义在意识形态领域的指导地位、不断巩固全党全国人民团结奋斗共同思想基础的必然要求②武→坚持用马克思主义特别是中国化时代化的马克思主义武装全党、教育人民、指导实践。马克思主义始终是随着时代、实践和科学的发展而不断发展的开放的理论③研→深化马克思主义理论研究和建设。推进理论的体系化、学理化，是深化理论创新的内在要求和重要途径④哲→加快构建中国特色哲学社会科学。哲学社会科学是人们认识世界、改造世界的重要工具，是推动历史发展和社会进步的重要力量",
+ k:["加强马克思主义理论建设","精神力量和理论支撑","最鲜活的马克思主义","推进理论的体系化","教育人民","指导实践","实践"]},
+
+{p:"10 第十章",t:"考点102、如何积极塑造主流舆论新格局",star:0,
+ q:"考点102、如何积极塑造主流舆论新格局",
+ a:"新闻舆论工作处在意识形态斗争前沿，是治国理政、定国安邦的大事。必须旗帜鲜明地坚持党管媒体，提高新闻舆论传播力、引导力、影响力、公信力。第一，新闻舆论工作有鲜明的意识形态属性，坚持正确的政治方向是做好新闻舆论工作的第一位要求。党性原则是新闻舆论工作的根本原则，要坚持正确的舆论导向，坚持党性原则最根本的是坚持党对新闻舆论工作的领导，必须自觉在思想上政治上行动上同党中央保持高度一致，正确处理党性和人民性的关系，把对党负责和对人民负责统一起来。第二，新闻媒体是社会舆论的发射器和放大器，做大做强主流舆论阵地，对推进社会主义现代化事业的顺利发展具有重要意义。伴随着信息社会不断发展，新兴媒体影响越来越大，推动媒体融合发展、建设全媒体就成为我们面临的一项紧迫课题。要加快推动媒体融合发展，形成全方位、多层次、多声部的主流舆论矩阵。第三，互联网是意识形态工作的主阵地、主战场、最前沿，管好用好互联网是新形势下做好新闻舆论工作的关键。必须切实肩负起举旗帜聚民心、防风险保安全、强治理惠民生、增动能促发展、谋合作图共赢的使命任务，科学认识网络传播规律，提高用网治网水平，推动互联网这个最大变量变成事业发展的最大增量。",
+ m:"三要求「向·阵·网」＝坚持正确政治方向和党性原则／做大做强主流舆论阵地／管好用好互联网这个主阵地主战场最前沿",
+ e:"①总→新闻舆论工作处在意识形态斗争前沿，是治国理政、定国安邦的大事。必须旗帜鲜明地坚持党管媒体，提高新闻舆论传播力、引导力、影响力、公信力②向→新闻舆论工作有鲜明的意识形态属性，坚持正确的政治方向是做好新闻舆论工作的第一位要求。党性原则是党的新闻舆论工作的根本原则③阵→新闻媒体是社会舆论的发射器和放大器，做大做强主流舆论阵地，对推进社会主义现代化事业的顺利发展具有重要意义④网→互联网是意识形态工作的主阵地、主战场、最前沿，管好用好互联网是新形势下做好新闻舆论工作的关键",
+ h:"口诀：三要求「向·阵·网」＝坚持正确政治方向和党性原则／做大做强主流舆论阵地／管好用好互联网这个主阵地主战场最前沿　｜　由点及面：①总→新闻舆论工作处在意识形态斗争前沿，是治国理政、定国安邦的大事。必须旗帜鲜明地坚持党管媒体，提高新闻舆论传播力、引导力、影响力、公信力②向→新闻舆论工作有鲜明的意识形态属性，坚持正确的政治方向是做好新闻舆论工作的第一位要求。党性原则是党的新闻舆论工作的根本原则③阵→新闻媒体是社会舆论的发射器和放大器，做大做强主流舆论阵地，对推进社会主义现代化事业的顺利发展具有重要意义④网→互联网是意识形态工作的主阵地、主战场、最前沿，管好用好互联网是新形势下做好新闻舆论工作的关键",
+ k:["多声部的主流舆论矩阵","定国安邦的大事","防风险保安全","强治理惠民生","增动能促发展","引导力","影响力","公信力"]},
+
+{p:"10 第十章",t:"考点103、如何广泛践行社会主义核心价值观",star:0,
+ q:"考点103、如何广泛践行社会主义核心价值观",
+ a:"核心价值观，承载着一个民族、 一个国家的精神追求，体现着一个社会评判是非曲直的价值标准。以富强、民主、文明、和谐，自由、平等、公正、法治，爱国、敬业、诚信、友善为基本内容的社会主义核心价值观，把涉及国家、社会、公民的价值要求融为一体，回答了我们要建设什么样的国家、建设什么样的社会、培育什么样的公民的重大问题。社会主义核心价值观既体现了社会主义本质要求，继承了中华优秀传统 文化，也吸收了世界文明有益成果，体现了时代精神，对于巩固社会主义制度、推进国家繁荣发展、维系社会和谐稳定具有重要作用。第一，社会主义核心价值观只有成为广泛的社会共识，内化为人们的精神追求，外化为人们的自觉行动，才能真正在社会生活中发挥作用。（1）要强化教育引导、实践养成、制度保障，把社会主义核心价值观融入法治建设、融入社会发展、融入日常生活；（2）要把社会主义核心价值观贯穿到日常形势宣传、成就宣传、主题宣传、典型宣传、热点引导和舆论监督中；（3)加强学校教育，推动社会主义核心价值观贯穿学前教育、初等教育、中等教育、高等教育各学段;(4）注重发挥社会实践的养成作用，广泛开展道德实践、学雷锋志愿服务等活动；（5）发挥法律推动核心价值观建设的作用，使符合核心价值观的行为得到鼓励、违背核心价值观的行为受到制约。第二，社会主义核心价值观建设，要注重区分层次、突出重点，抓好重点人群。（1）党员、干部的言行举止对社会有着很强的示范作用，必须带头弘扬和践行社会主义核心价值观，用自己的模范行为和高尚人格感召群众、带动群众；（2）公众人物、先进模范在社会上有广泛的影响，要发挥社会公众人物的示范作用，带动和引领广大人民群众自觉践行社会主义核心价值观。（3）青年的价值取向决定了未来整个社会的价值取向，青年要从现在做起、从自己做起，不断养成高尚品格，胸怀理想、志存高远，成为能够担当民族复兴大任的时代新人。",
+ m:"24字核心价值观三个层面「国·社·人」＝富强民主文明和谐（国家）／自由平等公正法治（社会）／爱国敬业诚信友善（个人）；方法「内化外化＋重点人群「干·人·青」」",
+ e:"①内→核心价值观，承载着一个民族、一个国家的精神追求，体现着一个社会评判是非曲直的价值标准。24字核心价值观分三个层面：国家层面是富强、民主、文明、和谐；社会层面是自由、平等、公正、法治；个人层面是爱国、敬业、诚信、友善（口诀「国社人」）②化→社会主义核心价值观只有成为广泛的社会共识，内化为人们的精神追求、外化为人们的自觉行动，才能真正发挥作用：（1）要强化教育引导、实践养成、制度保障，把社会主义核心价值观融入法治建设、融入社会发展、融入日常生活（2）要把社会主义核心价值观贯穿到日常形势宣传、成就宣传、主题宣传、典型宣传、热点引导和舆论监督中（3）发挥法律推动核心价值观建设的作用，使符合核心价值观的行为得到鼓励、违背核心价值观的行为受到制约③群→社会主义核心价值观建设，要注重区分层次、突出重点，抓好重点人群（口诀「干人青」）：（1）党员、干部的言行举止对社会有着很强的示范作用，必须带头弘扬和践行（2）公众人物、先进模范在社会上有广泛的影响，要发挥示范作用带动广大人民群众（3）青年的价值取向决定了未来整个社会的价值取向，青年要从现在做起、从自己做起",
+ h:"口诀：24字核心价值观三个层面「国·社·人」＝富强民主文明和谐（国家）／自由平等公正法治（社会）／爱国敬业诚信友善（个人）；方法「内化外化＋重点人群「干·人·青」」　｜　由点及面：①内→核心价值观，承载着一个民族、一个国家的精神追求，体现着一个社会评判是非曲直的价值标准。24字核心价值观分三个层面：国家层面是富强、民主、文明、和谐；社会层面是自由、平等、公正、法治；个人层面是爱国、敬业、诚信、友善（口诀「国社人」）②化→社会主义核心价值观只有成为广泛的社会共识，内化为人们的精神追求、外化为人们的自觉行动，才能真正发挥作用：（1）要强化教育引导、实践养成、制度保障，把社会主义核心价值观融入法治建设、融入社会发展、融入日常生活（2）要把社会主义核心价值观贯穿到日常形势宣传、成就宣传、主题宣传、典型宣传、热点引导和舆论监督中（3）发挥法律推动核心价值观建设的作用，使符合核心价值观的行为得到鼓励、违背核心价值观的行为受到制约③群→社会主义核心价值观建设，要注重区分层次、突出重点，抓好重点人群（口诀「干人青」）：（1）党员、干部的言行举止对社会有着很强的示范作用，必须带头弘扬和践行（2）公众人物、先进模范在社会上有广泛的影响，要发挥示范作用带动广大人民群众（3）青年的价值取向决定了未来整个社会的价值取向，青年要从现在做起、从自己做起",
+ k:["社会主义核心价值观建设","热点引导和舆论监督中","学雷锋志愿服务等活动","建设什么样的社会","推进国家繁荣发展","高等教育各学段","要强化教育引导","融入社会发展"]},
+
+{p:"10 第十章",t:"考点104、弘扬以伟大建党精神为源头的中国共产党精神谱系",star:0,
+ q:"考点104、弘扬以伟大建党精神为源头的中国共产党精神谱系",
+ a:"人无精神则不立，国无精神则不强。精神是一个民族赖以长久生存的灵魂，唯有精神上达到一定的高度，这个民族才能在历史的洪流中屹立不倒、奋勇向前。以伟大建党精神为源头的中国共产党人精神谱系，是党带领人民战胜艰难险阻、取得一个又一个伟大胜利的精神丰碑，是中华民族的宝贵精神财富。第一，在百余年接续奋斗中， 一代又一代中国共产党人弘扬伟大建党精神，展现出伟大的历史主动精神，锤炼出鲜明的政治品格，铸就了一系列伟大精神，构筑起中国共产党人精神谱系。（1）新民主主义革命时期，铸就了井冈山精神、长征精神、延安精神、抗战精神、西柏坡精神等；（2）社会主义革命和建设时期，铸就了抗美援朝精神、“两弹一星”精神、雷锋精神、焦裕禄精神等；（3）改革开放和社会主义现代化建设新时期，铸就了改革开放精神、特区精神、抗击“非典”精神、载人航天精神等；（4）中国特色社会主义新时代，铸就了脱贫攻坚精神、抗疫精神、探月精神、新时代北斗精神等。中国共产党人精神谱系已经深深融入党、国家、民族、人民的血脉和灵魂，成为民族精神和时代精神的重要组成部分，成为社会主义核心价值观的丰富滋养。第二，党的伟大精神和光荣传统跨越时空、历久弥新，是激励我们奋勇前进的强大精神动力。今天，我们迈上了全面建设社会主义现代化国家新征程，担负着新的历史任务，也必然面临着新的重大挑战，更加需要强大的精神力量。（1）要推进以伟大建党精神为源头的中国共产党人精神谱系教育常态化长效化，引导全社会从党的奋斗历程中汲取真理力量、人格力量、智慧力量；（2）推动党史教育、爱国主义教育与重大纪念活动深度融合，用好红色资源，增强红色文化的表现力、传播力、影响力（3）加强革命传统教育、爱国主义教育，使青少年深刻领悟红色政权来之不易、新中国来之不易、中国特色社会主义来之不易、今天的幸福生活来之不易，确保红色基因代代相传、红色江山永不变色。",
+ m:"四时期精神「井长延战西（新民主主义革命）／援两雷焦（社会主义革命和建设）／改特非载（改革开放）／脱抗探北（新时代）」；方法「常·融·育」＝教育常态化长效化／与党史教育纪念活动融合／加强革命传统和爱国主义教育",
+ e:"①总→人无精神则不立，国无精神则不强。精神是一个民族赖以长久生存的灵魂，唯有精神上达到一定的高度，这个民族才能在历史的洪流中屹立不倒②历→在百余年接续奋斗中，一代又一代中国共产党人弘扬伟大建党精神，展现出伟大的历史主动精神，锤炼出鲜明的政治品格：（1）新民主主义革命时期，铸就了井冈山精神、长征精神、延安精神、抗战精神、西柏坡精神等（口诀「井长延战西」）（2）社会主义革命和建设时期，铸就了抗美援朝精神、“两弹一星”精神、雷锋精神、焦裕禄精神等（口诀「援两雷焦」）（3）改革开放和社会主义现代化建设新时期，铸就了改革开放精神、特区精神、抗击“非典”精神、载人航天精神等（口诀「改特非载」）（4）中国特色社会主义新时代，铸就了脱贫攻坚精神、抗疫精神、探月精神、新时代北斗精神等（口诀「脱抗探北」）③法→党的伟大精神和光荣传统跨越时空、历久弥新，是激励我们奋勇前进的强大精神动力（口诀「常融育」）：（1）要推进以伟大建党精神为源头的中国共产党人精神谱系教育常态化长效化，引导全社会从党的奋斗历程中汲取智慧和力量（2）推动党史教育、爱国主义教育与重大纪念活动深度融合，用好红色资源，增强红色文化的表现力、传播力、影响力（3）加强革命传统教育、爱国主义教育，使青少年深刻领悟红色政权来之不易、新中国来之不易、中国特色社会主义来之不易",
+ h:"口诀：四时期精神「井长延战西（新民主主义革命）／援两雷焦（社会主义革命和建设）／改特非载（改革开放）／脱抗探北（新时代）」；方法「常·融·育」＝教育常态化长效化／与党史教育纪念活动融合／加强革命传统和爱国主义教育　｜　由点及面：①总→人无精神则不立，国无精神则不强。精神是一个民族赖以长久生存的灵魂，唯有精神上达到一定的高度，这个民族才能在历史的洪流中屹立不倒②历→在百余年接续奋斗中，一代又一代中国共产党人弘扬伟大建党精神，展现出伟大的历史主动精神，锤炼出鲜明的政治品格：（1）新民主主义革命时期，铸就了井冈山精神、长征精神、延安精神、抗战精神、西柏坡精神等（口诀「井长延战西」）（2）社会主义革命和建设时期，铸就了抗美援朝精神、“两弹一星”精神、雷锋精神、焦裕禄精神等（口诀「援两雷焦」）（3）改革开放和社会主义现代化建设新时期，铸就了改革开放精神、特区精神、抗击“非典”精神、载人航天精神等（口诀「改特非载」）（4）中国特色社会主义新时代，铸就了脱贫攻坚精神、抗疫精神、探月精神、新时代北斗精神等（口诀「脱抗探北」）③法→党的伟大精神和光荣传统跨越时空、历久弥新，是激励我们奋勇前进的强大精神动力（口诀「常融育」）：（1）要推进以伟大建党精神为源头的中国共产党人精神谱系教育常态化长效化，引导全社会从党的奋斗历程中汲取智慧和力量（2）推动党史教育、爱国主义教育与重大纪念活动深度融合，用好红色资源，增强红色文化的表现力、传播力、影响力（3）加强革命传统教育、爱国主义教育，使青少年深刻领悟红色政权来之不易、新中国来之不易、中国特色社会主义来之不易",
+ k:["社会主义革命和建设时期","中国特色社会主义新时代","新民主主义革命时期","“两弹一星”精神","抗击“非典”精神","新时代北斗精神等","红色江山永不变色","在百余年接续奋斗"]},
+
+{p:"10 第十章",t:"考点105、如何提高全社会文明程度",star:1,
+ q:"考点105、如何提高全社会文明程度",
+ a:"文明是现代化国家的显著标志。推动社会文明程度不断提高，是全面建设社会主义现代化国家的重要目标，也是建设社会主义文化强国的重大任务。必须坚持重在建设、以立为本，努力推动形成适应新时代要求的思想观念、精神面貌、文明风尚、行为规范。第一，广泛开展共产主义远大理想和中国特色社会主义共同理想教育，是团结全体人民共同奋斗的重要基础。人民有信仰，国家有力量，民族有希望。要把理想信念教育作为基础性工程、战略性任务，做到常态化开展、制度化推进，持续开展中国特色社会主义和中国梦宣传教育，调动各方面力量教育引导广大青少年树立正确的世界观、人生观、价值观。第二，实施公民道德建设工程，是不断提高全体人民道德素质的灵魂工程。国无德不兴，人无德不立。要加强全社会的思想道德建设，深入实施公民道德建设工程，大力弘扬中华传统美德，深入开展宣传学习活动，在全社会形成崇德向善、德行天下的浓厚氛围。第三，培育时代新风新貌，是营造良好社会风气的重要方面。 一个时代有一个时代的精神风貌，实现新时代新征程的目标任务对培育时代新风新貌提出了新的更高要求。要统筹推动文明培育、文明实践、文明创建，积极发挥党和国家功勋荣誉表彰的精神引领、典型示范作用，完善志愿服务制度和工作体系，注重家庭、注重家教、注重家风。记忆框架：总说+方法1.2.3",
+ m:"三条「理·德·风」＝开展远大理想和共同理想教育／实施公民道德建设工程／培育时代新风新貌",
+ e:"①总→文明是现代化国家的显著标志。推动社会文明程度不断提高，是全面建设社会主义现代化国家的重要目标，也是建设社会主义文化强国的重大任务②理→广泛开展共产主义远大理想和中国特色社会主义共同理想教育，是团结全体人民共同奋斗的重要基础。人民有信仰，国家有力量，民族有希望③德→实施公民道德建设工程，是不断提高全体人民道德素质的灵魂工程。国无德不兴，人无德不立。要加强全社会思想道德建设④风→培育时代新风新貌，是营造良好社会风气的重要方面。一个时代有一个时代的精神风貌，实现新时代新征程的目标任务，需要与之相适应的时代新风",
+ h:"口诀：三条「理·德·风」＝开展远大理想和共同理想教育／实施公民道德建设工程／培育时代新风新貌　｜　由点及面：①总→文明是现代化国家的显著标志。推动社会文明程度不断提高，是全面建设社会主义现代化国家的重要目标，也是建设社会主义文化强国的重大任务②理→广泛开展共产主义远大理想和中国特色社会主义共同理想教育，是团结全体人民共同奋斗的重要基础。人民有信仰，国家有力量，民族有希望③德→实施公民道德建设工程，是不断提高全体人民道德素质的灵魂工程。国无德不兴，人无德不立。要加强全社会思想道德建设④风→培育时代新风新貌，是营造良好社会风气的重要方面。一个时代有一个时代的精神风貌，实现新时代新征程的目标任务，需要与之相适应的时代新风",
+ k:["实施公民道德建设工程","德行天下的浓厚氛围","要统筹推动文明培育","必须坚持重在建设","培育时代新风新貌","精神面貌","文明风尚","行为规范"]},
+
+{p:"10 第十章",t:"考点106、如何传承发展中华优秀传统文化",star:1,
+ q:"考点106、如何传承发展中华优秀传统文化",
+ a:"中华优秀传统文化是中华文明的智慧结晶和精华所在，是中华民族的根和魂。要坚持把马克思主义基本原理同中华优秀传统文化相结合，推动中华优秀传统文化创造性转化、创新性发展，让中华文明展现出永久魅力和时代风采。第一，深刻把握中华文明的突出特性。中华优秀传统文化有很多重要元素，共同塑造出中华文明连续性、创新性、统一性、包容性、和平性的突出特性。（1）连续性从根本上决定了中华民族必然走自己的路；（2）创新性从根本上决定了中华民族守正不守旧、尊古不复古的进取精神，决定了中华民族不惧新挑战、勇于接受新事物的无畏品格；（3）统一性从根本上决定了国家统一永远是中国核心利益的核心，决定了一个坚强统一的国家是各族人民的命运所系；（4）包容性从根本上决定了中华民族交往交流交融的历史取向，决定了中国各宗教信仰多元并存的和谐格局，决定了中华文化对世界文明兼收并蓄的开放胸怀；（5）和平性从根本上决定了中国始终是世界和平的建设者、全球发展的贡献者、国际秩序的维护者，决定了中国不断追求文明交流互鉴而不搞文化霸权。第二，推动中华优秀传统文化创造性转化、创新性发展。中国共产党既是中国先进文化的积极引领者和践行者，又是中华优秀传统文化的忠实传承者和弘扬者。要坚持马克思主义的立场观点方法，坚持古为今用、推陈出新，有鉴别地加以对待，有扬弃地予以继承。（1）创造性转化，就是要按照时代特点和要求，对那些至今仍有借鉴价值的内涵和陈旧的表现形式加以改造，赋予其新的时代内涵和现代表达形式，激活其生命力。（2）创新性发展，就是要按照时代的新进步新进展，对中华优秀传统文化的内涵加以补充、拓展、完善，增强其影响力和感召力。第三，保护好、传承好文化遗产。党的十八大以来，以习近平同志为核心的党中央从留住文化根脉、守住民族之魂的战略高度出发，把历史文化遗产保护利用工作摆到更加突出的位置，推动文物保护利用和文化遗产保护传承工作得到全面加强。",
+ m:"三要求「特·创·保」＝深刻把握中华文明五个突出特性／推动创造性转化创新性发展（两创）／保护好传承好文化遗产；五特性「连·创·统·包·和」＝连续性、创新性、统一性、包容性、和平性",
+ e:"①总→中华优秀传统文化是中华文明的智慧结晶和精华所在，是中华民族的根和魂。要坚持把马克思主义基本原理同中华优秀传统文化相结合②特→深刻把握中华文明的突出特性（口诀「连创统包和」）：（1）连续性从根本上决定了中华民族必然走自己的路（2）创新性从根本上决定了中华民族守正不守旧、尊古不复古的进取精神，决定了中华民族不惧新挑战、勇于接受新事物（3）统一性从根本上决定了国家统一永远是中国核心利益的核心，决定了一个坚强统一的国家是各族人民的命运所系（4）包容性从根本上决定了中华民族交往交流交融的历史取向，决定了中国各宗教信仰多元并存的和谐格局（5）和平性从根本上决定了中国始终是世界和平的建设者、全球发展的贡献者、国际秩序的维护者③创→推动中华优秀传统文化创造性转化、创新性发展：（1）创造性转化，就是要按照时代特点和要求，对那些至今仍有借鉴价值的内涵和陈旧的表现形式加以改造，赋予其新的时代内涵和现代表达形式（2）创新性发展，就是要按照时代的新进步新进展，对中华优秀传统文化的内涵加以补充、拓展、完善，增强其影响力和感召力④保→保护好、传承好文化遗产。党的十八大以来，党中央从留住文化根脉、守住民族之魂的高度，全面加强文化遗产保护传承",
+ h:"口诀：三要求「特·创·保」＝深刻把握中华文明五个突出特性／推动创造性转化创新性发展（两创）／保护好传承好文化遗产；五特性「连·创·统·包·和」＝连续性、创新性、统一性、包容性、和平性　｜　由点及面：①总→中华优秀传统文化是中华文明的智慧结晶和精华所在，是中华民族的根和魂。要坚持把马克思主义基本原理同中华优秀传统文化相结合②特→深刻把握中华文明的突出特性（口诀「连创统包和」）：（1）连续性从根本上决定了中华民族必然走自己的路（2）创新性从根本上决定了中华民族守正不守旧、尊古不复古的进取精神，决定了中华民族不惧新挑战、勇于接受新事物（3）统一性从根本上决定了国家统一永远是中国核心利益的核心，决定了一个坚强统一的国家是各族人民的命运所系（4）包容性从根本上决定了中华民族交往交流交融的历史取向，决定了中国各宗教信仰多元并存的和谐格局（5）和平性从根本上决定了中国始终是世界和平的建设者、全球发展的贡献者、国际秩序的维护者③创→推动中华优秀传统文化创造性转化、创新性发展：（1）创造性转化，就是要按照时代特点和要求，对那些至今仍有借鉴价值的内涵和陈旧的表现形式加以改造，赋予其新的时代内涵和现代表达形式（2）创新性发展，就是要按照时代的新进步新进展，对中华优秀传统文化的内涵加以补充、拓展、完善，增强其影响力和感召力④保→保护好、传承好文化遗产。党的十八大以来，党中央从留住文化根脉、守住民族之魂的高度，全面加强文化遗产保护传承",
+ k:["和平性的突出特性","全球发展的贡献者","传承好文化遗产","创新性发展","创造性转化","创新性","统一性","包容性"]},
+
+{p:"10 第十章",t:"考点107、繁荣发展文化事业和文化产业",star:1,
+ q:"考点107、繁荣发展文化事业和文化产业",
+ a:"繁荣发展文化事业和文化产业，是满足人民精神文化需求、保障人民文化权益的基本途径。要大力发展文化事业和文化产业，以文化人、以文育人、以文培元，增强人民精神力量、促进人的全面发展。第一，文艺的重要性。文艺是民族精神的火炬，是时代前进的号角。举精神旗帜、立精神支柱、建精神家园，是当代中国文艺的崇高使命。弘扬中国精神、传播中国价值、凝聚中国力量，是文艺工作者的神圣职责。要牢固树立马克思主义文艺观，坚持以人民为中心的创作导向，生产出无愧于我们这个伟大民族、伟大时代的优秀作品。第二，发展文化事业、提升公共文化服务水平，是保障人民文化权益、改善人民生活品质、补齐文化发展短板的重要途径。要加强公共文化服务设施建设，实施国家文化数字化战略，提升公共文化服务数字化水平。第三，文化产业在促进国民经济发展、满足人民文化需求等方面发挥着重要作用。要坚持把社会效益放在首位、社会效益和经济效益相统一，深化文化体制改革，完善文化经济政策，不断扩大优质文化产品供给。",
+ m:"「文·事·产」＝文艺是民族精神的火炬号角／发展文化事业提升公共文化服务水平／发展文化产业坚持社会效益首位、两个效益统一",
+ e:"①总→繁荣发展文化事业和文化产业，是满足人民精神文化需求、保障人民文化权益的基本途径②文→文艺的重要性。文艺是民族精神的火炬，是时代前进的号角。举精神旗帜、立精神支柱、建精神家园，是当代中国文艺的崇高使命③事→发展文化事业、提升公共文化服务水平，是保障人民文化权益、改善人民生活品质、补齐文化发展短板的重要途径④产→文化产业在促进国民经济发展、满足人民文化需求等方面发挥着重要作用。要坚持把社会效益放在首位、社会效益和经济效益相统一",
+ h:"口诀：「文·事·产」＝文艺是民族精神的火炬号角／发展文化事业提升公共文化服务水平／发展文化产业坚持社会效益首位、两个效益统一　｜　由点及面：①总→繁荣发展文化事业和文化产业，是满足人民精神文化需求、保障人民文化权益的基本途径②文→文艺的重要性。文艺是民族精神的火炬，是时代前进的号角。举精神旗帜、立精神支柱、建精神家园，是当代中国文艺的崇高使命③事→发展文化事业、提升公共文化服务水平，是保障人民文化权益、改善人民生活品质、补齐文化发展短板的重要途径④产→文化产业在促进国民经济发展、满足人民文化需求等方面发挥着重要作用。要坚持把社会效益放在首位、社会效益和经济效益相统一",
+ k:["繁荣发展文化事业和文化产业","伟大时代的优秀作品","促进人的全面发展","改善人民生活品质","弘扬中国精神","传播中国价值","文艺的重要性","发展文化事业"]},
+
+{p:"10 第十章",t:"考点108、文化软实力",star:1,
+ q:"考点108、文化软实力",
+ a:"文化软实力集中体现了一个国家基于文化而具有的凝聚力和生命力，以及由此产生的吸引力和影响力。在一个国家的总体实力中，国家的硬实力固然具有标志性、基础性作用，但文化软实力同样具有不可替代的作用，是一种不可忽略的力量。提高我国文化软实力，不仅关系中国在世界文化格局中的定位，而且关系中国国际地位和国际影响力。一个国家的文化软实力，从根本上说，取决于其核心价值观的生命力、凝聚力、感召力。我们要加强国际传播能力建设，全面提升国际传播效能，形成同我国综合国力和国际地位相匹配的国际话语权。",
+ m:"「凝·补·位·核·传」＝凝聚力生命力吸引力影响力／对硬实力不可替代的补充／关系国际地位和影响力／根本上取决于核心价值观／加强国际传播能力建设",
+ e:"①凝→文化软实力集中体现了一个国家基于文化而具有的凝聚力和生命力，以及由此产生的吸引力和影响力②补→在一个国家的总体实力中，国家的硬实力固然具有标志性、基础性作用，但文化软实力同样具有不可替代的作用③位→提高我国文化软实力，不仅关系中国在世界文化格局中的定位，而且关系中国国际地位和国际影响力④核→一个国家的文化软实力，从根本上说，取决于其核心价值观的生命力、凝聚力、感召力⑤传→我们要加强国际传播能力建设，全面提升国际传播效能，形成同我国综合国力和国际地位相匹配的国际话语权",
+ h:"口诀：「凝·补·位·核·传」＝凝聚力生命力吸引力影响力／对硬实力不可替代的补充／关系国际地位和影响力／根本上取决于核心价值观／加强国际传播能力建设　｜　由点及面：①凝→文化软实力集中体现了一个国家基于文化而具有的凝聚力和生命力，以及由此产生的吸引力和影响力②补→在一个国家的总体实力中，国家的硬实力固然具有标志性、基础性作用，但文化软实力同样具有不可替代的作用③位→提高我国文化软实力，不仅关系中国在世界文化格局中的定位，而且关系中国国际地位和国际影响力④核→一个国家的文化软实力，从根本上说，取决于其核心价值观的生命力、凝聚力、感召力⑤传→我们要加强国际传播能力建设，全面提升国际传播效能，形成同我国综合国力和国际地位相匹配的国际话语权",
+ k:["在一个国家的总体实力","一个国家的文化软实力","提高我国文化软实力","文化软实力","凝聚力","感召力"]}
+];
+
+const KEY_STORE='bs-mn-10_第十章-v1';
+let state=JSON.parse(localStorage.getItem(KEY_STORE)||'{}');
+let filter='all', mode='seg', order=DECK.map((_,i)=>i), idx=0, flipped=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function deck(){
+  let list=order.filter(i=>{
+    const c=DECK[i], st=state[i]||{};
+    if(filter==='star') return c.star===1;
+    if(filter==='learning') return (st.streak||0)<2;
+    if(filter==='mastered') return (st.streak||0)>=2;
+    return true;
+  });
+  return list.length?list:[0];
+}
+
+function segsOf(text){
+  const raw=text.match(/[^。，；、？！]+[。，；、？！]?/g)||[text];
+  return raw.map(s=>s.trim()).filter(Boolean);
+}
+function renderSeg(text){
+  return segsOf(text).map(s=>
+    s.replace(/\s/g,'').length>=2?`<span class="cloze">${esc(s)}</span>`:esc(s)
+  ).join('');
+}
+function renderKey(text,terms){
+  const ts=[...new Set(terms||[])].sort((a,b)=>b.length-a.length);
+  let out=esc(text);
+  ts.forEach(t=>{
+    const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+    out=out.replace(re,m=>`<span class="cloze">${m}</span>`);
+  });
+  return out;
+}
+
+function render(){
+  const list=deck();
+  if(idx>=list.length) idx=0;
+  if(idx<0) idx=list.length-1;
+  const i=list[idx], c=DECK[i], st=state[i]||{streak:0};
+  const star=c.star?'★★★':'';
+  const no=`卡 ${i+1} / ${DECK.length}`;
+
+  ['f','b'].forEach(f=>{
+    $(f+'-part').textContent=c.p;
+    $(f+'-no').textContent=no;
+    $(f+'-star').textContent=star;
+  });
+  $('f-q').textContent=c.q;
+  $('b-q').textContent=c.q;
+  $('b-mnem').textContent=c.m||'';
+  const ex=(c.e||'').split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).filter(s=>s.trim());
+  $('b-expand').innerHTML=ex.length?('<ol>'+ex.map(function(s){
+    const t=s.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]/,'').trim();
+    const k=t.indexOf('→');
+    return '<li>'+(k>0?'<b>'+esc(t.slice(0,k))+'</b>　'+esc(t.slice(k+1)):esc(t))+'</li>';
+  }).join('')+'</ol>'):'';
+  $('b-a').innerHTML=esc(c.a);
+  $('f-a').innerHTML = mode==='seg' ? renderSeg(c.a) : renderKey(c.a,c.k);
+
+  const days=['第 1 天','第 3 天','第 7 天','第 15 天'];
+  const s=st.streak||0;
+  $('f-due').textContent = s>=2 ? '已毕业' : '下次复习 '+(days[Math.min(s,3)]||'第 15 天');
+
+  $('toggleAll').textContent='全部显示';
+  $('toggleAll').classList.remove('on');
+
+  const done=DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  $('prog').style.width=(done/DECK.length*100)+'%';
+  $('card').classList.toggle('flip',flipped);
+  updateToc(done);
+}
+
+function buildToc(){
+  const groups=[];
+  DECK.forEach((c,i)=>{
+    let g=groups.find(x=>x.p===c.p);
+    if(!g){ g={p:c.p,items:[]}; groups.push(g); }
+    g.items.push(i);
+  });
+  $('toc-body').innerHTML=groups.map(g=>`
+    <div class="toc-g">
+      <h6>${esc(g.p)}<span class="cnt"></span></h6>
+      <ul>${g.items.map(i=>`
+        <li data-i="${i}">
+          <span class="tn">${i+1}</span>
+          <span class="tt">${esc(DECK[i].t)}</span>
+          ${DECK[i].star?'<span class="ts">★★★</span>':''}
+          <span class="td"></span>
+        </li>`).join('')}</ul>
+    </div>`).join('');
+  $('toc-body').addEventListener('click',e=>{
+    const li=e.target.closest('li');
+    if(li) jumpTo(+li.dataset.i);
+  });
+}
+
+function updateToc(done){
+  if(!$('toc-body').children.length) return;
+  const cur=deck()[idx];
+  document.querySelectorAll('#toc-body li').forEach(li=>{
+    const i=+li.dataset.i, s=(state[i]||{streak:0}).streak||0;
+    li.classList.toggle('cur', i===cur);
+    li.classList.toggle('done', s>=2);
+    li.classList.toggle('half', s>0&&s<2);
+    li.querySelector('.td').textContent = s>=2?'✓':(s>0?'◐':'');
+  });
+  document.querySelectorAll('#toc-body .toc-g').forEach(g=>{
+    const lis=[...g.querySelectorAll('li')];
+    g.querySelector('.cnt').textContent = lis.filter(l=>l.classList.contains('done')).length+' / '+lis.length;
+  });
+  const total=DECK.length, d=(done!==undefined)?done:DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  const half=DECK.filter((_,j)=>{const s=(state[j]||{streak:0}).streak||0;return s>0&&s<2;}).length;
+  $('tocSum').textContent=`已掌握 ${d} / ${total}　记住过一次 ${half}　未背 ${total-d-half}`;
+}
+
+function openToc(){ $('toc').classList.add('on'); $('tocMask').classList.add('on'); $('tocBtn').classList.add('on'); }
+function closeToc(){ $('toc').classList.remove('on'); $('tocMask').classList.remove('on'); $('tocBtn').classList.remove('on'); }
+function toggleToc(){ $('toc').classList.contains('on')?closeToc():openToc(); }
+
+function jumpTo(i){
+  if(filter!=='all'){
+    filter='all';
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  }
+  const p=deck().indexOf(i);
+  if(p>=0){ idx=p; flipped=false; render(); closeToc(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function flip(){ flipped=!flipped; $('card').classList.toggle('flip',flipped); }
+function go(d){ const l=deck(); idx=(idx+d+l.length)%l.length; flipped=false; render(); }
+function mark(ok){
+  const list=deck(), i=list[idx], st=state[i]||{streak:0,last:0};
+  st.streak = ok ? Math.min((st.streak||0)+1,4) : 0;
+  st.last=Date.now();
+  state[i]=st; localStorage.setItem(KEY_STORE,JSON.stringify(state));
+  if(filter==='learning'||filter==='mastered'){ idx=0; render(); }
+  else { go(1); }
+}
+
+$('f-a').addEventListener('click',e=>{
+  const el=e.target.closest('.cloze');
+  if(el) el.classList.toggle('on');
+});
+$('toggleAll').addEventListener('click',()=>{
+  const cs=[...document.querySelectorAll('#f-a .cloze')];
+  const allOn=cs.length&&cs.every(c=>c.classList.contains('on'));
+  cs.forEach(c=>c.classList.toggle('on',!allOn));
+  $('toggleAll').textContent=allOn?'全部显示':'全部隐藏';
+  $('toggleAll').classList.toggle('on',!allOn);
+});
+document.querySelectorAll('[data-m]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+document.querySelectorAll('[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f; idx=0;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+$('tocBtn').addEventListener('click',toggleToc);
+$('tocBtn2').addEventListener('click',toggleToc);
+$('tocX').addEventListener('click',closeToc);
+$('tocMask').addEventListener('click',closeToc);
+$('shuffle').addEventListener('click',()=>{
+  order=DECK.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  idx=0; render();
+});
+$('reset').addEventListener('click',()=>{
+  if(confirm('清空全部掌握进度？')){ state={}; localStorage.removeItem(KEY_STORE); idx=0; render(); }
+});
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('flip').addEventListener('click',flip);
+$('got').addEventListener('click',()=>mark(true));
+$('again').addEventListener('click',()=>mark(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key===' '){flip();e.preventDefault();}
+  else if(k==='f'){$('toggleAll').click();}
+  else if(k==='m'){mode = mode==='seg'?'key':'seg';document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===mode));render();}
+  else if(k==='g'){mark(true);}
+  else if(k==='r'){mark(false);}
+  else if(k==='s'){$('shuffle').click();}
+  else if(k==='t'){toggleToc();}
+  else if(e.key==='Escape'){closeToc();}
+});
+
+buildToc();
+render();
+</script>
+</body>
+</html>
