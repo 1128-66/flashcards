@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第十五章 · 背诵抽认卡</title>
+<style>
+:root{
+  --bg:#12141a; --surface:#1a1d26; --surface-2:#21252f; --line:#2c313d;
+  --text:#e6e8ee; --muted:#98a0b0; --faint:#6c7488;
+  --accent:#1D9E75; --accent-soft:#5DCAA5; --accent-dim:rgba(93,202,165,.14);
+  --star:#EF9F27; --danger:#E24B4A;
+  --mask:#2b3240; --mask-hover:#394154;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; padding:24px 18px 60px;
+}
+.wrap{max-width:820px;margin:0 auto}
+
+header{margin-bottom:18px}
+h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+.sub{color:var(--faint);font-size:13px;margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  padding:5px 12px; border-radius:99px; font-size:13px; cursor:pointer;
+  transition:.15s; user-select:none;
+}
+.chip:hover{border-color:var(--faint);color:var(--text)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.spacer{flex:1}
+
+.progress{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{
+  margin-top:18px; perspective:2000px;
+}
+.faces{
+  position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.card.flip .faces{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 22px; min-height:360px;
+}
+.faces{display:grid}
+.front{transform:none}
+.back{transform:rotateY(180deg)}
+
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);margin-bottom:14px}
+.tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 9px;border-radius:6px;color:var(--muted)}
+.star{color:var(--star)}
+.q{font-size:19px;font-weight:600;line-height:1.6;margin-bottom:6px}
+.qhint{font-size:12px;color:var(--faint);margin-bottom:18px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--faint);color:var(--text)}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.tip{font-size:12px;color:var(--faint);margin-left:auto}
+
+.answer{font-size:16px;line-height:2.05;letter-spacing:.2px}
+.cloze{
+  background:var(--mask); color:transparent; border-radius:4px; cursor:pointer;
+  padding:1px 3px; transition:background .12s,color .12s;
+  box-decoration-break:clone; -webkit-box-decoration-break:clone;
+}
+.cloze:hover{background:var(--mask-hover)}
+.cloze.on{background:var(--accent-dim);color:var(--text)}
+.cloze.on:hover{background:rgba(93,202,165,.24)}
+
+.sec{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.sec h4{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:1px;margin-bottom:8px}
+.sec p{font-size:15px;line-height:1.9;color:var(--text)}
+.hook{color:var(--accent-soft)}
+.mnem{background:var(--accent-dim);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 14px;font-size:16px;line-height:1.95;color:var(--accent-soft);
+  font-weight:600;letter-spacing:.4px}
+.expand{margin-top:13px}
+.expand ol{list-style:none;counter-reset:ex}
+.expand li{position:relative;padding:8px 0 8px 33px;font-size:14.5px;line-height:1.95;color:var(--text);
+  border-bottom:1px dashed var(--line)}
+.expand li:last-child{border-bottom:none}
+.expand li::before{content:counter(ex);counter-increment:ex;position:absolute;left:0;top:11px;
+  width:21px;height:21px;border-radius:50%;background:var(--accent);color:#0b0e14;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+.expand li b{color:var(--accent-soft);font-weight:600}
+.plain{font-size:15.5px;line-height:2.0;color:var(--text)}
+
+nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.btn-lg{padding:9px 18px;font-size:14px}
+.btn-ok{border-color:var(--accent);color:var(--accent-soft)}
+.btn-ok:hover{background:var(--accent-dim)}
+.btn-bad{border-color:#5a3030;color:#e08b8b}
+.btn-bad:hover{background:rgba(226,75,74,.12)}
+
+.keys{margin-top:16px;font-size:12px;color:var(--faint);line-height:2}
+kbd{
+  background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+}
+details{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--faint)}
+details[open] summary:before{content:"▾ "}
+details h5{font-size:13px;color:var(--accent-soft);margin:14px 0 6px;font-weight:500}
+details li{font-size:13px;color:var(--muted);line-height:1.9;list-style:none;padding-left:2px}
+details li:before{content:"· ";color:var(--faint)}
+.due{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+.toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+.toc-mask.on{opacity:1;pointer-events:auto}
+.toc{
+  position:fixed;top:0;left:0;height:100%;width:min(430px,90vw);z-index:50;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,.2,.2,1);
+  overflow-y:auto;padding:22px 20px 50px;
+}
+.toc.on{transform:none}
+.toc-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.toc-head h3{font-size:16px;font-weight:600}
+.toc-x{margin-left:auto;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;padding:2px 7px;border-radius:6px}
+.toc-x:hover{background:var(--surface-2);color:var(--text)}
+.toc-sum{font-size:12px;color:var(--faint);margin-bottom:18px}
+.toc-g{margin-bottom:18px}
+.toc-g h6{
+  font-size:12px;font-weight:500;color:var(--accent-soft);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--line);
+}
+.toc-g h6 .cnt{margin-left:auto;color:var(--faint);font-size:11px}
+.toc-g ul{list-style:none}
+.toc-g li{
+  display:flex;align-items:baseline;gap:9px;padding:6px 9px;border-radius:8px;
+  font-size:13.5px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.toc-g li:hover{background:var(--surface-2);color:var(--text)}
+.toc-g li .tn{flex:none;width:22px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint)}
+.toc-g li .tt{flex:1;line-height:1.5}
+.toc-g li .ts{flex:none;font-size:9px;color:var(--star);letter-spacing:-.5px}
+.toc-g li .td{flex:none;width:14px;text-align:center;font-size:12px;color:var(--faint)}
+.toc-g li.half .td{color:var(--star)}
+.toc-g li.done .td{color:var(--accent)}
+.toc-g li.done .tt{color:var(--faint)}
+.toc-g li.cur{background:var(--accent-dim);color:var(--text)}
+.toc-g li.cur .tn{color:var(--accent-soft)}
+.toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="home-link" href="../index.html">← 章节导航</a>
+  <h1>第十五章 · 背诵抽认卡</h1>
+  <div class="sub">x背诵资料正式版 · 5 个考点 · 重点 2 张 · 逐条口诀</div>
+  <div class="bar">
+    <span class="chip on" data-f="all">全部</span>
+    <span class="chip" data-f="star">重点 ★★★</span>
+    <span class="chip" data-f="learning">学习中</span>
+    <span class="chip" data-f="mastered">已掌握</span>
+    <span class="spacer"></span>
+    <span class="chip" id="tocBtn">目录</span>
+    <span class="chip" id="shuffle">打乱</span>
+    <span class="chip" id="reset">重置进度</span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</header>
+
+<div class="card" id="card">
+  <div class="faces">
+    <section class="face front">
+      <div class="meta">
+        <span class="tag" id="f-part"></span>
+        <span id="f-no"></span>
+        <span class="star" id="f-star"></span>
+        <span class="spacer"></span>
+        <span class="due" id="f-due"></span>
+      </div>
+      <div class="q" id="f-q"></div>
+      <div class="qhint">先口述或默写，再点色块逐句核对</div>
+      <div class="tools">
+        <button class="btn on" data-m="seg">逐句挖空</button>
+        <button class="btn" data-m="key">只挖关键</button>
+        <button class="btn" id="toggleAll">全部显示</button>
+        <span class="tip">点色块 → 显现；再点 → 盖回去</span>
+      </div>
+      <div class="answer" id="f-a"></div>
+    </section>
+
+    <section class="face back">
+      <div class="meta">
+        <span class="tag" id="b-part"></span>
+        <span id="b-no"></span>
+        <span class="star" id="b-star"></span>
+      </div>
+      <div class="q" id="b-q"></div>
+      <div class="sec">
+        <h4>记忆口诀</h4>
+        <div class="mnem" id="b-mnem"></div>
+        <div class="expand" id="b-expand"></div>
+      </div>
+      <div class="sec">
+        <h4>完整答案</h4>
+        <div class="plain" id="b-a"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav>
+  <button class="btn btn-lg" id="tocBtn2">目录</button>
+  <button class="btn btn-lg" id="prev">← 上一张</button>
+  <button class="btn btn-lg" id="flip">翻面</button>
+  <button class="btn btn-lg" id="next">下一张 →</button>
+  <span class="spacer"></span>
+  <button class="btn btn-lg btn-bad" id="again">再看看</button>
+  <button class="btn btn-lg btn-ok" id="got">记住了</button>
+</nav>
+
+<div class="keys">
+  <kbd>←</kbd> <kbd>→</kbd> 切换　<kbd>空格</kbd> 翻面　<kbd>F</kbd> 全部显示/隐藏　<kbd>M</kbd> 切换挖空模式　<kbd>G</kbd> 记住了　<kbd>R</kbd> 再看看　<kbd>T</kbd> 目录　<kbd>Esc</kbd> 关闭　<kbd>S</kbd> 打乱
+</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<aside class="toc" id="toc">
+  <div class="toc-head">
+    <h3>目录</h3>
+    <span class="toc-x" id="tocX">×</span>
+  </div>
+  <div class="toc-sum" id="tocSum"></div>
+  <div id="toc-body"></div>
+  <div class="toc-foot">
+    <span style="color:var(--accent)">✓</span> 已掌握（连续两次记住）<br>
+    <span style="color:var(--star)">◐</span> 记住过一次　·　空白＝还没背<br>
+    点任意一条直接跳过去，<kbd>T</kbd> 开关目录
+  </div>
+</aside>
+
+<details>
+  <summary>关于本卡组</summary>
+  <ul>
+    <li>来源：x背诵资料正式版.docx「第十五章」，共 5 个考点，逐一成卡。</li>
+    <li>正面＝考点原文全文，逐句挖空，点色块显现、再点盖回。</li>
+    <li>背面「记忆口诀」为逐条编写的<b>由点及面</b>口诀：口诀里每个字对应一条，下方按 ①②③ 逐条展开成完整表述。<b>先背口诀，再对着编号把每条复述出来。</b></li>
+    <li>标注 <span style="color:#EF9F27">★★★</span> 的是本章篇幅最大的考点（篇幅排前 1/3，多为论述题量级）。</li>
+    <li>建议：正面用「逐句挖空」默写全文，翻面用「口诀＋展开」核对要点；考前用「只挖关键」速扫。</li>
+  </ul>
+</details>
+
+</div>
+
+<script>
+const DECK = [
+{p:"15 第十五章",t:"考点139、“一国两制”是中国特色社会主义的伟大创举",star:0,
+ q:"考点139、“一国两制”是中国特色社会主义的伟大创举",
+ a:"第一，“一国两制”是中国特色社会主义制度创新的重要成果。作为一项基本国策，“一国两制”是指在统一的国家之内，国家主体实行社会主义制度，个别地区依法实行资本主义制度。第二，“一国两制”是中国共产党领导人民实现祖国和平统一的伟大构想。维护国家主权和领土完整，绝不容忍国家分裂的历史悲剧重演，是中国共产党对历史和人民的庄严承诺。第三，“一国两制”为国际社会解决类似问题提供了新思路新方案。“一国两制”包含了中华文化中的和合理念，体现了尊重差异、求同存异的思维方式，是中华民族为世界和平与发展作出的新贡献。",
+ m:"三条「创·想·方」＝中国特色社会主义制度创新的重要成果／实现祖国和平统一的伟大构想／为国际社会解决类似问题提供新思路新方案",
+ e:"①创→“一国两制”是中国特色社会主义制度创新的重要成果。作为一项基本国策，“一国两制”是指在统一的国家内，国家的主体实行社会主义制度，个别地区依法实行资本主义制度②想→“一国两制”是中国共产党领导人民实现祖国和平统一的伟大构想。维护国家主权和领土完整，绝不容忍国家分裂的历史悲剧重演③方→“一国两制”为国际社会解决类似问题提供了新思路新方案。“一国两制”包含了中华文化中的和合理念，体现了海纳百川、有容乃大的中国智慧",
+ h:"口诀：三条「创·想·方」＝中国特色社会主义制度创新的重要成果／实现祖国和平统一的伟大构想／为国际社会解决类似问题提供新思路新方案　｜　由点及面：①创→“一国两制”是中国特色社会主义制度创新的重要成果。作为一项基本国策，“一国两制”是指在统一的国家内，国家的主体实行社会主义制度，个别地区依法实行资本主义制度②想→“一国两制”是中国共产党领导人民实现祖国和平统一的伟大构想。维护国家主权和领土完整，绝不容忍国家分裂的历史悲剧重演③方→“一国两制”为国际社会解决类似问题提供了新思路新方案。“一国两制”包含了中华文化中的和合理念，体现了海纳百川、有容乃大的中国智慧",
+ k:["一国两制"]},
+
+{p:"15 第十五章",t:"考点140、准确把握“一国两制”的科学内涵",star:0,
+ q:"考点140、准确把握“一国两制”的科学内涵",
+ a:"党的十八大以来，以习近平同志为核心的党中央继承和发展我们党关于“一国两制”的科学理论，深刻总结“一国两制”的成功实践经验，系统阐发了新时代坚持和完善“一国两制”的基本立场和重大原则，对马克思主义国家学说作出了新贡献。第一，牢牢把握“一国两制”的根本宗旨。“一国两制”的根本宗旨是维护国家主权、安全、发展利益，保持香港、澳门长期繁荣稳定。第二，准确把握“一国”和“两制”的关系。“一国两制”方针是一个完整的体系。“一国”是实行“两制”的前提和基础，“两制”从属和派生于“一国”,并统一于“一国”之内。第三，坚持中央全面管治权和保障特别行政区高度自治权相统一。我国是单一制国家，中央对包括香港、澳门特别行政区在内的所有地方行政区域拥有全面管治权。全面管治权与高度自治权在本质上是统一的。第四，坚定落实“爱国者治港”“爱国者治澳”原则。任何香港、澳门居民，只要秉持爱国爱港爱澳立场，不从事危害国家主权、安全、发展利益和港澳繁荣稳定的活动，都可以依法参与港澳的选举和治理。第五，坚持依法治港治澳。依法治理是最可靠、最稳定的治理。依法治港治澳，是全面依法治国的应有之义，是全面准确贯彻“一国两制”方针的必由之路。",
+ m:"五条「宗·关·权·爱·法」＝根本宗旨／“一国”和“两制”的关系／中央全面管治权与高度自治权相统一／爱国者治港治澳／依法治港治澳",
+ e:"①总→党的十八大以来，以习近平同志为核心的党中央继承和发展我们党关于“一国两制”的科学理论，深刻总结“一国两制”实践经验，形成了新时代“一国两制”的科学内涵②宗→牢牢把握“一国两制”的根本宗旨。“一国两制”的根本宗旨是维护国家主权、安全、发展利益，保持香港、澳门长期繁荣稳定③关→准确把握“一国”和“两制”的关系。“一国两制”方针是一个完整的体系。“一国”是实行“两制”的前提和基础，“两制”从属和派生于“一国”并统一于“一国”之内④权→坚持中央全面管治权和保障特别行政区高度自治权相统一。我国是单一制国家，中央对包括香港、澳门特别行政区在内的全部领土享有全面管治权⑤爱→坚定落实“爱国者治港”“爱国者治澳”原则。任何香港、澳门居民，只要秉持爱国爱港爱澳立场，不从事危害国家安全的活动，都可以依法参与特别行政区治理⑥法→坚持依法治港治澳。依法治理是最可靠、最稳定的治理。依法治港治澳，是全面依法治国的应有之义，是全面准确贯彻“一国两制”方针的必然要求",
+ h:"口诀：五条「宗·关·权·爱·法」＝根本宗旨／“一国”和“两制”的关系／中央全面管治权与高度自治权相统一／爱国者治港治澳／依法治港治澳　｜　由点及面：①总→党的十八大以来，以习近平同志为核心的党中央继承和发展我们党关于“一国两制”的科学理论，深刻总结“一国两制”实践经验，形成了新时代“一国两制”的科学内涵②宗→牢牢把握“一国两制”的根本宗旨。“一国两制”的根本宗旨是维护国家主权、安全、发展利益，保持香港、澳门长期繁荣稳定③关→准确把握“一国”和“两制”的关系。“一国两制”方针是一个完整的体系。“一国”是实行“两制”的前提和基础，“两制”从属和派生于“一国”并统一于“一国”之内④权→坚持中央全面管治权和保障特别行政区高度自治权相统一。我国是单一制国家，中央对包括香港、澳门特别行政区在内的全部领土享有全面管治权⑤爱→坚定落实“爱国者治港”“爱国者治澳”原则。任何香港、澳门居民，只要秉持爱国爱港爱澳立场，不从事危害国家安全的活动，都可以依法参与特别行政区治理⑥法→坚持依法治港治澳。依法治理是最可靠、最稳定的治理。依法治港治澳，是全面依法治国的应有之义，是全面准确贯彻“一国两制”方针的必然要求",
+ k:["发展利益，保持香港","澳门长期繁荣稳定","依法治理是最可靠","坚持依法治港治澳","党的十八大以来","最稳定的治理","爱国者治港","爱国者治澳"]},
+
+{p:"15 第十五章",t:"考点141、坚持和完善“一国两制”制度体系",star:0,
+ q:"考点141、坚持和完善“一国两制”制度体系",
+ a:"“一国两制”作为党和国家的大政方针，必须通过具体的制度体系、制度安排、制度规则呈现出来、落到实处。经过长期实践，我们已经形成了一整套“一国两制”的制度体系。形势在发展，时代在前进，这一制度体系也要在实践中不断加以完善。第一，加强依法治理相关制度和机制建设。要善于运用法治思维和法治方式进行治理，强化法治意识，完善与香港、澳门特别行政区基本法实施相配套的制度和法律体系，夯实依法治港治澳的制度基础。第二，健全中央行使全面管治权的制度。要依法行使宪法和基本法赋予中央的各项权力，健全特别行政区行政长官对中央政府负责的制度，完善港澳融入国家发展大局、同内地优势互补、协同发展机制，完善坚决防范和遏制外部势力干预港澳事务和进行分裂、颠覆、渗透、 破坏活动的体制机制。第三，为落实爱国者治理提供制度保障。要继续发展壮大爱国爱港爱澳力量，增强港澳同胞的爱国精神，形成更广泛的国内外支持“一国两制”的统一战线，在爱国爱港爱澳旗帜下画出最大同心圆。要增强港澳同胞的民族自豪感、主人翁意识和投身“一国两制”事业的责任感、使命感。",
+ m:"三条「法·权·爱」＝加强依法治理相关制度和机制建设／健全中央行使全面管治权的制度／为落实爱国者治理提供制度保障",
+ e:"①总→“一国两制”作为党和国家的大政方针，必须通过具体的制度体系、制度安排、制度规则呈现出来、落到实处②法→加强依法治理相关制度和机制建设。要善于运用法治思维和法治方式进行治理，强化法治意识，完善与香港、澳门特别行政区相关的法律制度和执行机制③权→健全中央行使全面管治权的制度。要依法行使宪法和基本法赋予中央的各项权力，健全特别行政区行政长官和政府依法施政的制度安排④爱→为落实爱国者治理提供制度保障。要继续发展壮大爱国爱港爱澳力量，增强港澳同胞的爱国精神，形成更广泛的爱国统一战线",
+ h:"口诀：三条「法·权·爱」＝加强依法治理相关制度和机制建设／健全中央行使全面管治权的制度／为落实爱国者治理提供制度保障　｜　由点及面：①总→“一国两制”作为党和国家的大政方针，必须通过具体的制度体系、制度安排、制度规则呈现出来、落到实处②法→加强依法治理相关制度和机制建设。要善于运用法治思维和法治方式进行治理，强化法治意识，完善与香港、澳门特别行政区相关的法律制度和执行机制③权→健全中央行使全面管治权的制度。要依法行使宪法和基本法赋予中央的各项权力，健全特别行政区行政长官和政府依法施政的制度安排④爱→为落实爱国者治理提供制度保障。要继续发展壮大爱国爱港爱澳力量，增强港澳同胞的爱国精神，形成更广泛的爱国统一战线",
+ k:["破坏活动的体制机制","制度规则呈现出来","同内地优势互补","一国两制","制度安排","落到实处","使命感","颠覆"]},
+
+{p:"15 第十五章",t:"考点142、如何保持香港、澳门长期繁荣稳定",star:1,
+ q:"考点142、如何保持香港、澳门长期繁荣稳定",
+ a:"党的十八大以来，以习近平同志为核心的党中央全面准确推进“一国两制”实践，牢牢掌握宪法和基本法赋予的中央对香港、澳门全面管治权，深化内地和港澳地区交流合作，保持了香港、澳门长期繁荣稳定。第一，香港、澳门保持长期稳定发展良好态势。（1）香港、澳门回归祖国后，走上了同祖国内地优势互补、共同发展的宽广道路，“一国两制”实践取得举世公认的成功。实践充分证明，“一国两制”是保持港澳长期繁荣稳定的好制度，是保障港澳居民根本利益和福祉的好制度。（2）党的十八大以来，习近平多次强调必须一如既往、坚定不移贯彻“一国两制”方针，保持香港、澳门长期繁荣稳定。以习近平同志为核心的党中央的鲜明态度和有力支持，为港澳保持长期繁荣稳定提供了坚强后盾。（3）在中央政府和祖国内地的大力支持下，港澳的独特地位和优势得到不断巩固，始终保持蓬勃发展的生机活力。经济实现跨越式发展，居民生活持续改善，人均收入水平稳居世界前列，社会保持稳定和谐，多元文化交相辉映，国际影响力不断提升。第二，推动香港进入由乱到治走向由治及兴的新阶段。面对香港局势动荡变化，党中央审时度势，采取一系列标本兼治的举措，坚决维护以宪法和基本法为基础的特别行政区宪制秩序，推动香港局势实现由乱到治的重大转折。（1）建立健全香港特别行政区维护国家安全的法律制度和执行机制。中央政府对香港特别行政区有关的国家安全事务负有根本责任，香港特别行政区负有维护国家安全的宪制责任。（2）完善香港特别行政区选举制度。全面贯彻并落实“爱国者治港”原则，形成一套符合香港法律地位和实际情况的选举制度。（3）坚持以行政长官为核心的行政主导体制，支持行政长官和特别行政区政府依法施政、积极作为。行政长官和特别行政区政府是香港的当家人，也是治理香港的第一责任人。第三，支持香港、澳门融入国家发展大局。在新时代国家改革开放进程中，香港、澳门仍然具有特殊地位和独特优势，发挥着不可替代的作用。（1）积极主动助力国家全面开放。在国家扩大对外开放的过程中，香港、澳门的地位和作用只会加强，不会减弱。（2）积极主动参与粤港澳大湾区建设。建设粤港澳大湾区，是党中央立足全局和长远作出的重大决策，也是保持香港、澳门长期繁荣稳定的重大举措。（3）积极主动参与国家治理实践。要关心国家发展全局，维护国家政治体制，自觉维护国家安全。（4）积极主动促进国际人文交流。要保持香港、澳门国际性城市的特色，利用香港、澳门对外联系广泛的有利条件，传播中华优秀文化，宣介国家方针政策，讲好当代中国故事。",
+ m:"三块「势·治·融」＝保持长期稳定发展良好态势／推动香港由乱到治走向由治及兴／支持港澳融入国家发展大局；治港三招「国安法·选举制·行政主导」；融入三主动「助力开放·参与大湾区·参与国家治理」",
+ e:"①总→党的十八大以来，以习近平同志为核心的党中央全面准确推进“一国两制”实践，牢牢掌握宪法和基本法赋予的中央对香港、澳门的全面管治权②势→香港、澳门保持长期稳定发展良好态势：（1）香港、澳门回归祖国后，走上了同祖国内地优势互补、共同发展的宽广道路，“一国两制”实践取得举世公认的成功（2）必须一如既往、坚定不移贯彻“一国两制”方针，保持香港、澳门长期繁荣稳定（3）在中央政府和祖国内地的大力支持下，港澳的独特地位和优势得到不断巩固，始终保持蓬勃发展的生机活力③治→推动香港进入由乱到治走向由治及兴的新阶段。面对香港局势动荡变化，党中央审时度势，采取一系列标本兼治的举措（口诀「国安法·选举制·行政主导」）：（1）建立健全香港特别行政区维护国家安全的法律制度和执行机制（2）完善香港特别行政区选举制度，全面贯彻并落实“爱国者治港”原则（3）坚持以行政长官为核心的行政主导体制，支持行政长官和特别行政区政府依法施政、积极作为④融→支持香港、澳门融入国家发展大局（三个“积极主动”）：（1）积极主动助力国家全面开放。在国家扩大对外开放的过程中，香港、澳门的地位和作用只会加强，不会减弱（2）积极主动参与粤港澳大湾区建设。建设粤港澳大湾区，是党中央立足全局和长远作出的重大决策（3）积极主动参与国家治理实践。要关心国家发展全局，维护国家政治体制，自觉维护国家安全",
+ h:"口诀：三块「势·治·融」＝保持长期稳定发展良好态势／推动香港由乱到治走向由治及兴／支持港澳融入国家发展大局；治港三招「国安法·选举制·行政主导」；融入三主动「助力开放·参与大湾区·参与国家治理」　｜　由点及面：①总→党的十八大以来，以习近平同志为核心的党中央全面准确推进“一国两制”实践，牢牢掌握宪法和基本法赋予的中央对香港、澳门的全面管治权②势→香港、澳门保持长期稳定发展良好态势：（1）香港、澳门回归祖国后，走上了同祖国内地优势互补、共同发展的宽广道路，“一国两制”实践取得举世公认的成功（2）必须一如既往、坚定不移贯彻“一国两制”方针，保持香港、澳门长期繁荣稳定（3）在中央政府和祖国内地的大力支持下，港澳的独特地位和优势得到不断巩固，始终保持蓬勃发展的生机活力③治→推动香港进入由乱到治走向由治及兴的新阶段。面对香港局势动荡变化，党中央审时度势，采取一系列标本兼治的举措（口诀「国安法·选举制·行政主导」）：（1）建立健全香港特别行政区维护国家安全的法律制度和执行机制（2）完善香港特别行政区选举制度，全面贯彻并落实“爱国者治港”原则（3）坚持以行政长官为核心的行政主导体制，支持行政长官和特别行政区政府依法施政、积极作为④融→支持香港、澳门融入国家发展大局（三个“积极主动”）：（1）积极主动助力国家全面开放。在国家扩大对外开放的过程中，香港、澳门的地位和作用只会加强，不会减弱（2）积极主动参与粤港澳大湾区建设。建设粤港澳大湾区，是党中央立足全局和长远作出的重大决策（3）积极主动参与国家治理实践。要关心国家发展全局，维护国家政治体制，自觉维护国家安全",
+ k:["澳门融入国家发展大局","澳门长期繁荣稳定","党的十八大以来","爱国者治港","要保持香港","一国两制","积极作为","支持香港"]},
+
+{p:"15 第十五章",t:"考点143、如何推进祖国完全统一",star:1,
+ q:"考点143、如何推进祖国完全统一",
+ a:"解决台湾问题、实现祖国完全统一，是党矢志不渝的历史任务，是全体中华儿女的共同愿望，是实现中华民族伟大复兴的必然要求。党的十八大以来，以习近平同志为核心的党中央积极推进对台工作理论和实践创新，形成新时代党解决台湾问题的总体方略，牢牢把握两岸关系主导权和主动权，扎实推进祖国统一进程。第一，实现祖国完全统一是由中华民族伟大复兴的时和势决定的，是不可阻挡的历史潮流。今天我们比历史上任何时期都更接近、更有信心和能力实现祖国完全统一的目标。（1）民族复兴、国家统一是大势所趋、大义所在、民心所向。中华文明具有突出的统一性，国家统一永远是中国核心利益的核心。台湾问题因民族弱乱而产生，必将随着民族复兴而解决。（2）台湾前途在于国家统一，台湾同胞福祉系于民族复兴。两岸关系和平发展是维护两岸和平、促进两岸共同发展、造福两岸同胞的正确道路。（3）统一是历史大势，是正道；“台独”是历史逆流，是绝路。对两岸关系和平发展的最大现实威胁是“台独”势力及其分裂活动。第二，坚持贯彻新时代党解决台湾问题的总体方略。新时代党解决台湾问题的总体方略内涵丰富、逻辑严密、系统完备，深刻回答了推进祖国统一的一系列重大理论和实践问题，是我们党对台大政方针的继承发展和集大成。（1）必须坚持党中央对对台工作的集中统一领导，这是统一的根本保证；（2）坚持在中华民族伟大复兴进程中推进祖国统一，这是统一的历史方位；（3）坚持在祖国大陆发展进步基础上解决台湾问题，这是统一的战略思路；（4）坚持“和平统一、一国两制”基本方针，这是统一的大政方针；（5）坚持一个中国原则和“九二共识”,这是统一的政治基础；（6）坚持推动两岸关系和平发展、融合发展，这是统一的实践途径；（7）坚持团结台湾同胞、争取台湾民心，这是统一的根本动力；（8）坚持粉碎“台独”分裂图谋，这是统一的必然要求；（9）坚持反对外部势力干涉，这是统一的外部条件；（10）坚持决不承诺放弃使用武力，这是统一的战略支撑。第三，牢牢把握两岸关系主导权和主动权。把握两岸关系主导权和主动权，推动两岸关系朝着正确方向发展，必须坚持一个中国原则和“九二共识”,坚决反对“台独”分裂行径，坚决反对外部势力干涉。（1）“和平统一、一国两制”方针是实现两岸统一的最佳方式。“和平统、一国两制”,既充分考虑台湾现实情况，又有利于统一后台湾长治久安，对两岸同胞和全民族最有利。（2）促进两岸经济文化交流合作，深化两岸各领域融合发展。积极推进两岸经济合作制度化，打造两岸共同市场，壮大中华民族经济。（3）坚持以最大诚意、尽最大努力争取和平统一的前景，但决不承诺放弃使用武力。确保国家主权和领土完整是国家核心利益，是一条不可逾越的红线。",
+ m:"「时·略·导」＝由民族复兴的时和势决定（不可阻挡的历史潮流）／贯彻新时代党解决台湾问题的总体方略十条／牢牢把握两岸关系主导权和主动权；总体方略十条定位口诀「保·位·路·方·基·途·动·求·外·武」",
+ e:"①总→解决台湾问题、实现祖国完全统一，是党矢志不渝的历史任务，是全体中华儿女的共同愿望，是实现中华民族伟大复兴的必然要求②时→实现祖国完全统一是由中华民族伟大复兴的时和势决定的，是不可阻挡的历史潮流：（1）民族复兴、国家统一是大势所趋、大义所在、民心所向。中华文明具有突出的统一性，国家统一永远是中国核心利益的核心（2）台湾前途在于国家统一，台湾同胞福祉系于民族复兴。两岸关系和平发展是维护两岸和平、促进两岸共同发展的正确道路（3）统一是历史大势，是正道；“台独”是历史逆流，是绝路。对两岸关系和平发展的最大现实威胁是“台独”分裂行径③略→坚持贯彻新时代党解决台湾问题的总体方略，十条定位口诀「保位路方基，途径动求外武」：（1）坚持党中央对对台工作的集中统一领导，这是统一的根本保证（2）坚持在中华民族伟大复兴进程中推进祖国统一，这是统一的历史方位（3）坚持在祖国大陆发展进步基础上解决台湾问题，这是统一的战略思路（4）坚持“和平统一、一国两制”基本方针，这是统一的大政方针（5）坚持一个中国原则和“九二共识”，这是统一的政治基础（6）坚持推动两岸关系和平发展、融合发展，这是统一的实践途径（7）坚持团结台湾同胞、争取台湾民心，这是统一的根本动力（8）坚持粉碎“台独”分裂图谋，这是统一的必然要求（9）坚持反对外部势力干涉，这是统一的外部条件（10）坚持决不承诺放弃使用武力，这是统一的战略支撑④导→牢牢把握两岸关系主导权和主动权：（1）“和平统一、一国两制”方针是实现两岸统一的最佳方式，既充分考虑台湾现实情况，又有利于统一后台湾长治久安（2）促进两岸经济文化交流合作，深化两岸各领域融合发展。积极推进两岸经济合作制度化，打造两岸共同市场，壮大中华民族经济（3）坚持以最大诚意、尽最大努力争取和平统一的前景，但决不承诺放弃使用武力。确保国家主权和领土完整是国家核心利益，是一条不可逾越的红线",
+ h:"口诀：「时·略·导」＝由民族复兴的时和势决定（不可阻挡的历史潮流）／贯彻新时代党解决台湾问题的总体方略十条／牢牢把握两岸关系主导权和主动权；总体方略十条定位口诀「保·位·路·方·基·途·动·求·外·武」　｜　由点及面：①总→解决台湾问题、实现祖国完全统一，是党矢志不渝的历史任务，是全体中华儿女的共同愿望，是实现中华民族伟大复兴的必然要求②时→实现祖国完全统一是由中华民族伟大复兴的时和势决定的，是不可阻挡的历史潮流：（1）民族复兴、国家统一是大势所趋、大义所在、民心所向。中华文明具有突出的统一性，国家统一永远是中国核心利益的核心（2）台湾前途在于国家统一，台湾同胞福祉系于民族复兴。两岸关系和平发展是维护两岸和平、促进两岸共同发展的正确道路（3）统一是历史大势，是正道；“台独”是历史逆流，是绝路。对两岸关系和平发展的最大现实威胁是“台独”分裂行径③略→坚持贯彻新时代党解决台湾问题的总体方略，十条定位口诀「保位路方基，途径动求外武」：（1）坚持党中央对对台工作的集中统一领导，这是统一的根本保证（2）坚持在中华民族伟大复兴进程中推进祖国统一，这是统一的历史方位（3）坚持在祖国大陆发展进步基础上解决台湾问题，这是统一的战略思路（4）坚持“和平统一、一国两制”基本方针，这是统一的大政方针（5）坚持一个中国原则和“九二共识”，这是统一的政治基础（6）坚持推动两岸关系和平发展、融合发展，这是统一的实践途径（7）坚持团结台湾同胞、争取台湾民心，这是统一的根本动力（8）坚持粉碎“台独”分裂图谋，这是统一的必然要求（9）坚持反对外部势力干涉，这是统一的外部条件（10）坚持决不承诺放弃使用武力，这是统一的战略支撑④导→牢牢把握两岸关系主导权和主动权：（1）“和平统一、一国两制”方针是实现两岸统一的最佳方式，既充分考虑台湾现实情况，又有利于统一后台湾长治久安（2）促进两岸经济文化交流合作，深化两岸各领域融合发展。积极推进两岸经济合作制度化，打造两岸共同市场，壮大中华民族经济（3）坚持以最大诚意、尽最大努力争取和平统一的前景，但决不承诺放弃使用武力。确保国家主权和领土完整是国家核心利益，是一条不可逾越的红线",
+ k:["台湾前途在于国家统一","和平统一、一国两制","国家统一是大势所趋","和平统、一国两制","促进两岸共同发展","统一是历史大势","解决台湾问题","坚持“和平统"]}
+];
+
+const KEY_STORE='bs-mn-15_第十五章-v1';
+let state=JSON.parse(localStorage.getItem(KEY_STORE)||'{}');
+let filter='all', mode='seg', order=DECK.map((_,i)=>i), idx=0, flipped=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function deck(){
+  let list=order.filter(i=>{
+    const c=DECK[i], st=state[i]||{};
+    if(filter==='star') return c.star===1;
+    if(filter==='learning') return (st.streak||0)<2;
+    if(filter==='mastered') return (st.streak||0)>=2;
+    return true;
+  });
+  return list.length?list:[0];
+}
+
+function segsOf(text){
+  const raw=text.match(/[^。，；、？！]+[。，；、？！]?/g)||[text];
+  return raw.map(s=>s.trim()).filter(Boolean);
+}
+function renderSeg(text){
+  return segsOf(text).map(s=>
+    s.replace(/\s/g,'').length>=2?`<span class="cloze">${esc(s)}</span>`:esc(s)
+  ).join('');
+}
+function renderKey(text,terms){
+  const ts=[...new Set(terms||[])].sort((a,b)=>b.length-a.length);
+  let out=esc(text);
+  ts.forEach(t=>{
+    const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+    out=out.replace(re,m=>`<span class="cloze">${m}</span>`);
+  });
+  return out;
+}
+
+function render(){
+  const list=deck();
+  if(idx>=list.length) idx=0;
+  if(idx<0) idx=list.length-1;
+  const i=list[idx], c=DECK[i], st=state[i]||{streak:0};
+  const star=c.star?'★★★':'';
+  const no=`卡 ${i+1} / ${DECK.length}`;
+
+  ['f','b'].forEach(f=>{
+    $(f+'-part').textContent=c.p;
+    $(f+'-no').textContent=no;
+    $(f+'-star').textContent=star;
+  });
+  $('f-q').textContent=c.q;
+  $('b-q').textContent=c.q;
+  $('b-mnem').textContent=c.m||'';
+  const ex=(c.e||'').split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).filter(s=>s.trim());
+  $('b-expand').innerHTML=ex.length?('<ol>'+ex.map(function(s){
+    const t=s.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]/,'').trim();
+    const k=t.indexOf('→');
+    return '<li>'+(k>0?'<b>'+esc(t.slice(0,k))+'</b>　'+esc(t.slice(k+1)):esc(t))+'</li>';
+  }).join('')+'</ol>'):'';
+  $('b-a').innerHTML=esc(c.a);
+  $('f-a').innerHTML = mode==='seg' ? renderSeg(c.a) : renderKey(c.a,c.k);
+
+  const days=['第 1 天','第 3 天','第 7 天','第 15 天'];
+  const s=st.streak||0;
+  $('f-due').textContent = s>=2 ? '已毕业' : '下次复习 '+(days[Math.min(s,3)]||'第 15 天');
+
+  $('toggleAll').textContent='全部显示';
+  $('toggleAll').classList.remove('on');
+
+  const done=DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  $('prog').style.width=(done/DECK.length*100)+'%';
+  $('card').classList.toggle('flip',flipped);
+  updateToc(done);
+}
+
+function buildToc(){
+  const groups=[];
+  DECK.forEach((c,i)=>{
+    let g=groups.find(x=>x.p===c.p);
+    if(!g){ g={p:c.p,items:[]}; groups.push(g); }
+    g.items.push(i);
+  });
+  $('toc-body').innerHTML=groups.map(g=>`
+    <div class="toc-g">
+      <h6>${esc(g.p)}<span class="cnt"></span></h6>
+      <ul>${g.items.map(i=>`
+        <li data-i="${i}">
+          <span class="tn">${i+1}</span>
+          <span class="tt">${esc(DECK[i].t)}</span>
+          ${DECK[i].star?'<span class="ts">★★★</span>':''}
+          <span class="td"></span>
+        </li>`).join('')}</ul>
+    </div>`).join('');
+  $('toc-body').addEventListener('click',e=>{
+    const li=e.target.closest('li');
+    if(li) jumpTo(+li.dataset.i);
+  });
+}
+
+function updateToc(done){
+  if(!$('toc-body').children.length) return;
+  const cur=deck()[idx];
+  document.querySelectorAll('#toc-body li').forEach(li=>{
+    const i=+li.dataset.i, s=(state[i]||{streak:0}).streak||0;
+    li.classList.toggle('cur', i===cur);
+    li.classList.toggle('done', s>=2);
+    li.classList.toggle('half', s>0&&s<2);
+    li.querySelector('.td').textContent = s>=2?'✓':(s>0?'◐':'');
+  });
+  document.querySelectorAll('#toc-body .toc-g').forEach(g=>{
+    const lis=[...g.querySelectorAll('li')];
+    g.querySelector('.cnt').textContent = lis.filter(l=>l.classList.contains('done')).length+' / '+lis.length;
+  });
+  const total=DECK.length, d=(done!==undefined)?done:DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  const half=DECK.filter((_,j)=>{const s=(state[j]||{streak:0}).streak||0;return s>0&&s<2;}).length;
+  $('tocSum').textContent=`已掌握 ${d} / ${total}　记住过一次 ${half}　未背 ${total-d-half}`;
+}
+
+function openToc(){ $('toc').classList.add('on'); $('tocMask').classList.add('on'); $('tocBtn').classList.add('on'); }
+function closeToc(){ $('toc').classList.remove('on'); $('tocMask').classList.remove('on'); $('tocBtn').classList.remove('on'); }
+function toggleToc(){ $('toc').classList.contains('on')?closeToc():openToc(); }
+
+function jumpTo(i){
+  if(filter!=='all'){
+    filter='all';
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  }
+  const p=deck().indexOf(i);
+  if(p>=0){ idx=p; flipped=false; render(); closeToc(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function flip(){ flipped=!flipped; $('card').classList.toggle('flip',flipped); }
+function go(d){ const l=deck(); idx=(idx+d+l.length)%l.length; flipped=false; render(); }
+function mark(ok){
+  const list=deck(), i=list[idx], st=state[i]||{streak:0,last:0};
+  st.streak = ok ? Math.min((st.streak||0)+1,4) : 0;
+  st.last=Date.now();
+  state[i]=st; localStorage.setItem(KEY_STORE,JSON.stringify(state));
+  if(filter==='learning'||filter==='mastered'){ idx=0; render(); }
+  else { go(1); }
+}
+
+$('f-a').addEventListener('click',e=>{
+  const el=e.target.closest('.cloze');
+  if(el) el.classList.toggle('on');
+});
+$('toggleAll').addEventListener('click',()=>{
+  const cs=[...document.querySelectorAll('#f-a .cloze')];
+  const allOn=cs.length&&cs.every(c=>c.classList.contains('on'));
+  cs.forEach(c=>c.classList.toggle('on',!allOn));
+  $('toggleAll').textContent=allOn?'全部显示':'全部隐藏';
+  $('toggleAll').classList.toggle('on',!allOn);
+});
+document.querySelectorAll('[data-m]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+document.querySelectorAll('[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f; idx=0;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+$('tocBtn').addEventListener('click',toggleToc);
+$('tocBtn2').addEventListener('click',toggleToc);
+$('tocX').addEventListener('click',closeToc);
+$('tocMask').addEventListener('click',closeToc);
+$('shuffle').addEventListener('click',()=>{
+  order=DECK.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  idx=0; render();
+});
+$('reset').addEventListener('click',()=>{
+  if(confirm('清空全部掌握进度？')){ state={}; localStorage.removeItem(KEY_STORE); idx=0; render(); }
+});
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('flip').addEventListener('click',flip);
+$('got').addEventListener('click',()=>mark(true));
+$('again').addEventListener('click',()=>mark(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key===' '){flip();e.preventDefault();}
+  else if(k==='f'){$('toggleAll').click();}
+  else if(k==='m'){mode = mode==='seg'?'key':'seg';document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===mode));render();}
+  else if(k==='g'){mark(true);}
+  else if(k==='r'){mark(false);}
+  else if(k==='s'){$('shuffle').click();}
+  else if(k==='t'){toggleToc();}
+  else if(e.key==='Escape'){closeToc();}
+});
+
+buildToc();
+render();
+</script>
+</body>
+</html>
