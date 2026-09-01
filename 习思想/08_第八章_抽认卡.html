@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第八章 · 背诵抽认卡</title>
+<style>
+:root{
+  --bg:#12141a; --surface:#1a1d26; --surface-2:#21252f; --line:#2c313d;
+  --text:#e6e8ee; --muted:#98a0b0; --faint:#6c7488;
+  --accent:#1D9E75; --accent-soft:#5DCAA5; --accent-dim:rgba(93,202,165,.14);
+  --star:#EF9F27; --danger:#E24B4A;
+  --mask:#2b3240; --mask-hover:#394154;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; padding:24px 18px 60px;
+}
+.wrap{max-width:820px;margin:0 auto}
+
+header{margin-bottom:18px}
+h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+.sub{color:var(--faint);font-size:13px;margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  padding:5px 12px; border-radius:99px; font-size:13px; cursor:pointer;
+  transition:.15s; user-select:none;
+}
+.chip:hover{border-color:var(--faint);color:var(--text)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.spacer{flex:1}
+
+.progress{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{
+  margin-top:18px; perspective:2000px;
+}
+.faces{
+  position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.card.flip .faces{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 22px; min-height:360px;
+}
+.faces{display:grid}
+.front{transform:none}
+.back{transform:rotateY(180deg)}
+
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);margin-bottom:14px}
+.tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 9px;border-radius:6px;color:var(--muted)}
+.star{color:var(--star)}
+.q{font-size:19px;font-weight:600;line-height:1.6;margin-bottom:6px}
+.qhint{font-size:12px;color:var(--faint);margin-bottom:18px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--faint);color:var(--text)}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.tip{font-size:12px;color:var(--faint);margin-left:auto}
+
+.answer{font-size:16px;line-height:2.05;letter-spacing:.2px}
+.cloze{
+  background:var(--mask); color:transparent; border-radius:4px; cursor:pointer;
+  padding:1px 3px; transition:background .12s,color .12s;
+  box-decoration-break:clone; -webkit-box-decoration-break:clone;
+}
+.cloze:hover{background:var(--mask-hover)}
+.cloze.on{background:var(--accent-dim);color:var(--text)}
+.cloze.on:hover{background:rgba(93,202,165,.24)}
+
+.sec{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.sec h4{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:1px;margin-bottom:8px}
+.sec p{font-size:15px;line-height:1.9;color:var(--text)}
+.hook{color:var(--accent-soft)}
+.mnem{background:var(--accent-dim);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 14px;font-size:16px;line-height:1.95;color:var(--accent-soft);
+  font-weight:600;letter-spacing:.4px}
+.expand{margin-top:13px}
+.expand ol{list-style:none;counter-reset:ex}
+.expand li{position:relative;padding:8px 0 8px 33px;font-size:14.5px;line-height:1.95;color:var(--text);
+  border-bottom:1px dashed var(--line)}
+.expand li:last-child{border-bottom:none}
+.expand li::before{content:counter(ex);counter-increment:ex;position:absolute;left:0;top:11px;
+  width:21px;height:21px;border-radius:50%;background:var(--accent);color:#0b0e14;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+.expand li b{color:var(--accent-soft);font-weight:600}
+.plain{font-size:15.5px;line-height:2.0;color:var(--text)}
+
+nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.btn-lg{padding:9px 18px;font-size:14px}
+.btn-ok{border-color:var(--accent);color:var(--accent-soft)}
+.btn-ok:hover{background:var(--accent-dim)}
+.btn-bad{border-color:#5a3030;color:#e08b8b}
+.btn-bad:hover{background:rgba(226,75,74,.12)}
+
+.keys{margin-top:16px;font-size:12px;color:var(--faint);line-height:2}
+kbd{
+  background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+}
+details{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--faint)}
+details[open] summary:before{content:"▾ "}
+details h5{font-size:13px;color:var(--accent-soft);margin:14px 0 6px;font-weight:500}
+details li{font-size:13px;color:var(--muted);line-height:1.9;list-style:none;padding-left:2px}
+details li:before{content:"· ";color:var(--faint)}
+.due{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+.toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+.toc-mask.on{opacity:1;pointer-events:auto}
+.toc{
+  position:fixed;top:0;left:0;height:100%;width:min(430px,90vw);z-index:50;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,.2,.2,1);
+  overflow-y:auto;padding:22px 20px 50px;
+}
+.toc.on{transform:none}
+.toc-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.toc-head h3{font-size:16px;font-weight:600}
+.toc-x{margin-left:auto;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;padding:2px 7px;border-radius:6px}
+.toc-x:hover{background:var(--surface-2);color:var(--text)}
+.toc-sum{font-size:12px;color:var(--faint);margin-bottom:18px}
+.toc-g{margin-bottom:18px}
+.toc-g h6{
+  font-size:12px;font-weight:500;color:var(--accent-soft);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--line);
+}
+.toc-g h6 .cnt{margin-left:auto;color:var(--faint);font-size:11px}
+.toc-g ul{list-style:none}
+.toc-g li{
+  display:flex;align-items:baseline;gap:9px;padding:6px 9px;border-radius:8px;
+  font-size:13.5px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.toc-g li:hover{background:var(--surface-2);color:var(--text)}
+.toc-g li .tn{flex:none;width:22px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint)}
+.toc-g li .tt{flex:1;line-height:1.5}
+.toc-g li .ts{flex:none;font-size:9px;color:var(--star);letter-spacing:-.5px}
+.toc-g li .td{flex:none;width:14px;text-align:center;font-size:12px;color:var(--faint)}
+.toc-g li.half .td{color:var(--star)}
+.toc-g li.done .td{color:var(--accent)}
+.toc-g li.done .tt{color:var(--faint)}
+.toc-g li.cur{background:var(--accent-dim);color:var(--text)}
+.toc-g li.cur .tn{color:var(--accent-soft)}
+.toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="home-link" href="../index.html">← 章节导航</a>
+  <h1>第八章 · 背诵抽认卡</h1>
+  <div class="sub">x背诵资料正式版 · 12 个考点 · 重点 4 张 · 逐条口诀</div>
+  <div class="bar">
+    <span class="chip on" data-f="all">全部</span>
+    <span class="chip" data-f="star">重点 ★★★</span>
+    <span class="chip" data-f="learning">学习中</span>
+    <span class="chip" data-f="mastered">已掌握</span>
+    <span class="spacer"></span>
+    <span class="chip" id="tocBtn">目录</span>
+    <span class="chip" id="shuffle">打乱</span>
+    <span class="chip" id="reset">重置进度</span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</header>
+
+<div class="card" id="card">
+  <div class="faces">
+    <section class="face front">
+      <div class="meta">
+        <span class="tag" id="f-part"></span>
+        <span id="f-no"></span>
+        <span class="star" id="f-star"></span>
+        <span class="spacer"></span>
+        <span class="due" id="f-due"></span>
+      </div>
+      <div class="q" id="f-q"></div>
+      <div class="qhint">先口述或默写，再点色块逐句核对</div>
+      <div class="tools">
+        <button class="btn on" data-m="seg">逐句挖空</button>
+        <button class="btn" data-m="key">只挖关键</button>
+        <button class="btn" id="toggleAll">全部显示</button>
+        <span class="tip">点色块 → 显现；再点 → 盖回去</span>
+      </div>
+      <div class="answer" id="f-a"></div>
+    </section>
+
+    <section class="face back">
+      <div class="meta">
+        <span class="tag" id="b-part"></span>
+        <span id="b-no"></span>
+        <span class="star" id="b-star"></span>
+      </div>
+      <div class="q" id="b-q"></div>
+      <div class="sec">
+        <h4>记忆口诀</h4>
+        <div class="mnem" id="b-mnem"></div>
+        <div class="expand" id="b-expand"></div>
+      </div>
+      <div class="sec">
+        <h4>完整答案</h4>
+        <div class="plain" id="b-a"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav>
+  <button class="btn btn-lg" id="tocBtn2">目录</button>
+  <button class="btn btn-lg" id="prev">← 上一张</button>
+  <button class="btn btn-lg" id="flip">翻面</button>
+  <button class="btn btn-lg" id="next">下一张 →</button>
+  <span class="spacer"></span>
+  <button class="btn btn-lg btn-bad" id="again">再看看</button>
+  <button class="btn btn-lg btn-ok" id="got">记住了</button>
+</nav>
+
+<div class="keys">
+  <kbd>←</kbd> <kbd>→</kbd> 切换　<kbd>空格</kbd> 翻面　<kbd>F</kbd> 全部显示/隐藏　<kbd>M</kbd> 切换挖空模式　<kbd>G</kbd> 记住了　<kbd>R</kbd> 再看看　<kbd>T</kbd> 目录　<kbd>Esc</kbd> 关闭　<kbd>S</kbd> 打乱
+</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<aside class="toc" id="toc">
+  <div class="toc-head">
+    <h3>目录</h3>
+    <span class="toc-x" id="tocX">×</span>
+  </div>
+  <div class="toc-sum" id="tocSum"></div>
+  <div id="toc-body"></div>
+  <div class="toc-foot">
+    <span style="color:var(--accent)">✓</span> 已掌握（连续两次记住）<br>
+    <span style="color:var(--star)">◐</span> 记住过一次　·　空白＝还没背<br>
+    点任意一条直接跳过去，<kbd>T</kbd> 开关目录
+  </div>
+</aside>
+
+<details>
+  <summary>关于本卡组</summary>
+  <ul>
+    <li>来源：x背诵资料正式版.docx「第八章」，共 12 个考点，逐一成卡。</li>
+    <li>正面＝考点原文全文，逐句挖空，点色块显现、再点盖回。</li>
+    <li>背面「记忆口诀」为逐条编写的<b>由点及面</b>口诀：口诀里每个字对应一条，下方按 ①②③ 逐条展开成完整表述。<b>先背口诀，再对着编号把每条复述出来。</b></li>
+    <li>标注 <span style="color:#EF9F27">★★★</span> 的是本章篇幅最大的考点（篇幅排前 1/3，多为论述题量级）。</li>
+    <li>建议：正面用「逐句挖空」默写全文，翻面用「口诀＋展开」核对要点；考前用「只挖关键」速扫。</li>
+  </ul>
+</details>
+
+</div>
+
+<script>
+const DECK = [
+{p:"08 第八章",t:"考点76、如何理解人民民主是社会主义的生命",star:0,
+ q:"考点76、如何理解人民民主是社会主义的生命",
+ a:"第一，民主是全人类共同价值，是人类政治文明发展的成果。民主是历史的， 一个国家的民主制度是在这个国家的社会历史条件下形成的，植根于本国的历史文化传统，成长于本国人民的政治实践探索和智慧创造。民主是具体的，一个国家实行什么样的民主制度，走什么样的民主发展道路，必须与这个国家的国情相适应。第二，民主是中国共产党和中国人民始终不渝坚持的重要理念。（1）新民主主义革命 时期，党领导人民为争取民主、反抗压迫和剥削进行了艰苦卓绝的斗争，我国民主发展进入新纪元，人民当家作主从梦想变为现实；（2）社会主义革命和建设时期，人民当家作主的政治架构、经济基础、法律原则、制度框架基本确立并不断发展，我国人民民主大厦巍然耸立；（3）改革开放和社会主义现代化建设新时期，党领导人民坚定不移推进社会主义民主法治建设，民主发展的政治制度保障和社会物质基础更加坚实；（4）中国特色社会主义新时代，以习近平同志为核心的党中央积极回应人民对民主的新要求新期盼，团结带领人民发展全过程人民民主，健全人民当家作主制度体系，我国社会主义民主发展取得新的历史性成就。第三，人民民主建立在社会主义经济基础之上，体现了社会主义国家的性质，反映了社会主义制度的本质要求，是一种新型的社会主义民主。在我国，国家一切权力属于人民，体现在国家根本性质即国体上，就是工人阶级领导的、以工农联盟为基础的人民民主专政的社会主义国家；体现在国家政权组织形式即政体上，就是人民通过各级人民代表大会行使国家权力。第四，人民民主是全面建设社会主义现代化国家的应有之义。发展社会主义民主政治，是全面建设社会主义现代化国家的内在要求和重要目标。社会主义现代化是全体人民的现代化，必然要求具有高度发达的民主政治，以实现好、维护好、发展好最广大人民根本利益为出发点和落脚点，保障人民当家作主，不断推动人的全面发展。全面建成社会主义现代化强国，人民是决定性力量。历史和实践证明，人民民主是社会主义的生命，没有民主就没有社会主义，就没有社会主义的现代化，就没有中华民族伟大复兴。社会主义愈发展，民主也愈发展。在全面建设社会主义现代化国家新征程上，要继续高举人民民主旗帜，坚定不移走适合中国国情的政治发展道路，为中国式民主发展不断注入新的动力。",
+ m:"四条「价·历·性·义」＝民主是全人类共同价值／党始终坚持的重要理念／体现社会主义国家性质／是现代化建设的应有之义；历程四时期「新·社·改·新」",
+ e:"①价→民主是全人类共同价值，是人类政治文明发展的成果。民主是历史的，一个国家的民主制度是在这个国家历史传承、文化传统、经济社会发展的基础上长期演进的结果②历→民主是中国共产党和中国人民始终不渝坚持的重要理念（口诀「新社改新」）：（1）新民主主义革命时期，党领导人民为争取民主、反抗压迫和剥削进行了艰苦卓绝的斗争（2）社会主义革命和建设时期，人民当家作主的政治架构、经济基础、法律原则、制度框架基本确立并不断发展（3）改革开放和社会主义现代化建设新时期，党领导人民坚定不移推进社会主义民主法治建设（4）中国特色社会主义新时代，党中央积极回应人民对民主的新要求新期盼，提出全过程人民民主③性→人民民主建立在社会主义经济基础之上，体现了社会主义国家的性质，反映了社会主义制度的本质要求④义→人民民主是全面建设社会主义现代化国家的应有之义。发展社会主义民主政治，是全面建设社会主义现代化国家的重要目标和重要保证",
+ h:"口诀：四条「价·历·性·义」＝民主是全人类共同价值／党始终坚持的重要理念／体现社会主义国家性质／是现代化建设的应有之义；历程四时期「新·社·改·新」　｜　由点及面：①价→民主是全人类共同价值，是人类政治文明发展的成果。民主是历史的，一个国家的民主制度是在这个国家历史传承、文化传统、经济社会发展的基础上长期演进的结果②历→民主是中国共产党和中国人民始终不渝坚持的重要理念（口诀「新社改新」）：（1）新民主主义革命时期，党领导人民为争取民主、反抗压迫和剥削进行了艰苦卓绝的斗争（2）社会主义革命和建设时期，人民当家作主的政治架构、经济基础、法律原则、制度框架基本确立并不断发展（3）改革开放和社会主义现代化建设新时期，党领导人民坚定不移推进社会主义民主法治建设（4）中国特色社会主义新时代，党中央积极回应人民对民主的新要求新期盼，提出全过程人民民主③性→人民民主建立在社会主义经济基础之上，体现了社会主义国家的性质，反映了社会主义制度的本质要求④义→人民民主是全面建设社会主义现代化国家的应有之义。发展社会主义民主政治，是全面建设社会主义现代化国家的重要目标和重要保证",
+ k:["社会主义革命和建设时期","中国特色社会主义新时代","民主是全人类共同价值","新民主主义革命 时期","经济基础","法律原则","维护好"]},
+
+{p:"08 第八章",t:"考点77、中国特色社会主义政治制度行得通、有生命力、有效率",star:0,
+ q:"考点77、中国特色社会主义政治制度行得通、有生命力、有效率",
+ a:"中国特色社会主义政治制度是中国共产党带领中国人民在革命、建设、改革的长期实践中形成的，集中体现了我国人民民主的本质属性，是保证人民当家作主科学有效的制度安排。第一，中国特色社会主义政治制度是由根本政治制度、基本政治制度、重要政治制度等组成的制度体系。人民代表大会制度是坚持党的领导、人民当家作主、依法治国有机统一的根本政治制度安排。第二，中国特色社会主义政治制度具有鲜明的中国特色。中国特色社会主义政治制度，是中国共产党团结带领中国人民，坚持以马克思主义为指导，坚持从国情出发、从实际出发确立起来的人民当家作主制度体系。第三，中国特色社会主义政治制度在实践中显示出巨大优势。事实证明，中国特色社会主义政治制度是中国共产党和中国人民的伟大创造，是具有强大自我完善和自我发展能力、强大生命力和显著优越性的先进制度。第四，党的十八大以来，我们坚持走中国特色社会主义政治发展道路，全面发展全过程人民民主，坚持和完善支撑中国特色社会主义制度的根本政治制度、基本政治制度、重要政治制度，推进协商民主广泛多层制度化发展，基层民主活力增强，人民当家作主更为扎实。",
+ m:"「组·特·优·成」＝制度组成／鲜明特色／巨大优势／发展成就；构成「一根本·三基本·加重要」",
+ e:"①总→中国特色社会主义政治制度是中国共产党带领中国人民在革命、建设、改革的长期实践中形成的，集中体现了我国政治制度的优势和特点②组→由根本政治制度、基本政治制度、重要政治制度等组成：人民代表大会制度是我国的根本政治制度；中国共产党领导的多党合作和政治协商制度、民族区域自治制度、基层群众自治制度构成基本政治制度；重要政治制度是建立在根本和基本政治制度基础上、由其派生形成的（口诀「一根本、三基本、加重要」）③特→具有鲜明的中国特色：是中国共产党团结带领中国人民在长期实践中形成的，扎根中国土壤、汲取中华优秀传统文化养分，不照搬西方政治制度模式④优→在实践中显示出巨大优势：能够集中力量办大事，保持国家长期稳定，促进经济社会快速发展，实现人民当家作主⑤成→党的十八大以来，我们坚持走中国特色社会主义政治发展道路，全面发展全过程人民民主，坚持和完善支撑中国特色社会主义制度的根本制度、基本制度、重要制度，社会主义民主政治制度化、规范化、程序化全面推进",
+ h:"口诀：「组·特·优·成」＝制度组成／鲜明特色／巨大优势／发展成就；构成「一根本·三基本·加重要」　｜　由点及面：①总→中国特色社会主义政治制度是中国共产党带领中国人民在革命、建设、改革的长期实践中形成的，集中体现了我国政治制度的优势和特点②组→由根本政治制度、基本政治制度、重要政治制度等组成：人民代表大会制度是我国的根本政治制度；中国共产党领导的多党合作和政治协商制度、民族区域自治制度、基层群众自治制度构成基本政治制度；重要政治制度是建立在根本和基本政治制度基础上、由其派生形成的（口诀「一根本、三基本、加重要」）③特→具有鲜明的中国特色：是中国共产党团结带领中国人民在长期实践中形成的，扎根中国土壤、汲取中华优秀传统文化养分，不照搬西方政治制度模式④优→在实践中显示出巨大优势：能够集中力量办大事，保持国家长期稳定，促进经济社会快速发展，实现人民当家作主⑤成→党的十八大以来，我们坚持走中国特色社会主义政治发展道路，全面发展全过程人民民主，坚持和完善支撑中国特色社会主义制度的根本制度、基本制度、重要制度，社会主义民主政治制度化、规范化、程序化全面推进",
+ k:["党的十八大以来","基本政治制度","人民当家作主","建设"]},
+
+{p:"08 第八章",t:"考点78、如何坚定不移走中国特色社会主义政治发展道路",star:0,
+ q:"考点78、如何坚定不移走中国特色社会主义政治发展道路",
+ a:"中国特色社会主义政治发展道路，是近代以来中国人民长期奋斗历史逻辑、理论逻辑、实践逻辑的必然结果，是坚持党的本质属性、践行党的根本宗旨的必然要求。事实充分证明，中国社会主义民主政治具有强大生命力，中国特色社会主义政治发展道路是符合中国国情、保证人民当家作主的正确道路。第一，走中国特色社会主义政治发展道路，必须坚持党的领导、人民当家作主、依法治国有机统一。党的领导是人民当家作主和依法治国的根本保证，人民当家作主是社会主义民主政治的本质特征，依法治国是党领导人民治理国家的基本方式，三者统一于我国社会主义民主政治伟大实践。走中国特色社会主义政治发展道路，最根本的是坚持党的领导。第二，走中国特色社会主义政治发展道路，必须积极稳妥推进政治体制改革。改革开放以来，我们在坚持根本政治制度、基本政治制度的基础上，不断深化政治体制 改革，推进制度体系完善和发展，为保持我国政治制度的活力提供了重要体制机制保障。第三，走中国特色社会主义政治发展道路，必须始终保持政治定力。如果这一点把握不好、把握不牢，走偏了方向，不仅社会主义民主很难发展好，而且会给党和人民的事业带来损害。必须始终保持清醒的政治头脑，始终保持战略定力。不能用单一的标尺衡量世界丰富多彩的政治制度、用单调的眼光审视人类五彩缤纷的政治文明，也不能割断历史、想象突然就搬来一座政治制度上的“飞来峰”。",
+ m:"三要求「统·改·定」＝坚持党的领导、人民当家作主、依法治国有机统一／积极稳妥推进政治体制改革／始终保持政治定力",
+ e:"①总→中国特色社会主义政治发展道路，是近代以来中国人民长期奋斗历史逻辑、理论逻辑、实践逻辑的必然结果，是坚持党的本质属性、践行党的根本宗旨的必然要求②统→走中国特色社会主义政治发展道路，必须坚持党的领导、人民当家作主、依法治国有机统一。党的领导是人民当家作主和依法治国的根本保证，人民当家作主是社会主义民主政治的本质和核心，依法治国是党领导人民治理国家的基本方式③改→必须积极稳妥推进政治体制改革。改革开放以来，我们在坚持根本政治制度、基本政治制度的前提下，不断推进政治体制改革，社会主义民主政治建设取得重大进展④定→必须始终保持政治定力。如果这一点把握不好、把握不牢，走偏了方向，不仅政治文明建设很难搞好，而且会给党和国家事业带来灾难",
+ h:"口诀：三要求「统·改·定」＝坚持党的领导、人民当家作主、依法治国有机统一／积极稳妥推进政治体制改革／始终保持政治定力　｜　由点及面：①总→中国特色社会主义政治发展道路，是近代以来中国人民长期奋斗历史逻辑、理论逻辑、实践逻辑的必然结果，是坚持党的本质属性、践行党的根本宗旨的必然要求②统→走中国特色社会主义政治发展道路，必须坚持党的领导、人民当家作主、依法治国有机统一。党的领导是人民当家作主和依法治国的根本保证，人民当家作主是社会主义民主政治的本质和核心，依法治国是党领导人民治理国家的基本方式③改→必须积极稳妥推进政治体制改革。改革开放以来，我们在坚持根本政治制度、基本政治制度的前提下，不断推进政治体制改革，社会主义民主政治建设取得重大进展④定→必须始终保持政治定力。如果这一点把握不好、把握不牢，走偏了方向，不仅政治文明建设很难搞好，而且会给党和国家事业带来灾难",
+ k:["如果这一点把握不好","依法治国有机统一","人民当家作主","理论逻辑","飞来峰"]},
+
+{p:"08 第八章",t:"考点79、如何理解全过程人民民主是社会主义民主政治的伟大创造",star:0,
+ q:"考点79、如何理解全过程人民民主是社会主义民主政治的伟大创造",
+ a:"党的十八大以来，以习近平同志为核心的党中央坚持党的领导、人民当家作主、依法治国有机统一，积极回应人民对民主政治的新要求新期待，提出全过程人民民主重大理念，推动全过程人民民主取得历史性成就，拓展了社会主义民主政治的理论和实践内涵，丰富了人类政治文明形态。第一，全过程人民民主是新时代我国民主政治领域具有重大创新意义的标志性成果。全过程人民民主的提出、实践和发展，鲜明展示了我们党始终高举人民民主旗帜、实现人民当家作主的坚定立场，深刻彰显了我国人民民主的鲜明特色和显著优势，实现了过程民主和成果民主、程序民主和实质民主、直接民主和间接民主、人民民主和国家意志相统一。第二，全过程人民民主是过程民主和成果民主的统一。（1）人民享有广泛而充分的民主，当家作主的权利贯通依法管理国家事务、管理经济和文化事业、管理社会事务的各方面各环节全过程。（2）党和国家始终把人民利益作为基本政治考量和根本政治准则，在决策、执行、监督、落实各个环节都要倾听来自人民的声音，汇聚人民的智慧，使社会主义民主政治的成果惠及广大人民。第三，全过程人民民主是程序民主和实质民主的统一。（1）全过程人民民主具有完整的制度程序，构建了多样、畅通、有序的民主渠道，国家法律法规、方针政策都依照程序、经过民主酝酿，通过科学决策、民主决策产生。（2）全过程人民民主更加注重实质民主，不仅保障人民的投票权而且确保人民拥有广泛参与权，不仅重视对人民的政治承诺而且确保这些承诺得到实现，使民主从价值理念变成扎根中国大地的制度形态、治理机制和人民的生活方式。第四，全过程人民民主是直接民主和间接民主的统一。（1）党和国家一直致力于丰富民主形式，拓宽民主渠道，既不断扩大直接民主又发展多种形式的间接民主，使人民民主的形式和内容更加广泛、更加充分、更加健全。（2）人民既可以通过选举各级人大代表、组成各级人民代表大会行使国家权力，间接参与国家和社会事务的管理，也可以通过村民委员会、居民委员会、职工代表大会等制度安排，直接参与基层的民主实践。第五，全过程人民民主是人民民主和国家意志的统一。（1）中华人民共和国的一切权力属于人民，国家权力是为人民服务的，人民行使国家权力的机关是全国人民代表大会和地方各级人民代表大会。这种民主制度既充分反映了人民的意愿，又充分体现了国家意志。（2）党和国家不断完善人民表达意愿的平台和载体，吸纳民意、汇集民智，使得党、国家和人民成为目标相同、利益一致、相互交融、同心同向的整体，从根本上实现了人民民主和国家意志的有机统一。总说+特点1.2.3.4.5",
+ m:"四个统一「过·程·直·民」＝过程民主和成果民主／程序民主和实质民主／直接民主和间接民主／人民民主和国家意志",
+ e:"①总→党的十八大以来，党中央坚持党的领导、人民当家作主、依法治国有机统一，积极回应人民对民主的新要求新期盼，提出全过程人民民主这一重大理念，这是社会主义民主政治的伟大创造②过→全过程人民民主是过程民主和成果民主的统一：人民享有广泛而充分的民主，当家作主的权利贯通依法管理国家事务、管理经济和文化事业、管理社会事务各环节；党和国家始终把人民利益作为基本政治考量和根本政治准则，在决策、执行、监督、落实各个环节都要倾听人民呼声③程→是程序民主和实质民主的统一：具有完整的制度程序，构建了多样、畅通、有序的民主渠道；更加注重实质民主，不仅保障人民的投票权而且确保人民拥有广泛参与权④直→是直接民主和间接民主的统一：既不断扩大直接民主又发展多种形式的间接民主；人民既可以通过选举各级人大代表、组成各级人民代表大会行使国家权力，间接参与国家和社会事务的管理，也可以通过多种渠道直接参与⑤民→是人民民主和国家意志的统一：中华人民共和国的一切权力属于人民，国家权力是为人民服务的，人民行使国家权力的机关是全国人民代表大会和地方各级人民代表大会",
+ h:"口诀：四个统一「过·程·直·民」＝过程民主和成果民主／程序民主和实质民主／直接民主和间接民主／人民民主和国家意志　｜　由点及面：①总→党的十八大以来，党中央坚持党的领导、人民当家作主、依法治国有机统一，积极回应人民对民主的新要求新期盼，提出全过程人民民主这一重大理念，这是社会主义民主政治的伟大创造②过→全过程人民民主是过程民主和成果民主的统一：人民享有广泛而充分的民主，当家作主的权利贯通依法管理国家事务、管理经济和文化事业、管理社会事务各环节；党和国家始终把人民利益作为基本政治考量和根本政治准则，在决策、执行、监督、落实各个环节都要倾听人民呼声③程→是程序民主和实质民主的统一：具有完整的制度程序，构建了多样、畅通、有序的民主渠道；更加注重实质民主，不仅保障人民的投票权而且确保人民拥有广泛参与权④直→是直接民主和间接民主的统一：既不断扩大直接民主又发展多种形式的间接民主；人民既可以通过选举各级人大代表、组成各级人民代表大会行使国家权力，间接参与国家和社会事务的管理，也可以通过多种渠道直接参与⑤民→是人民民主和国家意志的统一：中华人民共和国的一切权力属于人民，国家权力是为人民服务的，人民行使国家权力的机关是全国人民代表大会和地方各级人民代表大会",
+ k:["人民享有广泛而充分的民主","全过程人民民主的提出","程序民主和实质民主","直接民主和间接民主","管理经济和文化事业","方针政策都依照程序","汇集民智，使得党","党的十八大以来"]},
+
+{p:"08 第八章",t:"考点80、全过程人民民主是全链条、全方位、全覆盖的民主",star:0,
+ q:"考点80、全过程人民民主是全链条、全方位、全覆盖的民主",
+ a:"全过程人民民主，既有完整的制度程序，也有完整的参与实践，把民主选举、民主协商、民主决策、民主管理、民主监督贯通起来，涵盖经济、政治、文化、社会、生态文明等各个方面，聚焦国家发展大事、社会治理难事、百姓日常琐事，具有时间上的连续性、内容上的整体性、运行上的协同性、人民参与上的广泛性和持续性。第一，全过程人民民主是全链条的民主。民主选举环节，民主协商环节，民主决策环节，民主管理环节，民主监督环节，这些环节环环相扣、内在统一，是紧密联系、相互贯通、相辅相成的统一整体，形成全过程人民民主的完整链条。第二，全过程人民民主是全方位的民主。全过程人民民主贯通国家政治生活和社会生活各层面各维度。在中国这样一个人口数量巨大、社会结构复杂、利益诉求多元、发展任务艰巨的大国，只有广泛集中全体人民的智慧和意志，才能切实保障和实现社会利益的最大化。第三，全过程人民民主是全覆盖的民主。全过程人民民主涵盖国家各项事业各项工作，贯穿“五位一体”总体布局和“四个全面”战略布局的方方面面，是各方面民主的有机统一。",
+ m:"三特点「链·方·盖」＝全链条、全方位、全覆盖；五环节「选·商·决·管·监」＝民主选举、民主协商、民主决策、民主管理、民主监督",
+ e:"①总→全过程人民民主，既有完整的制度程序，也有完整的参与实践，把民主选举、民主协商、民主决策、民主管理、民主监督各个环节贯通起来②链→全过程人民民主是全链条的民主。民主选举环节、民主协商环节、民主决策环节、民主管理环节、民主监督环节，各个环节彼此贯通起来，扩大了人民有序政治参与（口诀「选商决管监」）③方→全过程人民民主是全方位的民主。贯通国家政治生活和社会生活各层面各维度，在中国这样的大国，保证国家统一、民族团结、社会稳定、人民安居乐业④盖→全过程人民民主是全覆盖的民主。涵盖国家各项事业各项工作，贯穿“五位一体”总体布局和“四个全面”战略布局的方方面面",
+ h:"口诀：三特点「链·方·盖」＝全链条、全方位、全覆盖；五环节「选·商·决·管·监」＝民主选举、民主协商、民主决策、民主管理、民主监督　｜　由点及面：①总→全过程人民民主，既有完整的制度程序，也有完整的参与实践，把民主选举、民主协商、民主决策、民主管理、民主监督各个环节贯通起来②链→全过程人民民主是全链条的民主。民主选举环节、民主协商环节、民主决策环节、民主管理环节、民主监督环节，各个环节彼此贯通起来，扩大了人民有序政治参与（口诀「选商决管监」）③方→全过程人民民主是全方位的民主。贯通国家政治生活和社会生活各层面各维度，在中国这样的大国，保证国家统一、民族团结、社会稳定、人民安居乐业④盖→全过程人民民主是全覆盖的民主。涵盖国家各项事业各项工作，贯穿“五位一体”总体布局和“四个全面”战略布局的方方面面",
+ k:["全过程人民民主是全链条","内在统一，是紧密联系","内容上的整体性","运行上的协同性","全过程人民民主","全覆盖的民主","社会治理难事","社会结构复杂"]},
+
+{p:"08 第八章",t:"考点81、全过程人民民主是最广泛、最真实、最管用的民主",star:0,
+ q:"考点81、全过程人民民主是最广泛、最真实、最管用的民主",
+ a:"评判一种民主形式好不好，实践最有说服力，人民最有发言权。全过程人民民主既能确保人民充分享有各方面权利，又能有效促进国家治理高效和社会和谐稳定，维护和保障人民群众的根本利益，是最广泛、最真实、最管用的民主。第一，全过程人民民主是最广泛的民主。我国宪法规定，国家的一切权力属于人民。全过程人民民主是全体人民共同持续参与，各个民族共同平等享有，不同地域、不同领域、不同层级、不同群体均实现全面覆盖的民主体系，是最广泛的民主。第二，全过程人民民主是最真实的民主。全过程人民民主把党的主张、国家意志、人民意愿紧密融合在一起，充分彰显了人民的主体地位，彰显了人民民主的真实性。第三，全过程人民民主是最管用的民主。全过程人民民主体现了社会主义民主的优势，保证在党的领导下有效治理国家，切实防止出现群龙无首、 一盘散沙的现象；保证人民依法行使权利，切实防止出现选举时漫天许诺、选举后无人过问的现象。",
+ m:"三特点「广·真·用」＝最广泛、最真实、最管用的民主",
+ e:"①总→评判一种民主形式好不好，实践最有说服力，人民最有发言权。全过程人民民主既能确保人民充分享有各方面权利，又能推动国家和社会发展②广→全过程人民民主是最广泛的民主。我国宪法规定，国家的一切权力属于人民。全过程人民民主是全体人民共同享有的民主，不是少数人的民主③真→全过程人民民主是最真实的民主。全过程人民民主把党的主张、国家意志、人民意愿紧密融合在一起，真正体现人民意愿、反映人民呼声④用→全过程人民民主是最管用的民主。全过程人民民主体现了社会主义民主的优势，保证在党的领导下有效治理国家，切实解决人民需要解决的问题",
+ h:"口诀：三特点「广·真·用」＝最广泛、最真实、最管用的民主　｜　由点及面：①总→评判一种民主形式好不好，实践最有说服力，人民最有发言权。全过程人民民主既能确保人民充分享有各方面权利，又能推动国家和社会发展②广→全过程人民民主是最广泛的民主。我国宪法规定，国家的一切权力属于人民。全过程人民民主是全体人民共同享有的民主，不是少数人的民主③真→全过程人民民主是最真实的民主。全过程人民民主把党的主张、国家意志、人民意愿紧密融合在一起，真正体现人民意愿、反映人民呼声④用→全过程人民民主是最管用的民主。全过程人民民主体现了社会主义民主的优势，保证在党的领导下有效治理国家，切实解决人民需要解决的问题",
+ k:["全过程人民民主是最广泛","评判一种民主形式好不好","选举后无人过问的现象","一盘散沙的现象","最管用的民主","不同领域","不同层级","国家意志"]},
+
+{p:"08 第八章",t:"考点82、如何加强人民当家作主制度保障",star:0,
+ q:"考点82、如何加强人民当家作主制度保障",
+ a:"加强人民当家作主制度保障，要不断坚持和完善我国根本政治制度、基本政治制度、重要政治制度，构建多样、畅通、有序的民主渠道，有效保证党的主张、国家意志、人民意愿相统一。第一，人民代表大会制度是我国的根本政治制度，是符合我国国情和实际、体现社会主义国家性质、保证人民当家作主、保障实现中华民族伟大复兴的好制度，是我们党领导人民在人类政治制度史上的伟大创造。第二，中国共产党领导的多党合作和政治协商制度、民族区域自治制度、基层群众自治制度构成了我国的基本政治制度，反映了我国社会主义民主政治的独特优势，是保障各政党、各阶层、各民族和基层人民群众当家作主的重要基础。（1）中国共产党领导的多党合作和政治协商制度是中国共产党、中国人民和各民主党派、无党派人士的伟大政治创造；（2）民族区域自治制度是中国特色解决民族问题的正确道路的重要内容和制度保障；（3）基层群众自治制度是社会主义民主政治建设的基础。第三，重要政治制度是建立在我国根本政治制度和基本政治制度基础上的、由根本政治制度和基本政治制度派生而来，体现在国家治理各领域各方面各环节的具体政治制度，与我国根本政治制度、基本政治制度相衔接，保障人民当家作主制度体系有效运行。要顺应中国式现代化建设的新要求、满足人民对民主的新期待、适应全过程人民民主制度健全新目标，不断推进重要政治制度体系完善和发展。第四，制度成熟定型是一个动态过程。当前，我们的民主制度建设同扩大人民民主和促进经济社会发展的要求还不完全适应，社会主义民主政治还存在不够完善的地方，在保障人民民主权利、发挥人民创造精神方面也还存在一些不足。要在坚持我国根本政治制度、基本政治制度、重要政治制度的基础上，不断拓展民主渠道、丰富民主形式，实现民主发展与政治稳定、社会进步的良性互动。",
+ m:"「根·基·重·动」＝根本政治制度／基本政治制度／重要政治制度／制度成熟定型是动态过程；基本三制「多·民·基」＝多党合作和政治协商、民族区域自治、基层群众自治",
+ e:"①总→加强人民当家作主制度保障，要不断坚持和完善我国根本政治制度、基本政治制度、重要政治制度，构建多样、畅通、有序的民主渠道②根→人民代表大会制度是我国的根本政治制度，是符合我国国情和实际、体现社会主义国家性质、保证人民当家作主、保障实现中华民族伟大复兴的好制度③基→中国共产党领导的多党合作和政治协商制度、民族区域自治制度、基层群众自治制度构成了我国的基本政治制度（口诀「多民基」）：（1）中国共产党领导的多党合作和政治协商制度是中国共产党、中国人民和各民主党派、无党派人士的伟大政治创造（2）民族区域自治制度是中国特色解决民族问题的正确道路的重要内容和制度保障（3）基层群众自治制度是社会主义民主政治建设的基础④重→重要政治制度是建立在我国根本政治制度和基本政治制度基础上的、由根本政治制度和基本政治制度派生而来的制度⑤动→制度成熟定型是一个动态过程。当前，我们的民主制度建设同扩大人民民主和促进经济社会发展的要求还不完全适应，要在实践中不断完善",
+ h:"口诀：「根·基·重·动」＝根本政治制度／基本政治制度／重要政治制度／制度成熟定型是动态过程；基本三制「多·民·基」＝多党合作和政治协商、民族区域自治、基层群众自治　｜　由点及面：①总→加强人民当家作主制度保障，要不断坚持和完善我国根本政治制度、基本政治制度、重要政治制度，构建多样、畅通、有序的民主渠道②根→人民代表大会制度是我国的根本政治制度，是符合我国国情和实际、体现社会主义国家性质、保证人民当家作主、保障实现中华民族伟大复兴的好制度③基→中国共产党领导的多党合作和政治协商制度、民族区域自治制度、基层群众自治制度构成了我国的基本政治制度（口诀「多民基」）：（1）中国共产党领导的多党合作和政治协商制度是中国共产党、中国人民和各民主党派、无党派人士的伟大政治创造（2）民族区域自治制度是中国特色解决民族问题的正确道路的重要内容和制度保障（3）基层群众自治制度是社会主义民主政治建设的基础④重→重要政治制度是建立在我国根本政治制度和基本政治制度基础上的、由根本政治制度和基本政治制度派生而来的制度⑤动→制度成熟定型是一个动态过程。当前，我们的民主制度建设同扩大人民民主和促进经济社会发展的要求还不完全适应，要在实践中不断完善",
+ k:["加强人民当家作主制度保障","体现社会主义国家性质","中国人民和各民主党派","社会进步的良性互动","保证人民当家作主","民族区域自治制度","人民意愿相统一","基本政治制度"]},
+
+{p:"08 第八章",t:"考点83、如何全面发展协商民主",star:0,
+ q:"考点83、如何全面发展协商民主",
+ a:"社会主义协商民主，是在中国共产党领导下，人民内部各方面围绕改革发展稳定重大问题和涉及群众切身利益的实际问题，在决策之前和决策实施之中开展广泛协商，努力形成共识的重要民主形式。第一，协商民主是实践全过程人民民主的重要形式。保证和支持人民当家作主，通过依法选举、让人民的代表来参与国家生活和社会生活的管理是十分重要的，通过选举以外的制度和方式让人民参与国家生活和社会生活的管理也是十分重要的。第二，协商民主是中国社会主义民主政治中独特的、独有的、独到的民主形式。通过协商民主，密切了党同人民群众的血肉联系，促进了科学决策、民主决策，凝聚了全社会共识，保障了人民有序政治参与，体现了中国特色社会主义民主政治的独特优势。第三，全面发展协商民主的要求。（1）要不断完善协商民主体系，统筹推进政党协商、 人大协商、政府协商、政协协商、人民团体协商、基层协商以及社会组织协商，健全各种制度化协商平台，推进协商民主广泛多层制度化发展。（2）要坚持和完善中国共产党领导的多党合作和政治协商制度，坚持党的领导、统一战线、协商民主有机结合，发挥人民政协作为专门协商机构的作用，加强制度化、规范化、程序化等功能建设。（3）要提高深度协商互动、意见充分表达、广泛凝聚共识水平，完善人民政协民主监督和委员联系界别群众制度机制。",
+ m:"「形·特·要」＝实践全过程人民民主的重要形式／独特独有独到的民主形式／全面发展要求；六渠道「党·人·府·协·团·基」＝政党协商、人大协商、政府协商、政协协商、人民团体协商、基层协商",
+ e:"①总→社会主义协商民主，是在中国共产党领导下，人民内部各方面围绕改革发展稳定重大问题和涉及群众切身利益的实际问题，在决策之前和决策实施之中开展广泛协商②形→协商民主是实践全过程人民民主的重要形式。保证和支持人民当家作主，通过依法选举、让人民的代表来参与国家和社会事务管理，同时通过选举以外的制度和方式让人民参与国家和社会事务管理③特→协商民主是中国社会主义民主政治中独特的、独有的、独到的民主形式。通过协商民主，密切了党同人民群众的联系，促进科学决策、民主决策④要→全面发展协商民主的要求：（1）要不断完善协商民主体系，统筹推进政党协商、人大协商、政府协商、政协协商、人民团体协商、基层协商以及社会组织协商（口诀「党人府协团基」）（2）要坚持和完善中国共产党领导的多党合作和政治协商制度，坚持党的领导、统一战线、协商民主有机结合（3）要提高深度协商互动、意见充分表达、广泛凝聚共识水平，完善人民政协民主监督和委员联系界别群众制度机制",
+ h:"口诀：「形·特·要」＝实践全过程人民民主的重要形式／独特独有独到的民主形式／全面发展要求；六渠道「党·人·府·协·团·基」＝政党协商、人大协商、政府协商、政协协商、人民团体协商、基层协商　｜　由点及面：①总→社会主义协商民主，是在中国共产党领导下，人民内部各方面围绕改革发展稳定重大问题和涉及群众切身利益的实际问题，在决策之前和决策实施之中开展广泛协商②形→协商民主是实践全过程人民民主的重要形式。保证和支持人民当家作主，通过依法选举、让人民的代表来参与国家和社会事务管理，同时通过选举以外的制度和方式让人民参与国家和社会事务管理③特→协商民主是中国社会主义民主政治中独特的、独有的、独到的民主形式。通过协商民主，密切了党同人民群众的联系，促进科学决策、民主决策④要→全面发展协商民主的要求：（1）要不断完善协商民主体系，统筹推进政党协商、人大协商、政府协商、政协协商、人民团体协商、基层协商以及社会组织协商（口诀「党人府协团基」）（2）要坚持和完善中国共产党领导的多党合作和政治协商制度，坚持党的领导、统一战线、协商民主有机结合（3）要提高深度协商互动、意见充分表达、广泛凝聚共识水平，完善人民政协民主监督和委员联系界别群众制度机制",
+ k:["全面发展协商民主的要求","要不断完善协商民主体系","要提高深度协商互动","程序化等功能建设","社会主义协商民主","独到的民主形式","人民团体协商","意见充分表达"]},
+
+{p:"08 第八章",t:"考点84、积极发展基层民主",star:1,
+ q:"考点84、积极发展基层民主",
+ a:"第一，基层民主是全过程人民民主的重要体现。我国基层民主有多种多样的形式，如以村民委员会为组织形态的农村村民自治、以社区居民委员会为组织形态的城市居民自治、以职工代表大会为组织依托的企事业单位职工自治等。广大人民群众最直接的政治参与主要在基层，最直观的当家作主感受也主要在基层。发展基层民主，是实现人民有效政治参与的重要渠道，是人民当家作主的有效途径，是社会主义民主最广泛的实践。第二，基层民主的建立和发展，保障了基层群众广泛、直接、有效行使民主权利，彰显了人民当家作主的广泛性、真实性、有效性。人民群众通过一系列接地气、聚人气的民主实践，围绕涉及自身利益的实际问题，发表意见建议，进行广泛协商，利益得到协调，矛盾有效化解，为我国社会长期稳定提供了重要政治基础和制度保障。第三，坚持和完善基层群众自治制度的方法。（1）要把党的领导贯穿基层群众自治全过程和各方面，确保基层民主建设始终沿着正确道路前进。（2）健全基层党组织领导的基层群众自治机制，加强基层组织建设，完善基层直接民主制度体系和工作体系，增强城乡社区群众自我管理、自我服务、自我教育、自我监督的实效。（3）完善办事公开制度，拓宽基层各类群体有序参与基层治理渠道，保障人民依法管理基层公共事务和公益事业。（4）全心全意依靠工人阶级，健全以职工代表大会为基本形式的企事业单位民主管理制度，维护职工合法权益。记忆框架：内涵+意义+方法",
+ m:"「体·权·法」＝全过程人民民主的重要体现／保障基层群众广泛直接有效行使民主权利／完善制度方法；四方法「党·机·开·职」",
+ e:"①体→基层民主是全过程人民民主的重要体现。我国基层民主有多种多样的形式，如以村民委员会为组织形态的农村基层民主、以城市居民委员会为组织形态的城市基层民主、以职工代表大会为组织形态的企业事业单位基层民主②权→基层民主的建立和发展，保障了基层群众广泛、直接、有效行使民主权利，彰显了人民当家作主的广泛性、真实性、有效性③法→坚持和完善基层群众自治制度的方法（口诀「党机开职」）：（1）要把党的领导贯穿基层群众自治全过程和各方面，确保基层民主建设始终沿着正确道路前进（2）健全基层党组织领导的基层群众自治机制，加强基层组织建设，完善基层直接民主制度体系和工作体系（3）完善办事公开制度，拓宽基层各类群体有序参与基层治理渠道，保障人民依法管理基层公共事务和公益事业（4）全心全意依靠工人阶级，健全以职工代表大会为基本形式的企事业单位民主管理制度，维护职工合法权益",
+ h:"口诀：「体·权·法」＝全过程人民民主的重要体现／保障基层群众广泛直接有效行使民主权利／完善制度方法；四方法「党·机·开·职」　｜　由点及面：①体→基层民主是全过程人民民主的重要体现。我国基层民主有多种多样的形式，如以村民委员会为组织形态的农村基层民主、以城市居民委员会为组织形态的城市基层民主、以职工代表大会为组织形态的企业事业单位基层民主②权→基层民主的建立和发展，保障了基层群众广泛、直接、有效行使民主权利，彰显了人民当家作主的广泛性、真实性、有效性③法→坚持和完善基层群众自治制度的方法（口诀「党机开职」）：（1）要把党的领导贯穿基层群众自治全过程和各方面，确保基层民主建设始终沿着正确道路前进（2）健全基层党组织领导的基层群众自治机制，加强基层组织建设，完善基层直接民主制度体系和工作体系（3）完善办事公开制度，拓宽基层各类群体有序参与基层治理渠道，保障人民依法管理基层公共事务和公益事业（4）全心全意依靠工人阶级，健全以职工代表大会为基本形式的企事业单位民主管理制度，维护职工合法权益",
+ k:["基层民主的建立和发展","全心全意依靠工人阶级","完善办事公开制度","自我监督的实效","自我服务","自我教育","真实性","有效性"]},
+
+{p:"08 第八章",t:"考点85、统一战线",star:1,
+ q:"考点85、统一战线",
+ a:"统一战线是中国共产党夺取革命、建设、改革事业胜利的重要法宝，也是实现中华民族伟大复兴的重要法宝。党的十八大以来，以习近平同志为核心的党中央从治国理政的战略高度对统战工作作出全面部署，推动大统战工作格局逐步形成，统一战线呈现出团结、奋进、开拓、活跃的良好局面。统战工作的本质要求是大团结大联合，解决的就是人心和力量问题。统战工作的关键是要坚持求同存异，发扬“团结一批评一团结”的优良传统，在尊重多样性中寻求一致性，找到最大公约数、画出最大同心圆。统一战线是做人的工作，搞统一战线是为了壮大共同奋斗的力量。统一战线是党领导的统一战线。党的领导是统一战线最鲜明的特征，坚持党的领导是统一战线最核心最根本的问题。",
+ m:"「宝·局·质·关·人·领」＝重要法宝／大统战工作格局／本质要求是大团结大联合／关键是求同存异／是做人的工作／党的领导是核心根本",
+ e:"①宝→统一战线是中国共产党夺取革命、建设、改革事业胜利的重要法宝，也是实现中华民族伟大复兴的重要法宝②局→党的十八大以来，以习近平同志为核心的党中央从治国理政的战略高度对统战工作作出全面部署，推动大统战工作格局③质→统战工作的本质要求是大团结大联合，解决的就是人心和力量问题④关→统战工作的关键是要坚持求同存异，发扬“团结—批评—团结”的优良传统，在尊重多样性中寻求一致性，找到最大公约数、画出最大同心圆⑤人→统一战线是做人的工作，搞统一战线是为了壮大共同奋斗的力量⑥领→统一战线是党领导的统一战线；党的领导是统一战线最鲜明的特征，坚持党的领导是统一战线最核心最根本的问题",
+ h:"口诀：「宝·局·质·关·人·领」＝重要法宝／大统战工作格局／本质要求是大团结大联合／关键是求同存异／是做人的工作／党的领导是核心根本　｜　由点及面：①宝→统一战线是中国共产党夺取革命、建设、改革事业胜利的重要法宝，也是实现中华民族伟大复兴的重要法宝②局→党的十八大以来，以习近平同志为核心的党中央从治国理政的战略高度对统战工作作出全面部署，推动大统战工作格局③质→统战工作的本质要求是大团结大联合，解决的就是人心和力量问题④关→统战工作的关键是要坚持求同存异，发扬“团结—批评—团结”的优良传统，在尊重多样性中寻求一致性，找到最大公约数、画出最大同心圆⑤人→统一战线是做人的工作，搞统一战线是为了壮大共同奋斗的力量⑥领→统一战线是党领导的统一战线；党的领导是统一战线最鲜明的特征，坚持党的领导是统一战线最核心最根本的问题",
+ k:["统一战线是做人的工作","团结一批评一团结","活跃的良好局面","画出最大同心圆","党的十八大以来","统一战线","建设","奋进"]},
+
+{p:"08 第八章",t:"考点86、筑牢中华民族共同体意识",star:1,
+ q:"考点86、筑牢中华民族共同体意识",
+ a:"第一，民族团结是我国各族人民的生命线，中华民族共同体意识是民族团结之本。多民族是我国的一大特色，也是我国发展的一大有利因素。中华民族和各民族的关系，是一个大家庭和家庭成员的关系，各民族的关系是一个大家庭里不同成员的关系。中国是全国各族人民共同缔造的统一的多民族国家，中华民族共同体的形成是中华民族历史发展的必然结果。第二，铸牢中华民族共同体意识，就是要引导各族人民牢固树立休戚与共、荣辱与共、生死与共、命运与共的共同体理念。要正确把握共同性和差异性的关系、中华民族共同体意识和各民族意识的关系、中华文化和各民族文化的关系、物质和精神的关系，建设各民族共有精神家园，促进各民族共同繁荣共同发展。第三，必须坚决贯彻落实新时代党的宗教工作理论和方针政策，坚持我国宗教中国化方向，积极引导宗教与社会主义社会相适应，构建积极健康的宗教关系，支持宗 教团体加强自身建设，提高宗教工作法治化水平，引导宗教努力为促进经济发展、社会和谐、文化繁荣、民族团结、祖国统一服务。广泛宣传新时代党的宗教工作理论和方针政策，宣传宗教相关法律法规，加强宗教方面宣传舆论引导。",
+ m:"「线·念·教」＝民族团结是生命线／树立“四个与共”共同体理念／坚持我国宗教中国化方向；四与共「休·荣·生·命」＝休戚与共、荣辱与共、生死与共、命运与共",
+ e:"①线→民族团结是我国各族人民的生命线，中华民族共同体意识是民族团结之本。多民族是我国的一大特色，也是我国发展的一大有利因素②念→铸牢中华民族共同体意识，就是要引导各族人民牢固树立休戚与共、荣辱与共、生死与共、命运与共的共同体理念（口诀「休荣生命」）③教→必须坚决贯彻落实新时代党的宗教工作理论和方针政策，坚持我国宗教中国化方向，积极引导宗教与社会主义社会相适应",
+ h:"口诀：「线·念·教」＝民族团结是生命线／树立“四个与共”共同体理念／坚持我国宗教中国化方向；四与共「休·荣·生·命」＝休戚与共、荣辱与共、生死与共、命运与共　｜　由点及面：①线→民族团结是我国各族人民的生命线，中华民族共同体意识是民族团结之本。多民族是我国的一大特色，也是我国发展的一大有利因素②念→铸牢中华民族共同体意识，就是要引导各族人民牢固树立休戚与共、荣辱与共、生死与共、命运与共的共同体理念（口诀「休荣生命」）③教→必须坚决贯彻落实新时代党的宗教工作理论和方针政策，坚持我国宗教中国化方向，积极引导宗教与社会主义社会相适应",
+ k:["铸牢中华民族共同体意识","命运与共的共同体理念","祖国统一服务","荣辱与共","生死与共","社会和谐","文化繁荣","民族团结"]},
+
+{p:"08 第八章",t:"考点87、怎样加强和促进海内外中华儿女大团结",star:1,
+ q:"考点87、怎样加强和促进海内外中华儿女大团结",
+ a:"促进中华儿女大团结，是新时代爱国统一战线的历史责任。团结奋斗是中国共产党和中国人民最显著的精神标识，能团结奋斗的民族才有前途，能团结奋斗的政党才能立于不败之地。第一，加强和促进海内外中华儿女大团结，要高举爱国主义、社会主义旗帜。爱国主义是中华民族精神的核心，维系着华夏大地上各个民族的团结统一，激励着一代又一代中华儿女为祖国发展繁荣而不懈奋斗。第二，加强和促进海内外中华儿女大团结，要抓好重点领域统战工作。在民主党派和无党派人士工作方面，要围绕发挥我国新型政党制度效能，健全完善符合民主党派特点、系统规范的参政党建设制度机制，推动新时代多党合作更加规范有序、生动活泼。第三，加强和促进海内外中华儿女大团结，要辩证把握好四方面关系。 一是把握好固守圆心和扩大共识的关系，二是把握好潜绩和显绩的关系，三是把握好原则性和灵活性的关系，四是把握好团结和斗争的关系，这四方面关系既讲“两点论”又讲“重点论”,为把握统一战线的政治性和策略性、推动统战工作高质量发展提供了重要原则和方法。 记忆框架：总说+方法1.2.3",
+ m:"三要点「旗·重·四」＝高举爱国主义、社会主义旗帜／抓好重点领域统战工作／辩证把握好四方面关系",
+ e:"①总→促进中华儿女大团结，是新时代爱国统一战线的历史责任。团结奋斗是中国共产党和中国人民最显著的精神标识②旗→加强和促进海内外中华儿女大团结，要高举爱国主义、社会主义旗帜。爱国主义是中华民族精神的核心，维护国家统一和民族团结是中华民族的根本利益③重→要抓好重点领域统战工作。在民主党派和无党派人士工作方面，要围绕中心、服务大局，发挥好参谋、好帮手、好同事的作用④四→要辩证把握好四方面关系：一是把握好固守圆心和扩大共识的关系，二是把握好潜绩和显绩的关系，三是把握好原则性和灵活性的关系，四是把握好团结和斗争的关系",
+ h:"口诀：三要点「旗·重·四」＝高举爱国主义、社会主义旗帜／抓好重点领域统战工作／辩证把握好四方面关系　｜　由点及面：①总→促进中华儿女大团结，是新时代爱国统一战线的历史责任。团结奋斗是中国共产党和中国人民最显著的精神标识②旗→加强和促进海内外中华儿女大团结，要高举爱国主义、社会主义旗帜。爱国主义是中华民族精神的核心，维护国家统一和民族团结是中华民族的根本利益③重→要抓好重点领域统战工作。在民主党派和无党派人士工作方面，要围绕中心、服务大局，发挥好参谋、好帮手、好同事的作用④四→要辩证把握好四方面关系：一是把握好固守圆心和扩大共识的关系，二是把握好潜绩和显绩的关系，三是把握好原则性和灵活性的关系，四是把握好团结和斗争的关系",
+ k:["促进中华儿女大团结","社会主义旗帜","生动活泼","两点论","重点论"]}
+];
+
+const KEY_STORE='bs-mn-08_第八章-v1';
+let state=JSON.parse(localStorage.getItem(KEY_STORE)||'{}');
+let filter='all', mode='seg', order=DECK.map((_,i)=>i), idx=0, flipped=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function deck(){
+  let list=order.filter(i=>{
+    const c=DECK[i], st=state[i]||{};
+    if(filter==='star') return c.star===1;
+    if(filter==='learning') return (st.streak||0)<2;
+    if(filter==='mastered') return (st.streak||0)>=2;
+    return true;
+  });
+  return list.length?list:[0];
+}
+
+function segsOf(text){
+  const raw=text.match(/[^。，；、？！]+[。，；、？！]?/g)||[text];
+  return raw.map(s=>s.trim()).filter(Boolean);
+}
+function renderSeg(text){
+  return segsOf(text).map(s=>
+    s.replace(/\s/g,'').length>=2?`<span class="cloze">${esc(s)}</span>`:esc(s)
+  ).join('');
+}
+function renderKey(text,terms){
+  const ts=[...new Set(terms||[])].sort((a,b)=>b.length-a.length);
+  let out=esc(text);
+  ts.forEach(t=>{
+    const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+    out=out.replace(re,m=>`<span class="cloze">${m}</span>`);
+  });
+  return out;
+}
+
+function render(){
+  const list=deck();
+  if(idx>=list.length) idx=0;
+  if(idx<0) idx=list.length-1;
+  const i=list[idx], c=DECK[i], st=state[i]||{streak:0};
+  const star=c.star?'★★★':'';
+  const no=`卡 ${i+1} / ${DECK.length}`;
+
+  ['f','b'].forEach(f=>{
+    $(f+'-part').textContent=c.p;
+    $(f+'-no').textContent=no;
+    $(f+'-star').textContent=star;
+  });
+  $('f-q').textContent=c.q;
+  $('b-q').textContent=c.q;
+  $('b-mnem').textContent=c.m||'';
+  const ex=(c.e||'').split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).filter(s=>s.trim());
+  $('b-expand').innerHTML=ex.length?('<ol>'+ex.map(function(s){
+    const t=s.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]/,'').trim();
+    const k=t.indexOf('→');
+    return '<li>'+(k>0?'<b>'+esc(t.slice(0,k))+'</b>　'+esc(t.slice(k+1)):esc(t))+'</li>';
+  }).join('')+'</ol>'):'';
+  $('b-a').innerHTML=esc(c.a);
+  $('f-a').innerHTML = mode==='seg' ? renderSeg(c.a) : renderKey(c.a,c.k);
+
+  const days=['第 1 天','第 3 天','第 7 天','第 15 天'];
+  const s=st.streak||0;
+  $('f-due').textContent = s>=2 ? '已毕业' : '下次复习 '+(days[Math.min(s,3)]||'第 15 天');
+
+  $('toggleAll').textContent='全部显示';
+  $('toggleAll').classList.remove('on');
+
+  const done=DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  $('prog').style.width=(done/DECK.length*100)+'%';
+  $('card').classList.toggle('flip',flipped);
+  updateToc(done);
+}
+
+function buildToc(){
+  const groups=[];
+  DECK.forEach((c,i)=>{
+    let g=groups.find(x=>x.p===c.p);
+    if(!g){ g={p:c.p,items:[]}; groups.push(g); }
+    g.items.push(i);
+  });
+  $('toc-body').innerHTML=groups.map(g=>`
+    <div class="toc-g">
+      <h6>${esc(g.p)}<span class="cnt"></span></h6>
+      <ul>${g.items.map(i=>`
+        <li data-i="${i}">
+          <span class="tn">${i+1}</span>
+          <span class="tt">${esc(DECK[i].t)}</span>
+          ${DECK[i].star?'<span class="ts">★★★</span>':''}
+          <span class="td"></span>
+        </li>`).join('')}</ul>
+    </div>`).join('');
+  $('toc-body').addEventListener('click',e=>{
+    const li=e.target.closest('li');
+    if(li) jumpTo(+li.dataset.i);
+  });
+}
+
+function updateToc(done){
+  if(!$('toc-body').children.length) return;
+  const cur=deck()[idx];
+  document.querySelectorAll('#toc-body li').forEach(li=>{
+    const i=+li.dataset.i, s=(state[i]||{streak:0}).streak||0;
+    li.classList.toggle('cur', i===cur);
+    li.classList.toggle('done', s>=2);
+    li.classList.toggle('half', s>0&&s<2);
+    li.querySelector('.td').textContent = s>=2?'✓':(s>0?'◐':'');
+  });
+  document.querySelectorAll('#toc-body .toc-g').forEach(g=>{
+    const lis=[...g.querySelectorAll('li')];
+    g.querySelector('.cnt').textContent = lis.filter(l=>l.classList.contains('done')).length+' / '+lis.length;
+  });
+  const total=DECK.length, d=(done!==undefined)?done:DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  const half=DECK.filter((_,j)=>{const s=(state[j]||{streak:0}).streak||0;return s>0&&s<2;}).length;
+  $('tocSum').textContent=`已掌握 ${d} / ${total}　记住过一次 ${half}　未背 ${total-d-half}`;
+}
+
+function openToc(){ $('toc').classList.add('on'); $('tocMask').classList.add('on'); $('tocBtn').classList.add('on'); }
+function closeToc(){ $('toc').classList.remove('on'); $('tocMask').classList.remove('on'); $('tocBtn').classList.remove('on'); }
+function toggleToc(){ $('toc').classList.contains('on')?closeToc():openToc(); }
+
+function jumpTo(i){
+  if(filter!=='all'){
+    filter='all';
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  }
+  const p=deck().indexOf(i);
+  if(p>=0){ idx=p; flipped=false; render(); closeToc(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function flip(){ flipped=!flipped; $('card').classList.toggle('flip',flipped); }
+function go(d){ const l=deck(); idx=(idx+d+l.length)%l.length; flipped=false; render(); }
+function mark(ok){
+  const list=deck(), i=list[idx], st=state[i]||{streak:0,last:0};
+  st.streak = ok ? Math.min((st.streak||0)+1,4) : 0;
+  st.last=Date.now();
+  state[i]=st; localStorage.setItem(KEY_STORE,JSON.stringify(state));
+  if(filter==='learning'||filter==='mastered'){ idx=0; render(); }
+  else { go(1); }
+}
+
+$('f-a').addEventListener('click',e=>{
+  const el=e.target.closest('.cloze');
+  if(el) el.classList.toggle('on');
+});
+$('toggleAll').addEventListener('click',()=>{
+  const cs=[...document.querySelectorAll('#f-a .cloze')];
+  const allOn=cs.length&&cs.every(c=>c.classList.contains('on'));
+  cs.forEach(c=>c.classList.toggle('on',!allOn));
+  $('toggleAll').textContent=allOn?'全部显示':'全部隐藏';
+  $('toggleAll').classList.toggle('on',!allOn);
+});
+document.querySelectorAll('[data-m]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+document.querySelectorAll('[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f; idx=0;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+$('tocBtn').addEventListener('click',toggleToc);
+$('tocBtn2').addEventListener('click',toggleToc);
+$('tocX').addEventListener('click',closeToc);
+$('tocMask').addEventListener('click',closeToc);
+$('shuffle').addEventListener('click',()=>{
+  order=DECK.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  idx=0; render();
+});
+$('reset').addEventListener('click',()=>{
+  if(confirm('清空全部掌握进度？')){ state={}; localStorage.removeItem(KEY_STORE); idx=0; render(); }
+});
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('flip').addEventListener('click',flip);
+$('got').addEventListener('click',()=>mark(true));
+$('again').addEventListener('click',()=>mark(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key===' '){flip();e.preventDefault();}
+  else if(k==='f'){$('toggleAll').click();}
+  else if(k==='m'){mode = mode==='seg'?'key':'seg';document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===mode));render();}
+  else if(k==='g'){mark(true);}
+  else if(k==='r'){mark(false);}
+  else if(k==='s'){$('shuffle').click();}
+  else if(k==='t'){toggleToc();}
+  else if(e.key==='Escape'){closeToc();}
+});
+
+buildToc();
+render();
+</script>
+</body>
+</html>
