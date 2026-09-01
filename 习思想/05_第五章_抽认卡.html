@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第五章 · 背诵抽认卡</title>
+<style>
+:root{
+  --bg:#12141a; --surface:#1a1d26; --surface-2:#21252f; --line:#2c313d;
+  --text:#e6e8ee; --muted:#98a0b0; --faint:#6c7488;
+  --accent:#1D9E75; --accent-soft:#5DCAA5; --accent-dim:rgba(93,202,165,.14);
+  --star:#EF9F27; --danger:#E24B4A;
+  --mask:#2b3240; --mask-hover:#394154;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; padding:24px 18px 60px;
+}
+.wrap{max-width:820px;margin:0 auto}
+
+header{margin-bottom:18px}
+h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+.sub{color:var(--faint);font-size:13px;margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  padding:5px 12px; border-radius:99px; font-size:13px; cursor:pointer;
+  transition:.15s; user-select:none;
+}
+.chip:hover{border-color:var(--faint);color:var(--text)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.spacer{flex:1}
+
+.progress{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{
+  margin-top:18px; perspective:2000px;
+}
+.faces{
+  position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.card.flip .faces{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 22px; min-height:360px;
+}
+.faces{display:grid}
+.front{transform:none}
+.back{transform:rotateY(180deg)}
+
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);margin-bottom:14px}
+.tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 9px;border-radius:6px;color:var(--muted)}
+.star{color:var(--star)}
+.q{font-size:19px;font-weight:600;line-height:1.6;margin-bottom:6px}
+.qhint{font-size:12px;color:var(--faint);margin-bottom:18px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--faint);color:var(--text)}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.tip{font-size:12px;color:var(--faint);margin-left:auto}
+
+.answer{font-size:16px;line-height:2.05;letter-spacing:.2px}
+.cloze{
+  background:var(--mask); color:transparent; border-radius:4px; cursor:pointer;
+  padding:1px 3px; transition:background .12s,color .12s;
+  box-decoration-break:clone; -webkit-box-decoration-break:clone;
+}
+.cloze:hover{background:var(--mask-hover)}
+.cloze.on{background:var(--accent-dim);color:var(--text)}
+.cloze.on:hover{background:rgba(93,202,165,.24)}
+
+.sec{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.sec h4{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:1px;margin-bottom:8px}
+.sec p{font-size:15px;line-height:1.9;color:var(--text)}
+.hook{color:var(--accent-soft)}
+.mnem{background:var(--accent-dim);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 14px;font-size:16px;line-height:1.95;color:var(--accent-soft);
+  font-weight:600;letter-spacing:.4px}
+.expand{margin-top:13px}
+.expand ol{list-style:none;counter-reset:ex}
+.expand li{position:relative;padding:8px 0 8px 33px;font-size:14.5px;line-height:1.95;color:var(--text);
+  border-bottom:1px dashed var(--line)}
+.expand li:last-child{border-bottom:none}
+.expand li::before{content:counter(ex);counter-increment:ex;position:absolute;left:0;top:11px;
+  width:21px;height:21px;border-radius:50%;background:var(--accent);color:#0b0e14;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+.expand li b{color:var(--accent-soft);font-weight:600}
+.plain{font-size:15.5px;line-height:2.0;color:var(--text)}
+
+nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.btn-lg{padding:9px 18px;font-size:14px}
+.btn-ok{border-color:var(--accent);color:var(--accent-soft)}
+.btn-ok:hover{background:var(--accent-dim)}
+.btn-bad{border-color:#5a3030;color:#e08b8b}
+.btn-bad:hover{background:rgba(226,75,74,.12)}
+
+.keys{margin-top:16px;font-size:12px;color:var(--faint);line-height:2}
+kbd{
+  background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+}
+details{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--faint)}
+details[open] summary:before{content:"▾ "}
+details h5{font-size:13px;color:var(--accent-soft);margin:14px 0 6px;font-weight:500}
+details li{font-size:13px;color:var(--muted);line-height:1.9;list-style:none;padding-left:2px}
+details li:before{content:"· ";color:var(--faint)}
+.due{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+.toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+.toc-mask.on{opacity:1;pointer-events:auto}
+.toc{
+  position:fixed;top:0;left:0;height:100%;width:min(430px,90vw);z-index:50;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,.2,.2,1);
+  overflow-y:auto;padding:22px 20px 50px;
+}
+.toc.on{transform:none}
+.toc-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.toc-head h3{font-size:16px;font-weight:600}
+.toc-x{margin-left:auto;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;padding:2px 7px;border-radius:6px}
+.toc-x:hover{background:var(--surface-2);color:var(--text)}
+.toc-sum{font-size:12px;color:var(--faint);margin-bottom:18px}
+.toc-g{margin-bottom:18px}
+.toc-g h6{
+  font-size:12px;font-weight:500;color:var(--accent-soft);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--line);
+}
+.toc-g h6 .cnt{margin-left:auto;color:var(--faint);font-size:11px}
+.toc-g ul{list-style:none}
+.toc-g li{
+  display:flex;align-items:baseline;gap:9px;padding:6px 9px;border-radius:8px;
+  font-size:13.5px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.toc-g li:hover{background:var(--surface-2);color:var(--text)}
+.toc-g li .tn{flex:none;width:22px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint)}
+.toc-g li .tt{flex:1;line-height:1.5}
+.toc-g li .ts{flex:none;font-size:9px;color:var(--star);letter-spacing:-.5px}
+.toc-g li .td{flex:none;width:14px;text-align:center;font-size:12px;color:var(--faint)}
+.toc-g li.half .td{color:var(--star)}
+.toc-g li.done .td{color:var(--accent)}
+.toc-g li.done .tt{color:var(--faint)}
+.toc-g li.cur{background:var(--accent-dim);color:var(--text)}
+.toc-g li.cur .tn{color:var(--accent-soft)}
+.toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="home-link" href="../index.html">← 章节导航</a>
+  <h1>第五章 · 背诵抽认卡</h1>
+  <div class="sub">x背诵资料正式版 · 9 个考点 · 重点 3 张 · 逐条口诀</div>
+  <div class="bar">
+    <span class="chip on" data-f="all">全部</span>
+    <span class="chip" data-f="star">重点 ★★★</span>
+    <span class="chip" data-f="learning">学习中</span>
+    <span class="chip" data-f="mastered">已掌握</span>
+    <span class="spacer"></span>
+    <span class="chip" id="tocBtn">目录</span>
+    <span class="chip" id="shuffle">打乱</span>
+    <span class="chip" id="reset">重置进度</span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</header>
+
+<div class="card" id="card">
+  <div class="faces">
+    <section class="face front">
+      <div class="meta">
+        <span class="tag" id="f-part"></span>
+        <span id="f-no"></span>
+        <span class="star" id="f-star"></span>
+        <span class="spacer"></span>
+        <span class="due" id="f-due"></span>
+      </div>
+      <div class="q" id="f-q"></div>
+      <div class="qhint">先口述或默写，再点色块逐句核对</div>
+      <div class="tools">
+        <button class="btn on" data-m="seg">逐句挖空</button>
+        <button class="btn" data-m="key">只挖关键</button>
+        <button class="btn" id="toggleAll">全部显示</button>
+        <span class="tip">点色块 → 显现；再点 → 盖回去</span>
+      </div>
+      <div class="answer" id="f-a"></div>
+    </section>
+
+    <section class="face back">
+      <div class="meta">
+        <span class="tag" id="b-part"></span>
+        <span id="b-no"></span>
+        <span class="star" id="b-star"></span>
+      </div>
+      <div class="q" id="b-q"></div>
+      <div class="sec">
+        <h4>记忆口诀</h4>
+        <div class="mnem" id="b-mnem"></div>
+        <div class="expand" id="b-expand"></div>
+      </div>
+      <div class="sec">
+        <h4>完整答案</h4>
+        <div class="plain" id="b-a"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav>
+  <button class="btn btn-lg" id="tocBtn2">目录</button>
+  <button class="btn btn-lg" id="prev">← 上一张</button>
+  <button class="btn btn-lg" id="flip">翻面</button>
+  <button class="btn btn-lg" id="next">下一张 →</button>
+  <span class="spacer"></span>
+  <button class="btn btn-lg btn-bad" id="again">再看看</button>
+  <button class="btn btn-lg btn-ok" id="got">记住了</button>
+</nav>
+
+<div class="keys">
+  <kbd>←</kbd> <kbd>→</kbd> 切换　<kbd>空格</kbd> 翻面　<kbd>F</kbd> 全部显示/隐藏　<kbd>M</kbd> 切换挖空模式　<kbd>G</kbd> 记住了　<kbd>R</kbd> 再看看　<kbd>T</kbd> 目录　<kbd>Esc</kbd> 关闭　<kbd>S</kbd> 打乱
+</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<aside class="toc" id="toc">
+  <div class="toc-head">
+    <h3>目录</h3>
+    <span class="toc-x" id="tocX">×</span>
+  </div>
+  <div class="toc-sum" id="tocSum"></div>
+  <div id="toc-body"></div>
+  <div class="toc-foot">
+    <span style="color:var(--accent)">✓</span> 已掌握（连续两次记住）<br>
+    <span style="color:var(--star)">◐</span> 记住过一次　·　空白＝还没背<br>
+    点任意一条直接跳过去，<kbd>T</kbd> 开关目录
+  </div>
+</aside>
+
+<details>
+  <summary>关于本卡组</summary>
+  <ul>
+    <li>来源：x背诵资料正式版.docx「第五章」，共 9 个考点，逐一成卡。</li>
+    <li>正面＝考点原文全文，逐句挖空，点色块显现、再点盖回。</li>
+    <li>背面「记忆口诀」为逐条编写的<b>由点及面</b>口诀：口诀里每个字对应一条，下方按 ①②③ 逐条展开成完整表述。<b>先背口诀，再对着编号把每条复述出来。</b></li>
+    <li>标注 <span style="color:#EF9F27">★★★</span> 的是本章篇幅最大的考点（篇幅排前 1/3，多为论述题量级）。</li>
+    <li>建议：正面用「逐句挖空」默写全文，翻面用「口诀＋展开」核对要点；考前用「只挖关键」速扫。</li>
+  </ul>
+</details>
+
+</div>
+
+<script>
+const DECK = [
+{p:"05 第五章",t:"考点42、如何理解改革开放是我们前进的重要法宝",star:0,
+ q:"考点42、如何理解改革开放是我们前进的重要法宝",
+ a:"改革开放是党和人民大踏步赶上时代的重要法宝。新时代坚持和发展中国特色社会主义，实现“两个一百年”奋斗目标、实现中华民族伟大复兴，必须以改革开放为强大动力。第一，改革开放是坚持和发展中国特色社会主义的必由之路。改革开放使中国社会焕发出强大的生机活力，我国用几十年时间走完了发达国家几百年走过的工业化历程，创造了经济快速发展和社会长期稳定两大奇迹中华民族以崭新姿态屹立于世界的东方。第二，全面深化改革开放是完成新时代目标任务的必然要求。进入新时代，我国发展到了一个新的阶段，需要决胜全面建成小康社会、实现第一个百年奋斗目标、开启全面建设社会主义现代化国家新征程，机遇和挑战前所未有。第三，中国要前进，就要全面深化改革开放；除了全面深化改革开放，别无他途。党的十一届三中全会是划时代的，开启了改革开放和社会主义现代化建设新时期。党的十八届三中全会也是划时代的，实现改革由局部探索、破冰突围到系统集成、全面深化的转变，开创了我国改革开放新局面。",
+ m:"三原因「路·要·唯」＝坚持和发展中国特色社会主义的必由之路／完成新时代目标任务的必然要求／中国要前进别无他途",
+ e:"①总→改革开放是党和人民大踏步赶上时代的重要法宝。新时代坚持和发展中国特色社会主义、实现“两个一百年”奋斗目标，必须坚定不移推进改革开放②路→改革开放是坚持和发展中国特色社会主义的必由之路。改革开放使中国社会焕发出强大的生机活力，我国用几十年时间走完了发达国家几百年走过的工业化历程③要→全面深化改革开放是完成新时代目标任务的必然要求。进入新时代，我国发展到了一个新的阶段，需要决胜全面建成小康社会、进而全面建设社会主义现代化国家④唯→中国要前进，就要全面深化改革开放；除了全面深化改革开放，别无他途。党的十一届三中全会是划时代的，开启了改革开放和社会主义现代化建设新时期；党的十八届三中全会也是划时代的，开启了全面深化改革、系统整体设计推进改革的新时代",
+ h:"口诀：三原因「路·要·唯」＝坚持和发展中国特色社会主义的必由之路／完成新时代目标任务的必然要求／中国要前进别无他途　｜　由点及面：①总→改革开放是党和人民大踏步赶上时代的重要法宝。新时代坚持和发展中国特色社会主义、实现“两个一百年”奋斗目标，必须坚定不移推进改革开放②路→改革开放是坚持和发展中国特色社会主义的必由之路。改革开放使中国社会焕发出强大的生机活力，我国用几十年时间走完了发达国家几百年走过的工业化历程③要→全面深化改革开放是完成新时代目标任务的必然要求。进入新时代，我国发展到了一个新的阶段，需要决胜全面建成小康社会、进而全面建设社会主义现代化国家④唯→中国要前进，就要全面深化改革开放；除了全面深化改革开放，别无他途。党的十一届三中全会是划时代的，开启了改革开放和社会主义现代化建设新时期；党的十八届三中全会也是划时代的，开启了全面深化改革、系统整体设计推进改革的新时代",
+ k:["破冰突围到系统集成","两个一百年","中国要前进"]},
+
+{p:"05 第五章",t:"考点43、如何理解新时代全面深化改革是一场深刻革命",star:0,
+ q:"考点43、如何理解新时代全面深化改革是一场深刻革命",
+ a:"新时代全面深化改革开放，就其艰巨性、复杂性和系统性来说，是一场深刻的革命。这场革命取得了历史性成就，对中国特色社会主义事业发展产生了重大而深远的影响。第一，全面深化改革开放是涉险滩、闯难关的变革。（1）必须勇于破除一切不合时宜的思维定势和固有观念，深入贯彻新理念新思想新战略，形成勇于变革、勇于突破、勇于创新的新思维方式；（2）必须勇于打破部门利益、行业利益、本位思想，坚持服从国家整体利益；（3）必须勇于跳出条条框框限制，破除深层次体制机制障碍和顽瘴痼疾，构建系统完备、科学规范、运行有效的制度体系（4）必须勇于破解我国开放型经济体制建设中的突出问题，以对外开放的主动赢得经济发展的主动、赢得国际竞争的主动。第二，全面深化改革开放是在多年改革开放基础上的深化，是一场全面、系统、整体的制度创新。必须着眼改革的关联性、系统性、可行性，全面系统整体推进各方面改革，使社会主义制度的优越性得到更好发挥。（1）坚持和完善社会主义基本经济制度；（2）坚持和完善对外开放制度机制；（3）坚持和完善人民当家作主制度体系；（4）坚持和完善繁荣发展社会主义先进文化的制度；（5）坚持和完善统筹城乡的民生保障制度和共建共治共享的社会治理制度；（6）坚持和完善生态文明制度体系；（7）坚持和完善党的领导和党的建设制度体系。第三，新时代的改革开放是全方位、深层次、根本性的，取得的成就是历史性、革命性、开创性的。放眼全世界，没有哪个国家和政党，能有这样的政治气魄和历史担当，敢于大刀阔斧、刀刃向内，也没有哪个国家和政党，能在这么短时间内推动这么大范围、这么大规模、这么大力度的改革，这体现了中国特色社会主义制度的鲜明特征和显著优势。在新征程上，要继续保持这一鲜明特征、发挥这一显著优势，以坚定毅力和历史主动把改革开放事业不断推向前进。",
+ m:"「闯·制」＝涉险滩闯难关的变革＋全面系统整体的制度创新；四“勇于”「念·益·障·开」；六制度「经·开·民·文·社·生」",
+ e:"①总→新时代全面深化改革开放，就其艰巨性、复杂性和系统性来说，是一场深刻的革命，这场革命取得了历史性成就②闯→全面深化改革开放是涉险滩、闯难关的变革，四个“必须勇于”（口诀「念益障开」＝破观念、破利益、破障碍、破开放难题）：（1）必须勇于破除一切不合时宜的思维定势和固有观念，深入贯彻新理念新思想新战略（2）必须勇于打破部门利益、行业利益、本位思想，坚持服从国家整体利益（3）必须勇于跳出条条框框限制，破除深层次体制机制障碍和顽瘴痼疾，构建系统完备、科学规范、运行有效的制度体系（4）必须勇于破解我国开放型经济体制建设中的突出问题，以对外开放的主动赢得经济发展的主动、赢得国际竞争的主动③制→是在多年改革开放基础上的深化，是一场全面、系统、整体的制度创新。必须着眼改革的系统性、整体性、协同性，坚持和完善六个方面的制度（口诀「经开民文社生」）：（1）社会主义基本经济制度（2）对外开放制度机制（3）人民当家作主制度体系（4）繁荣发展社会主义先进文化的制度（5）统筹城乡的民生保障制度和共建共治共享的社会治理制度（6）生态文明制度体系",
+ h:"口诀：「闯·制」＝涉险滩闯难关的变革＋全面系统整体的制度创新；四“勇于”「念·益·障·开」；六制度「经·开·民·文·社·生」　｜　由点及面：①总→新时代全面深化改革开放，就其艰巨性、复杂性和系统性来说，是一场深刻的革命，这场革命取得了历史性成就②闯→全面深化改革开放是涉险滩、闯难关的变革，四个“必须勇于”（口诀「念益障开」＝破观念、破利益、破障碍、破开放难题）：（1）必须勇于破除一切不合时宜的思维定势和固有观念，深入贯彻新理念新思想新战略（2）必须勇于打破部门利益、行业利益、本位思想，坚持服从国家整体利益（3）必须勇于跳出条条框框限制，破除深层次体制机制障碍和顽瘴痼疾，构建系统完备、科学规范、运行有效的制度体系（4）必须勇于破解我国开放型经济体制建设中的突出问题，以对外开放的主动赢得经济发展的主动、赢得国际竞争的主动③制→是在多年改革开放基础上的深化，是一场全面、系统、整体的制度创新。必须着眼改革的系统性、整体性、协同性，坚持和完善六个方面的制度（口诀「经开民文社生」）：（1）社会主义基本经济制度（2）对外开放制度机制（3）人民当家作主制度体系（4）繁荣发展社会主义先进文化的制度（5）统筹城乡的民生保障制度和共建共治共享的社会治理制度（6）生态文明制度体系",
+ k:["全面深化改革开放是涉险滩","必须勇于跳出条条框框限制","新时代全面深化改革开放","勇于创新的新思维方式","必须着眼改革的关联性","必须勇于打破部门利益","赢得国际竞争的主动","整体的制度创新"]},
+
+{p:"05 第五章",t:"考点44、如何坚持全面深化改革开放的正确方向",star:0,
+ q:"考点44、如何坚持全面深化改革开放的正确方向",
+ a:"全面深化改革开放改什么、怎么改，这是一个带有根本性的问题。要保持战略定力，牢牢把握全面深化改革开放的正确方向，确保改革不改向、变革不变色。第一，必须坚持和改善党的全面领导、坚持和完善中国特色社会主义制度。改革开放是对社会主义生产关系和上层建筑的调整，使之适应生产力和经济基础发展的新要求，是社会主义制度的自我完善和发展，而不是改弦易张。第二，必须坚持以人民为中心，促进社会公平正义、增进人民福祉。社会主义改革开放的出发点和落脚点，是为了更好实现和维护人民利益、为了让老百姓过上好日子。党和国家的一系列改革开放举措，都要坚持符合人民利益、反映人民需要、回应人民呼声。第三，必须有利于进一步解放思想、进一步解放和发展社会生产力、进一步解放和增强社会活力。解放思想，是开启改革开放事业的思想前提，也是新时代全面深化改革开放的思想前提；解放和发展社会生产力，是改革开放的鲜明特征和首要任务，也是新时代贯彻新发展理念、构建新发展格局、推动高质量发展的必然要求；解放和增强社会活力，是社会主义改革的内在要求和基本目的，也是新时代全面深化改革的关键所在。",
+ m:"三要求「党·民·三解放」＝坚持党的全面领导和中国特色社会主义制度／坚持以人民为中心／三个“进一步解放”；三解放「思·生·活」＝解放思想、解放和发展社会生产力、解放和增强社会活力",
+ e:"①总→全面深化改革开放改什么、怎么改，这是一个带有根本性的问题。要保持战略定力，牢牢把握全面深化改革开放的正确方向②党→必须坚持和改善党的全面领导、坚持和完善中国特色社会主义制度。改革开放是对社会主义生产关系和上层建筑的具体形式、具体制度的自我完善和发展，不是改旗易帜③民→必须坚持以人民为中心，促进社会公平正义、增进人民福祉。社会主义改革开放的出发点和落脚点，是为了让人民过上好日子④三解放→必须有利于进一步解放思想、进一步解放和发展社会生产力、进一步解放和增强社会活力（口诀「思生活」）。解放思想是开启改革开放的钥匙，是发展中国特色社会主义的一大法宝",
+ h:"口诀：三要求「党·民·三解放」＝坚持党的全面领导和中国特色社会主义制度／坚持以人民为中心／三个“进一步解放”；三解放「思·生·活」＝解放思想、解放和发展社会生产力、解放和增强社会活力　｜　由点及面：①总→全面深化改革开放改什么、怎么改，这是一个带有根本性的问题。要保持战略定力，牢牢把握全面深化改革开放的正确方向②党→必须坚持和改善党的全面领导、坚持和完善中国特色社会主义制度。改革开放是对社会主义生产关系和上层建筑的具体形式、具体制度的自我完善和发展，不是改旗易帜③民→必须坚持以人民为中心，促进社会公平正义、增进人民福祉。社会主义改革开放的出发点和落脚点，是为了让人民过上好日子④三解放→必须有利于进一步解放思想、进一步解放和发展社会生产力、进一步解放和增强社会活力（口诀「思生活」）。解放思想是开启改革开放的钥匙，是发展中国特色社会主义的一大法宝",
+ k:["必须有利于进一步解放思想","全面深化改革开放改什么","必须坚持以人民为中心","构建新发展格局","增进人民福祉","反映人民需要","回应人民呼声","变革不变色"]},
+
+{p:"05 第五章",t:"考点45、坚持全面深化改革总目标",star:0,
+ q:"考点45、坚持全面深化改革总目标",
+ a:"新时代全面深化改革具有全面性、系统性、整体性的鲜明特点，必须将其作为一个系统工程来把握。党的十八届三中全会对全面深化改革进行了顶层设计、系统规划和总体部署，明确了全面深化改革的总目标和主要任务。党的十九届四中全会系统总结了十八大以来改革开放的理论成果、制度成果、实践成果，勾勒出新时代全面深化改革开放更加清晰的蓝图。第一，全面深化改革总目标是：完善和发展中国特色社会主义制度、推进国家治理体系和治理能力现代化。这一总目标的提出，标志着我们党对社会主义建设规律和改革开放规律认识的深化，对于新时代统筹推进各领域各方面的改革，对于决胜全面建成小康社会、全面建设社会主义现代化国家、全面推进中华民族伟大复兴具有重大指导意义。第二，全面深化改革必须牢牢把握总目标，实施好“六个紧紧围绕”的路线图。紧紧围绕使市场在资源配置中起决定性作用和更好发挥政府作用，深化经济体制改革；紧紧围绕坚持党的领导、人民当家作主、依法治国有机统一，深化政治体制改革；紧紧围绕建设社会主义核心价值体系、社会主义文化强国，深化文化体制改革；紧紧围绕更好保障和改善民生、促进社会公平正义，深化社会体制改革；紧紧围绕建设美丽中国，深化生态文明体制改革；紧紧围绕提高科学执政、民主执政、依法执政水平，深化党的建设制度改革。第三，统筹推进各领域各方面改革开放，必须以全面深化改革总目标为引领，以制度建设为主线，以经济体制改革为重点，以重要领域和关键环节改革为突破口，使各方面改革协同推进、环环相扣、形成合力。",
+ m:"「目·图·路」＝总目标＋“六个紧紧围绕”路线图＋方法论；总目标「制·治」＝完善制度、推进治理现代化；方法「引·线·重」＝以总目标为引领、以制度建设为主线、以经济体制改革为重点",
+ e:"①总→新时代全面深化改革具有全面性、系统性、整体性的鲜明特点，必须将其作为一个系统工程来把握。党的十八届三中全会确定了全面深化改革的总目标②目→全面深化改革总目标是：完善和发展中国特色社会主义制度、推进国家治理体系和治理能力现代化（口诀「制治」：完善和发展制度是根本方向，推进治理现代化是实现路径）③图→必须牢牢把握总目标，实施好“六个紧紧围绕”的路线图：紧紧围绕使市场在资源配置中起决定性作用和更好发挥政府作用深化经济体制改革；紧紧围绕坚持党的领导、人民当家作主、依法治国有机统一深化政治体制改革；紧紧围绕建设社会主义核心价值体系、社会主义文化强国深化文化体制改革；紧紧围绕更好保障和改善民生、促进社会公平正义深化社会体制改革；紧紧围绕建设美丽中国深化生态文明体制改革；紧紧围绕提高科学执政、民主执政、依法执政水平深化党的建设制度改革④路→统筹推进各领域各方面改革开放，必须以全面深化改革总目标为引领，以制度建设为主线，以经济体制改革为重点（口诀「引线重」）",
+ h:"口诀：「目·图·路」＝总目标＋“六个紧紧围绕”路线图＋方法论；总目标「制·治」＝完善制度、推进治理现代化；方法「引·线·重」＝以总目标为引领、以制度建设为主线、以经济体制改革为重点　｜　由点及面：①总→新时代全面深化改革具有全面性、系统性、整体性的鲜明特点，必须将其作为一个系统工程来把握。党的十八届三中全会确定了全面深化改革的总目标②目→全面深化改革总目标是：完善和发展中国特色社会主义制度、推进国家治理体系和治理能力现代化（口诀「制治」：完善和发展制度是根本方向，推进治理现代化是实现路径）③图→必须牢牢把握总目标，实施好“六个紧紧围绕”的路线图：紧紧围绕使市场在资源配置中起决定性作用和更好发挥政府作用深化经济体制改革；紧紧围绕坚持党的领导、人民当家作主、依法治国有机统一深化政治体制改革；紧紧围绕建设社会主义核心价值体系、社会主义文化强国深化文化体制改革；紧紧围绕更好保障和改善民生、促进社会公平正义深化社会体制改革；紧紧围绕建设美丽中国深化生态文明体制改革；紧紧围绕提高科学执政、民主执政、依法执政水平深化党的建设制度改革④路→统筹推进各领域各方面改革开放，必须以全面深化改革总目标为引领，以制度建设为主线，以经济体制改革为重点（口诀「引线重」）",
+ k:["紧紧围绕坚持党的领导","紧紧围绕提高科学执政","全面深化改革总目标","六个紧紧围绕","人民当家作主","制度成果","民主执政","环环相扣"]},
+
+{p:"05 第五章",t:"考点46、如何推进国家治理体系和治理能力现代化",star:0,
+ q:"考点46、如何推进国家治理体系和治理能力现代化",
+ a:"国家治理体系和治理能力现代化，是一个国家现代化的重要标志。新时代全面深化改革开放，就是要使中国特色社会主义制度更加成熟更加定型，推进国家治理体系和治理能力现代化。国家治理体系和治理能力是一个国家制度和制度执行能力的集中体现。国家治理体系是在党领导下管理国家的制度体系，包括经济、政治、文化、社会、生态文明和党的建设等各领域体制机制、法律法规安排，是一整套紧密相连、相互协调的国家制度；国家治理能力则是运用国家制度管理社会各方面事务的能力，包括改革发展稳定、内政外交国防、治党治国治军等各个方面。国家治理体系和治理能力是一个有机整体，相辅相成，有了好的国家治理体系才能提高国家治理能力，提高国家治理能力才能充分发挥国家治理体系的效能。第一，推进国家治理体系和治理能力现代化，必须坚定中国特色社会主义制度自信。中国特色社会主义制度和国家治理体系是在中国的社会土壤中生长起来的，是马克思主义国家理论指导我国制度建设实践的成果，是经过革命、建设、改革长期探索形成的，凝结着党和人民的智慧，具有深厚的理论渊源、历史基础、文化底蕴和现实依据。第二，推进国家治理体系和治理能力現代化，必须更好发挥中国特色社会主义制度优势。中国特色社会主义制度是党和人民在长期实践探索中形成的，具有多方面的显著优势。长期保持并不断增强这些优势，是我们在新时代坚持和完善中国特色社会主义制度、推进国家治理体系和治理能力现代化的努力方向。第三，推进国家治理体系和治理能力现代化，必须把中国特色社会主义制度优势转化为国家治理效能。把中国特色社会主义制度坚持好完善好，最重要的是发挥好这个制度的作用，把制度优势转化为治理效能。",
+ m:"三方法「信·优·效」＝坚定中国特色社会主义制度自信／更好发挥制度优势／把制度优势转化为国家治理效能",
+ e:"①总→国家治理体系和治理能力现代化，是一个国家现代化的重要标志。新时代全面深化改革开放，就是要使中国特色社会主义制度更加成熟更加定型，把制度优势转化为治理效能②信→推进国家治理体系和治理能力现代化，必须坚定中国特色社会主义制度自信。中国特色社会主义制度和国家治理体系是以马克思主义为指导、植根中国大地、具有深厚中华文化根基、深得人民拥护的制度体系③优→必须更好发挥中国特色社会主义制度优势。我国国家制度和国家治理体系具有多方面的显著优势，包括坚持党的集中统一领导、坚持人民当家作主、坚持全面依法治国、坚持全国一盘棋等④效→必须把中国特色社会主义制度优势转化为国家治理效能。制度的生命力在于执行，要强化制度执行力、加强制度执行的监督，把制度优势转化为管理国家和社会事务的实际效能",
+ h:"口诀：三方法「信·优·效」＝坚定中国特色社会主义制度自信／更好发挥制度优势／把制度优势转化为国家治理效能　｜　由点及面：①总→国家治理体系和治理能力现代化，是一个国家现代化的重要标志。新时代全面深化改革开放，就是要使中国特色社会主义制度更加成熟更加定型，把制度优势转化为治理效能②信→推进国家治理体系和治理能力现代化，必须坚定中国特色社会主义制度自信。中国特色社会主义制度和国家治理体系是以马克思主义为指导、植根中国大地、具有深厚中华文化根基、深得人民拥护的制度体系③优→必须更好发挥中国特色社会主义制度优势。我国国家制度和国家治理体系具有多方面的显著优势，包括坚持党的集中统一领导、坚持人民当家作主、坚持全面依法治国、坚持全国一盘棋等④效→必须把中国特色社会主义制度优势转化为国家治理效能。制度的生命力在于执行，要强化制度执行力、加强制度执行的监督，把制度优势转化为管理国家和社会事务的实际效能",
+ k:["相互协调的国家制度","文化底蕴和现实依据","内政外交国防","历史基础","政治","文化","社会","建设"]},
+
+{p:"05 第五章",t:"考点47、全面深化改革开放要坚持正确的方法论",star:0,
+ q:"考点47、全面深化改革开放要坚持正确的方法论",
+ a:"全面深化改革开放是一个复杂系统工程，正确的方法对于改革顺利推进、取得成功至关重要。第一，增强全面深化改革的系统性、整体性、协同性。全面深化改革是一场深刻而全面的社会变革，涉及经济社会发展各个方面、各个领域，每一项改革都可能牵一发而动全身，对经济社会发展产生多方面影响。这就需要加强对改革的整体谋划、协同推进、系统集成，注重改革措施整体效果，避免各行其是、相互掣肘。第二，加强顶层设计和摸着石头过河相结合。新时代的改革同过去相比，广度和深度都大大拓展了，要把改革推向前进，必须加强顶层设计，以利于提高改革的科学性和协调性。改革开放是全新的事业，没有现成的方案和经验可以借鉴，必须在实践中探索，摸着石头过河就是摸规律。第三，统筹改革发展稳定。正确处理好改革发展稳定的关系，是我国改革开放的一条重要经验。改革发展稳定是我国社会主义现代化建设的三个重要支点。改革是经济社会发展的强大动力，发展是解决一切经济社会问题的关键，稳定是改革发展的前提。只有社会稳定，改革发 展才能不断推进；只有改革发展不断推进，社会稳定才能具有坚实基础。第四，胆子要大，步子要稳。胆子要大，就是改革再难也要向前推进，敢于担当，敢于啃硬骨头，敢于涉险滩。步子要稳，就是方向一定要准，行驶一定要稳，尤其不能犯颠覆性错误。第五，坚持重大改革于法有据。全面深化改革是一场深刻的制度变革，制度的“立”和“破”都必须于法有据。改革和法治如鸟之两翼、车之两轮，相辅相成、相伴而生。要坚持改革决策和立法决策相统一、相衔接，做到改革和法治同步推进，增强改革的穿透力。",
+ m:"五方法「协·顶·统·胆·法」＝增强系统性整体性协同性／顶层设计与摸着石头过河相结合／统筹改革发展稳定／胆子要大步子要稳／重大改革于法有据（助记：协同顶层，统筹胆法）",
+ e:"①总→全面深化改革开放是一个复杂系统工程，正确的方法对于改革顺利推进、取得成功至关重要②协→增强全面深化改革的系统性、整体性、协同性。全面深化改革是一场深刻而全面的社会变革，涉及经济社会发展各领域，必须统筹谋划、协同推进③顶→加强顶层设计和摸着石头过河相结合。新时代的改革同过去相比广度和深度都大大拓展了，要在加强顶层设计的同时继续鼓励大胆探索、勇于开拓④统→统筹改革发展稳定。正确处理好改革发展稳定的关系，是我国改革开放的一条重要经验：改革是动力、发展是目的、稳定是前提⑤胆→胆子要大，步子要稳。胆子要大，就是改革再难也要向前推进，敢于担当，敢于啃硬骨头，敢于涉险滩；步子要稳，就是方向要准、行驶要稳，尤其是不能犯颠覆性错误⑥法→坚持重大改革于法有据。全面深化改革是一场深刻的制度变革，制度的“立”和“破”都必须于法有据，做到改革和法治同步推进，增强改革的穿透力",
+ h:"口诀：五方法「协·顶·统·胆·法」＝增强系统性整体性协同性／顶层设计与摸着石头过河相结合／统筹改革发展稳定／胆子要大步子要稳／重大改革于法有据（助记：协同顶层，统筹胆法）　｜　由点及面：①总→全面深化改革开放是一个复杂系统工程，正确的方法对于改革顺利推进、取得成功至关重要②协→增强全面深化改革的系统性、整体性、协同性。全面深化改革是一场深刻而全面的社会变革，涉及经济社会发展各领域，必须统筹谋划、协同推进③顶→加强顶层设计和摸着石头过河相结合。新时代的改革同过去相比广度和深度都大大拓展了，要在加强顶层设计的同时继续鼓励大胆探索、勇于开拓④统→统筹改革发展稳定。正确处理好改革发展稳定的关系，是我国改革开放的一条重要经验：改革是动力、发展是目的、稳定是前提⑤胆→胆子要大，步子要稳。胆子要大，就是改革再难也要向前推进，敢于担当，敢于啃硬骨头，敢于涉险滩；步子要稳，就是方向要准、行驶要稳，尤其是不能犯颠覆性错误⑥法→坚持重大改革于法有据。全面深化改革是一场深刻的制度变革，制度的“立”和“破”都必须于法有据，做到改革和法治同步推进，增强改革的穿透力",
+ k:["增强全面深化改革的系统性","改革和法治如鸟之两翼","坚持重大改革于法有据","车之两轮，相辅相成","取得成功至关重要","统筹改革发展稳定","协同推进","相互掣肘"]},
+
+{p:"05 第五章",t:"考点48、如何理解改革开放永无止境",star:1,
+ q:"考点48、如何理解改革开放永无止境",
+ a:"全面深化改革开放，是新时代坚持和发展中国特色社会主义的根本动力。习近平指出：“实践发展永无止境，解放思想永无止境，改革开放也永无止境，改革开放只有进行时、没有完成时。这是历史唯物主义态度。”第一，改革开放永无止境是社会基本矛盾运动规律的深刻反映。历史唯物主义认为，生产力是推动人类社会发展最活跃最具有革命性的因素，生产力的不断发展客观上要求生产关系与之相适应，要求上层建筑与经济基础相适应。进入新时代，全面深化改革开放取得历史性成就，但改革开放的历史任务并没有完结， 一些制约我国发展和稳定的体制机制障碍仍然存在，中国特色社会主义制度和国家治理体系还没有达到完全成熟定型的要求。生产力发展是永无止境的，调整生产关系、完善上层建筑的改革开放也是永无止境的。第二，改革开放永无止境是总结世界社会主义实践经验得出的重要结论。世界社会主义发展经验，特别是苏联和东欧社会主义国家的教训充分表明，社会主义是在开拓创新中前进的，固守旧有体制机制、不实行改革开放死路一条；不坚持科学社会主义基本原则，搞否定社会主义方向的“改革开放”也是死路一条。第三，改革开放永无止境是推进党和人民事业发展的必然要求。中国共产党立志于中华民族千秋伟业，为中国人民谋幸福、为中华民族谋复兴是我们党的初心和使命。完成这一光荣的历史使命，就必须不断解放和发展生产力，不断发展社会主义经济、政治、文化、社会和生态文明，不断完善社会主义的各项制度，这一切都要求不断深化改革开放。",
+ m:"三依据「规·验·业」＝社会基本矛盾运动规律的深刻反映／总结世界社会主义实践经验的重要结论／推进党和人民事业发展的必然要求",
+ e:"①总→全面深化改革开放，是新时代坚持和发展中国特色社会主义的根本动力。习近平指出：“实践发展永无止境，解放思想永无止境，改革开放也永无止境。”②规→改革开放永无止境是社会基本矛盾运动规律的深刻反映。历史唯物主义认为，生产力是推动人类社会发展最活跃最革命的因素，生产关系要不断适应生产力发展，这就决定了改革开放只有进行时、没有完成时③验→改革开放永无止境是总结世界社会主义实践经验得出的重要结论。世界社会主义发展经验，特别是苏联和东欧国家的教训表明，不改革或改革停滞僵化就会失去生机活力④业→改革开放永无止境是推进党和人民事业发展的必然要求。中国共产党立志于中华民族千秋伟业，为中国人民谋幸福、为中华民族谋复兴，必须不断把改革开放推向前进",
+ h:"口诀：三依据「规·验·业」＝社会基本矛盾运动规律的深刻反映／总结世界社会主义实践经验的重要结论／推进党和人民事业发展的必然要求　｜　由点及面：①总→全面深化改革开放，是新时代坚持和发展中国特色社会主义的根本动力。习近平指出：“实践发展永无止境，解放思想永无止境，改革开放也永无止境。”②规→改革开放永无止境是社会基本矛盾运动规律的深刻反映。历史唯物主义认为，生产力是推动人类社会发展最活跃最革命的因素，生产关系要不断适应生产力发展，这就决定了改革开放只有进行时、没有完成时③验→改革开放永无止境是总结世界社会主义实践经验得出的重要结论。世界社会主义发展经验，特别是苏联和东欧国家的教训表明，不改革或改革停滞僵化就会失去生机活力④业→改革开放永无止境是推进党和人民事业发展的必然要求。中国共产党立志于中华民族千秋伟业，为中国人民谋幸福、为中华民族谋复兴，必须不断把改革开放推向前进",
+ k:["全面深化改革开放","没有完成时","改革开放","政治","文化"]},
+
+{p:"05 第五章",t:"考点49、坚定不移把全面深化改革引向深入",star:1,
+ q:"考点49、坚定不移把全面深化改革引向深入",
+ a:"第一，在全面建设社会主义现代化国家新征程上，根本动力仍然是改革开放，要继续用足用好改革开放这个关键一招。党的二十大围绕全面建成社会主义现代化强国、以中国式现代化全面推进中华民族伟大复兴的中心任务，对全面深化改革开放作出新的部署。第二，把全面深化改革不断引向深入，要聚焦全面建设社会主义现代化国家中的重大问题，注重统筹全局、把握重点，抓好重大改革任务攻坚克难。（1）要深化社会主义市场经济体制改革，形成有利于贯彻新发展理念、构建新发展格局、推动高质量发展的体制机制；（2）深化人民当家作主制度体系改革，形成有利于发展全过程人民民主、建设中国特色社会主义法治体系、加快法治中国建设的体制机制；（3）深化文化体制改革，形成有利于建设具有强大凝聚力和引领力的社会主义意识形态、广泛践行社会主义核心价值观、提高全社会文明程度、繁荣发展文化事业和文化产业、增强中华文明传播力影响力的体制机制；（4）深化社会体制改革，形成有利于完善分配、促进就业、健全社会保障、推进健康中国建设的体制机制；（5）深化生态文明体制改革，形成有利于加快发展方式绿色转型、深入推进环境污染防治、提升生态系统多样性稳定性持续性的体制机制；（6）健全加强党的全面领导、全面从严治党制度体系，形成有利于坚持和加强党中央集中统一领导、坚持不懈用习近平新时代中国特色社会主义思想凝心铸魂、完善党的自我革命制度规范体系、建设高素质干部队伍的体制机制。第三，改革推进到今天，比认识更重要的是决心，比方法更关键的是担当。当前改革又到了一个新的历史关头，要立足新发展阶段、贯彻新发展理念、构建新发展格局、推动高质量发展，以一往无前的奋斗姿态推动全面深化改革迈出新步伐，不断增强社会主义现代化建设的动力和活力。",
+ m:"「动·点·担」＝根本动力是改革开放／聚焦重大问题、把握重点／比认识更重要的是决心、比方法更关键的是担当；六大改革「市·民·文·社·生·党」",
+ e:"①动→在全面建设社会主义现代化国家新征程上，根本动力仍然是改革开放，要继续用足用好改革开放这个关键一招②点→把全面深化改革不断引向深入，要聚焦全面建设社会主义现代化国家中的重大问题，注重统筹全局、把握重点，重点推进六大改革（口诀「市民文社生党」）：（1）深化社会主义市场经济体制改革，形成有利于贯彻新发展理念、构建新发展格局、推动高质量发展的体制机制（2）深化人民当家作主制度体系改革，形成有利于发展全过程人民民主、建设中国特色社会主义法治体系的体制机制（3）深化文化体制改革，形成有利于建设具有强大凝聚力和引领力的社会主义意识形态、广泛践行社会主义核心价值观的体制机制（4）深化社会体制改革，形成有利于完善分配、促进就业、健全社会保障、推进健康中国建设的体制机制（5）深化生态文明体制改革，形成有利于加快发展方式绿色转型、深入推进环境污染防治、提升生态系统多样性的体制机制（6）健全加强党的全面领导、全面从严治党制度体系，形成有利于坚持和加强党中央集中统一领导的制度机制③担→改革推进到今天，比认识更重要的是决心，比方法更关键的是担当。当前改革又到了一个新的历史关头，要敢于啃硬骨头、敢于涉险滩",
+ h:"口诀：「动·点·担」＝根本动力是改革开放／聚焦重大问题、把握重点／比认识更重要的是决心、比方法更关键的是担当；六大改革「市·民·文·社·生·党」　｜　由点及面：①动→在全面建设社会主义现代化国家新征程上，根本动力仍然是改革开放，要继续用足用好改革开放这个关键一招②点→把全面深化改革不断引向深入，要聚焦全面建设社会主义现代化国家中的重大问题，注重统筹全局、把握重点，重点推进六大改革（口诀「市民文社生党」）：（1）深化社会主义市场经济体制改革，形成有利于贯彻新发展理念、构建新发展格局、推动高质量发展的体制机制（2）深化人民当家作主制度体系改革，形成有利于发展全过程人民民主、建设中国特色社会主义法治体系的体制机制（3）深化文化体制改革，形成有利于建设具有强大凝聚力和引领力的社会主义意识形态、广泛践行社会主义核心价值观的体制机制（4）深化社会体制改革，形成有利于完善分配、促进就业、健全社会保障、推进健康中国建设的体制机制（5）深化生态文明体制改革，形成有利于加快发展方式绿色转型、深入推进环境污染防治、提升生态系统多样性的体制机制（6）健全加强党的全面领导、全面从严治党制度体系，形成有利于坚持和加强党中央集中统一领导的制度机制③担→改革推进到今天，比认识更重要的是决心，比方法更关键的是担当。当前改革又到了一个新的历史关头，要敢于啃硬骨头、敢于涉险滩",
+ k:["深入推进环境污染防治","深化生态文明体制改革","健全加强党的全面领导","提高全社会文明程度","深化文化体制改革","深化社会体制改革","构建新发展格局","贯彻新发展理念"]},
+
+{p:"05 第五章",t:"考点50、坚定不移扩大高水平对外开放",star:1,
+ q:"考点50、坚定不移扩大高水平对外开放",
+ a:"开放也是改革。以开放促改革、促发展是我国发展不断取得新成就的宝贵经验。改革不停顿、开放不止步。我们将坚定不移全面扩大开放，发展更高水平开放型经济，不断以中国新发展为世界提供新机遇。第一，坚定不移扩大高水平对外开放的国际背景。近年来经济全球化遭遇逆流，单边主义、保护主义、孤立主义上升，世界经济低迷，国际贸易和投资大幅萎缩，但是开放合作仍然是历史潮流，经济全球化的历史大势不可逆转，世界决不会退回到相互封闭、彼此分割的状态。顺应大势才能赢得优势。第二，中国坚定不移扩大高水平对外开放的生动实践。党的十八大以来，我们坚定不移扩大对外开放，实行更加积极主动的开放战略，坚持对内对外开放相互促进、“引进来”和“走出去”更好结合，推动贸易和投资自由化便利化，构建面向全球的高标准自由贸易区网络，共建“一带一路”成为当今世界深受欢迎的国际公共产品和国际合作平台，我国国际经济合作和竞争新优势不断增强。第三，坚定不移扩大高水平对外开放的方法策略。继续扩大对外开放，构建更高水平开放型经济新体制。要依托我国超大规模市场优势，以国内大循环吸引全球资源要素，提升贸易投资合作质量和水平；深化贸易投资领域体制机制改革，稳步扩大规则、规制、管理、标准等制度型开放；推动货物贸易优化升级，创新服务贸易发展机制，发展数字贸易，加快建设贸易强国；推动共建“一带一路”高质量发展。中国的发展离不开世界，世界的繁荣也需要中国。中国对外开放，不是要一家唱独角戏，而是要欢迎各方共同参与；不是要谋求势力范围，而是要支持各国共同发展；不是要营造自己的后花园，而是要建设各国共享的百花园。未来之中国，必将以更加开放的姿态拥抱世界，必将同世界形成更加良性的互动，带来更加进步和繁荣的中国和世界。",
+ m:"「背·践·策」＝国际背景／生动实践／方法策略；结语：中国开放的大门只会越开越大",
+ e:"①总→开放也是改革。以开放促改革、促发展是我国发展不断取得新成就的宝贵经验。改革不停顿、开放不止步②背→坚定不移扩大高水平对外开放的国际背景。近年来经济全球化遭遇逆流，单边主义、保护主义、孤立主义上升，世界经济复苏乏力，但经济全球化仍是历史大势③践→中国坚定不移扩大高水平对外开放的生动实践。党的十八大以来，我们坚定不移扩大对外开放，实行更加积极主动的开放战略，形成更大范围、更宽领域、更深层次的对外开放格局④策→坚定不移扩大高水平对外开放的方法策略。要继续扩大对外开放，构建更高水平开放型经济新体制，依托我国超大规模市场优势，以国内大循环吸引全球资源要素，增强国内国际两个市场两种资源联动效应，稳步扩大规则、规制、管理、标准等制度型开放⑤结语→中国开放的大门不会关闭，只会越开越大",
+ h:"口诀：「背·践·策」＝国际背景／生动实践／方法策略；结语：中国开放的大门只会越开越大　｜　由点及面：①总→开放也是改革。以开放促改革、促发展是我国发展不断取得新成就的宝贵经验。改革不停顿、开放不止步②背→坚定不移扩大高水平对外开放的国际背景。近年来经济全球化遭遇逆流，单边主义、保护主义、孤立主义上升，世界经济复苏乏力，但经济全球化仍是历史大势③践→中国坚定不移扩大高水平对外开放的生动实践。党的十八大以来，我们坚定不移扩大对外开放，实行更加积极主动的开放战略，形成更大范围、更宽领域、更深层次的对外开放格局④策→坚定不移扩大高水平对外开放的方法策略。要继续扩大对外开放，构建更高水平开放型经济新体制，依托我国超大规模市场优势，以国内大循环吸引全球资源要素，增强国内国际两个市场两种资源联动效应，稳步扩大规则、规制、管理、标准等制度型开放⑤结语→中国开放的大门不会关闭，只会越开越大",
+ k:["坚定不移扩大高水平对外开放","标准等制度型开放","彼此分割的状态","以开放促改革","开放也是改革","改革不停顿","开放不止步","一带一路"]}
+];
+
+const KEY_STORE='bs-mn-05_第五章-v1';
+let state=JSON.parse(localStorage.getItem(KEY_STORE)||'{}');
+let filter='all', mode='seg', order=DECK.map((_,i)=>i), idx=0, flipped=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function deck(){
+  let list=order.filter(i=>{
+    const c=DECK[i], st=state[i]||{};
+    if(filter==='star') return c.star===1;
+    if(filter==='learning') return (st.streak||0)<2;
+    if(filter==='mastered') return (st.streak||0)>=2;
+    return true;
+  });
+  return list.length?list:[0];
+}
+
+function segsOf(text){
+  const raw=text.match(/[^。，；、？！]+[。，；、？！]?/g)||[text];
+  return raw.map(s=>s.trim()).filter(Boolean);
+}
+function renderSeg(text){
+  return segsOf(text).map(s=>
+    s.replace(/\s/g,'').length>=2?`<span class="cloze">${esc(s)}</span>`:esc(s)
+  ).join('');
+}
+function renderKey(text,terms){
+  const ts=[...new Set(terms||[])].sort((a,b)=>b.length-a.length);
+  let out=esc(text);
+  ts.forEach(t=>{
+    const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+    out=out.replace(re,m=>`<span class="cloze">${m}</span>`);
+  });
+  return out;
+}
+
+function render(){
+  const list=deck();
+  if(idx>=list.length) idx=0;
+  if(idx<0) idx=list.length-1;
+  const i=list[idx], c=DECK[i], st=state[i]||{streak:0};
+  const star=c.star?'★★★':'';
+  const no=`卡 ${i+1} / ${DECK.length}`;
+
+  ['f','b'].forEach(f=>{
+    $(f+'-part').textContent=c.p;
+    $(f+'-no').textContent=no;
+    $(f+'-star').textContent=star;
+  });
+  $('f-q').textContent=c.q;
+  $('b-q').textContent=c.q;
+  $('b-mnem').textContent=c.m||'';
+  const ex=(c.e||'').split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).filter(s=>s.trim());
+  $('b-expand').innerHTML=ex.length?('<ol>'+ex.map(function(s){
+    const t=s.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]/,'').trim();
+    const k=t.indexOf('→');
+    return '<li>'+(k>0?'<b>'+esc(t.slice(0,k))+'</b>　'+esc(t.slice(k+1)):esc(t))+'</li>';
+  }).join('')+'</ol>'):'';
+  $('b-a').innerHTML=esc(c.a);
+  $('f-a').innerHTML = mode==='seg' ? renderSeg(c.a) : renderKey(c.a,c.k);
+
+  const days=['第 1 天','第 3 天','第 7 天','第 15 天'];
+  const s=st.streak||0;
+  $('f-due').textContent = s>=2 ? '已毕业' : '下次复习 '+(days[Math.min(s,3)]||'第 15 天');
+
+  $('toggleAll').textContent='全部显示';
+  $('toggleAll').classList.remove('on');
+
+  const done=DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  $('prog').style.width=(done/DECK.length*100)+'%';
+  $('card').classList.toggle('flip',flipped);
+  updateToc(done);
+}
+
+function buildToc(){
+  const groups=[];
+  DECK.forEach((c,i)=>{
+    let g=groups.find(x=>x.p===c.p);
+    if(!g){ g={p:c.p,items:[]}; groups.push(g); }
+    g.items.push(i);
+  });
+  $('toc-body').innerHTML=groups.map(g=>`
+    <div class="toc-g">
+      <h6>${esc(g.p)}<span class="cnt"></span></h6>
+      <ul>${g.items.map(i=>`
+        <li data-i="${i}">
+          <span class="tn">${i+1}</span>
+          <span class="tt">${esc(DECK[i].t)}</span>
+          ${DECK[i].star?'<span class="ts">★★★</span>':''}
+          <span class="td"></span>
+        </li>`).join('')}</ul>
+    </div>`).join('');
+  $('toc-body').addEventListener('click',e=>{
+    const li=e.target.closest('li');
+    if(li) jumpTo(+li.dataset.i);
+  });
+}
+
+function updateToc(done){
+  if(!$('toc-body').children.length) return;
+  const cur=deck()[idx];
+  document.querySelectorAll('#toc-body li').forEach(li=>{
+    const i=+li.dataset.i, s=(state[i]||{streak:0}).streak||0;
+    li.classList.toggle('cur', i===cur);
+    li.classList.toggle('done', s>=2);
+    li.classList.toggle('half', s>0&&s<2);
+    li.querySelector('.td').textContent = s>=2?'✓':(s>0?'◐':'');
+  });
+  document.querySelectorAll('#toc-body .toc-g').forEach(g=>{
+    const lis=[...g.querySelectorAll('li')];
+    g.querySelector('.cnt').textContent = lis.filter(l=>l.classList.contains('done')).length+' / '+lis.length;
+  });
+  const total=DECK.length, d=(done!==undefined)?done:DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  const half=DECK.filter((_,j)=>{const s=(state[j]||{streak:0}).streak||0;return s>0&&s<2;}).length;
+  $('tocSum').textContent=`已掌握 ${d} / ${total}　记住过一次 ${half}　未背 ${total-d-half}`;
+}
+
+function openToc(){ $('toc').classList.add('on'); $('tocMask').classList.add('on'); $('tocBtn').classList.add('on'); }
+function closeToc(){ $('toc').classList.remove('on'); $('tocMask').classList.remove('on'); $('tocBtn').classList.remove('on'); }
+function toggleToc(){ $('toc').classList.contains('on')?closeToc():openToc(); }
+
+function jumpTo(i){
+  if(filter!=='all'){
+    filter='all';
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  }
+  const p=deck().indexOf(i);
+  if(p>=0){ idx=p; flipped=false; render(); closeToc(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function flip(){ flipped=!flipped; $('card').classList.toggle('flip',flipped); }
+function go(d){ const l=deck(); idx=(idx+d+l.length)%l.length; flipped=false; render(); }
+function mark(ok){
+  const list=deck(), i=list[idx], st=state[i]||{streak:0,last:0};
+  st.streak = ok ? Math.min((st.streak||0)+1,4) : 0;
+  st.last=Date.now();
+  state[i]=st; localStorage.setItem(KEY_STORE,JSON.stringify(state));
+  if(filter==='learning'||filter==='mastered'){ idx=0; render(); }
+  else { go(1); }
+}
+
+$('f-a').addEventListener('click',e=>{
+  const el=e.target.closest('.cloze');
+  if(el) el.classList.toggle('on');
+});
+$('toggleAll').addEventListener('click',()=>{
+  const cs=[...document.querySelectorAll('#f-a .cloze')];
+  const allOn=cs.length&&cs.every(c=>c.classList.contains('on'));
+  cs.forEach(c=>c.classList.toggle('on',!allOn));
+  $('toggleAll').textContent=allOn?'全部显示':'全部隐藏';
+  $('toggleAll').classList.toggle('on',!allOn);
+});
+document.querySelectorAll('[data-m]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+document.querySelectorAll('[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f; idx=0;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+$('tocBtn').addEventListener('click',toggleToc);
+$('tocBtn2').addEventListener('click',toggleToc);
+$('tocX').addEventListener('click',closeToc);
+$('tocMask').addEventListener('click',closeToc);
+$('shuffle').addEventListener('click',()=>{
+  order=DECK.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  idx=0; render();
+});
+$('reset').addEventListener('click',()=>{
+  if(confirm('清空全部掌握进度？')){ state={}; localStorage.removeItem(KEY_STORE); idx=0; render(); }
+});
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('flip').addEventListener('click',flip);
+$('got').addEventListener('click',()=>mark(true));
+$('again').addEventListener('click',()=>mark(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key===' '){flip();e.preventDefault();}
+  else if(k==='f'){$('toggleAll').click();}
+  else if(k==='m'){mode = mode==='seg'?'key':'seg';document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===mode));render();}
+  else if(k==='g'){mark(true);}
+  else if(k==='r'){mark(false);}
+  else if(k==='s'){$('shuffle').click();}
+  else if(k==='t'){toggleToc();}
+  else if(e.key==='Escape'){closeToc();}
+});
+
+buildToc();
+render();
+</script>
+</body>
+</html>
