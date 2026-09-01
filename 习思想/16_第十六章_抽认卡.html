@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第十六章 · 背诵抽认卡</title>
+<style>
+:root{
+  --bg:#12141a; --surface:#1a1d26; --surface-2:#21252f; --line:#2c313d;
+  --text:#e6e8ee; --muted:#98a0b0; --faint:#6c7488;
+  --accent:#1D9E75; --accent-soft:#5DCAA5; --accent-dim:rgba(93,202,165,.14);
+  --star:#EF9F27; --danger:#E24B4A;
+  --mask:#2b3240; --mask-hover:#394154;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; padding:24px 18px 60px;
+}
+.wrap{max-width:820px;margin:0 auto}
+
+header{margin-bottom:18px}
+h1{font-size:19px;font-weight:600;letter-spacing:.3px}
+.sub{color:var(--faint);font-size:13px;margin-top:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.chip{
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  padding:5px 12px; border-radius:99px; font-size:13px; cursor:pointer;
+  transition:.15s; user-select:none;
+}
+.chip:hover{border-color:var(--faint);color:var(--text)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.spacer{flex:1}
+
+.progress{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-top:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+.card{
+  margin-top:18px; perspective:2000px;
+}
+.faces{
+  position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.card.flip .faces{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:26px 26px 22px; min-height:360px;
+}
+.faces{display:grid}
+.front{transform:none}
+.back{transform:rotateY(180deg)}
+
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);margin-bottom:14px}
+.tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 9px;border-radius:6px;color:var(--muted)}
+.star{color:var(--star)}
+.q{font-size:19px;font-weight:600;line-height:1.6;margin-bottom:6px}
+.qhint{font-size:12px;color:var(--faint);margin-bottom:18px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--faint);color:var(--text)}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-soft)}
+.tip{font-size:12px;color:var(--faint);margin-left:auto}
+
+.answer{font-size:16px;line-height:2.05;letter-spacing:.2px}
+.cloze{
+  background:var(--mask); color:transparent; border-radius:4px; cursor:pointer;
+  padding:1px 3px; transition:background .12s,color .12s;
+  box-decoration-break:clone; -webkit-box-decoration-break:clone;
+}
+.cloze:hover{background:var(--mask-hover)}
+.cloze.on{background:var(--accent-dim);color:var(--text)}
+.cloze.on:hover{background:rgba(93,202,165,.24)}
+
+.sec{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.sec h4{font-size:12px;color:var(--faint);font-weight:500;letter-spacing:1px;margin-bottom:8px}
+.sec p{font-size:15px;line-height:1.9;color:var(--text)}
+.hook{color:var(--accent-soft)}
+.mnem{background:var(--accent-dim);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:8px;padding:12px 14px;font-size:16px;line-height:1.95;color:var(--accent-soft);
+  font-weight:600;letter-spacing:.4px}
+.expand{margin-top:13px}
+.expand ol{list-style:none;counter-reset:ex}
+.expand li{position:relative;padding:8px 0 8px 33px;font-size:14.5px;line-height:1.95;color:var(--text);
+  border-bottom:1px dashed var(--line)}
+.expand li:last-child{border-bottom:none}
+.expand li::before{content:counter(ex);counter-increment:ex;position:absolute;left:0;top:11px;
+  width:21px;height:21px;border-radius:50%;background:var(--accent);color:#0b0e14;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+.expand li b{color:var(--accent-soft);font-weight:600}
+.plain{font-size:15.5px;line-height:2.0;color:var(--text)}
+
+nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.btn-lg{padding:9px 18px;font-size:14px}
+.btn-ok{border-color:var(--accent);color:var(--accent-soft)}
+.btn-ok:hover{background:var(--accent-dim)}
+.btn-bad{border-color:#5a3030;color:#e08b8b}
+.btn-bad:hover{background:rgba(226,75,74,.12)}
+
+.keys{margin-top:16px;font-size:12px;color:var(--faint);line-height:2}
+kbd{
+  background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)
+}
+details{margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--faint)}
+details[open] summary:before{content:"▾ "}
+details h5{font-size:13px;color:var(--accent-soft);margin:14px 0 6px;font-weight:500}
+details li{font-size:13px;color:var(--muted);line-height:1.9;list-style:none;padding-left:2px}
+details li:before{content:"· ";color:var(--faint)}
+.due{font-size:11px;color:var(--faint);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+.toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+.toc-mask.on{opacity:1;pointer-events:auto}
+.toc{
+  position:fixed;top:0;left:0;height:100%;width:min(430px,90vw);z-index:50;
+  background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,.2,.2,1);
+  overflow-y:auto;padding:22px 20px 50px;
+}
+.toc.on{transform:none}
+.toc-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.toc-head h3{font-size:16px;font-weight:600}
+.toc-x{margin-left:auto;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;padding:2px 7px;border-radius:6px}
+.toc-x:hover{background:var(--surface-2);color:var(--text)}
+.toc-sum{font-size:12px;color:var(--faint);margin-bottom:18px}
+.toc-g{margin-bottom:18px}
+.toc-g h6{
+  font-size:12px;font-weight:500;color:var(--accent-soft);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--line);
+}
+.toc-g h6 .cnt{margin-left:auto;color:var(--faint);font-size:11px}
+.toc-g ul{list-style:none}
+.toc-g li{
+  display:flex;align-items:baseline;gap:9px;padding:6px 9px;border-radius:8px;
+  font-size:13.5px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.toc-g li:hover{background:var(--surface-2);color:var(--text)}
+.toc-g li .tn{flex:none;width:22px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint)}
+.toc-g li .tt{flex:1;line-height:1.5}
+.toc-g li .ts{flex:none;font-size:9px;color:var(--star);letter-spacing:-.5px}
+.toc-g li .td{flex:none;width:14px;text-align:center;font-size:12px;color:var(--faint)}
+.toc-g li.half .td{color:var(--star)}
+.toc-g li.done .td{color:var(--accent)}
+.toc-g li.done .tt{color:var(--faint)}
+.toc-g li.cur{background:var(--accent-dim);color:var(--text)}
+.toc-g li.cur .tn{color:var(--accent-soft)}
+.toc-foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--faint);line-height:1.9}
+
+.home-link{
+  display:inline-block;margin-bottom:12px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:5px 14px;border:1px solid var(--line);
+  border-radius:99px;background:var(--surface);transition:.15s;
+}
+.home-link:hover{border-color:var(--accent);color:var(--accent-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <a class="home-link" href="../index.html">← 章节导航</a>
+  <h1>第十六章 · 背诵抽认卡</h1>
+  <div class="sub">x背诵资料正式版 · 11 个考点 · 重点 4 张 · 逐条口诀</div>
+  <div class="bar">
+    <span class="chip on" data-f="all">全部</span>
+    <span class="chip" data-f="star">重点 ★★★</span>
+    <span class="chip" data-f="learning">学习中</span>
+    <span class="chip" data-f="mastered">已掌握</span>
+    <span class="spacer"></span>
+    <span class="chip" id="tocBtn">目录</span>
+    <span class="chip" id="shuffle">打乱</span>
+    <span class="chip" id="reset">重置进度</span>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</header>
+
+<div class="card" id="card">
+  <div class="faces">
+    <section class="face front">
+      <div class="meta">
+        <span class="tag" id="f-part"></span>
+        <span id="f-no"></span>
+        <span class="star" id="f-star"></span>
+        <span class="spacer"></span>
+        <span class="due" id="f-due"></span>
+      </div>
+      <div class="q" id="f-q"></div>
+      <div class="qhint">先口述或默写，再点色块逐句核对</div>
+      <div class="tools">
+        <button class="btn on" data-m="seg">逐句挖空</button>
+        <button class="btn" data-m="key">只挖关键</button>
+        <button class="btn" id="toggleAll">全部显示</button>
+        <span class="tip">点色块 → 显现；再点 → 盖回去</span>
+      </div>
+      <div class="answer" id="f-a"></div>
+    </section>
+
+    <section class="face back">
+      <div class="meta">
+        <span class="tag" id="b-part"></span>
+        <span id="b-no"></span>
+        <span class="star" id="b-star"></span>
+      </div>
+      <div class="q" id="b-q"></div>
+      <div class="sec">
+        <h4>记忆口诀</h4>
+        <div class="mnem" id="b-mnem"></div>
+        <div class="expand" id="b-expand"></div>
+      </div>
+      <div class="sec">
+        <h4>完整答案</h4>
+        <div class="plain" id="b-a"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<nav>
+  <button class="btn btn-lg" id="tocBtn2">目录</button>
+  <button class="btn btn-lg" id="prev">← 上一张</button>
+  <button class="btn btn-lg" id="flip">翻面</button>
+  <button class="btn btn-lg" id="next">下一张 →</button>
+  <span class="spacer"></span>
+  <button class="btn btn-lg btn-bad" id="again">再看看</button>
+  <button class="btn btn-lg btn-ok" id="got">记住了</button>
+</nav>
+
+<div class="keys">
+  <kbd>←</kbd> <kbd>→</kbd> 切换　<kbd>空格</kbd> 翻面　<kbd>F</kbd> 全部显示/隐藏　<kbd>M</kbd> 切换挖空模式　<kbd>G</kbd> 记住了　<kbd>R</kbd> 再看看　<kbd>T</kbd> 目录　<kbd>Esc</kbd> 关闭　<kbd>S</kbd> 打乱
+</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<aside class="toc" id="toc">
+  <div class="toc-head">
+    <h3>目录</h3>
+    <span class="toc-x" id="tocX">×</span>
+  </div>
+  <div class="toc-sum" id="tocSum"></div>
+  <div id="toc-body"></div>
+  <div class="toc-foot">
+    <span style="color:var(--accent)">✓</span> 已掌握（连续两次记住）<br>
+    <span style="color:var(--star)">◐</span> 记住过一次　·　空白＝还没背<br>
+    点任意一条直接跳过去，<kbd>T</kbd> 开关目录
+  </div>
+</aside>
+
+<details>
+  <summary>关于本卡组</summary>
+  <ul>
+    <li>来源：x背诵资料正式版.docx「第十六章」，共 11 个考点，逐一成卡。</li>
+    <li>正面＝考点原文全文，逐句挖空，点色块显现、再点盖回。</li>
+    <li>背面「记忆口诀」为逐条编写的<b>由点及面</b>口诀：口诀里每个字对应一条，下方按 ①②③ 逐条展开成完整表述。<b>先背口诀，再对着编号把每条复述出来。</b></li>
+    <li>标注 <span style="color:#EF9F27">★★★</span> 的是本章篇幅最大的考点（篇幅排前 1/3，多为论述题量级）。</li>
+    <li>建议：正面用「逐句挖空」默写全文，翻面用「口诀＋展开」核对要点；考前用「只挖关键」速扫。</li>
+  </ul>
+</details>
+
+</div>
+
+<script>
+const DECK = [
+{p:"16 第十六章",t:"考点144、当今世界正经历百年未有之大变局",star:0,
+ q:"考点144、当今世界正经历百年未有之大变局",
+ a:"放眼世界，我们面对的是百年未有之大变局。 一方面，世界多极化、经济全球化、社会信息化、文化多样化深入发展，和平、发展、合作、共赢的历史潮流不可阻挡；另一方面，世界面临的不稳定性不确定性突出，全球性问题加剧，人类处在一个危机交织叠加、风险日益增多的时代。第一，国际力量对比深刻变化。 新兴市场国家和发展中国家群体性崛起，自身实力、自主发展能力、国际影响力不断增强，正在改变全球政治经济版图。同时，发达国家内部矛盾重重、实力相对下降，“东升西降”“中治西乱”更加鲜明。这是近代以来国际力量对比中最具革命性的变化。第二，新一轮科技革命和产业变革深人发展。人工智能、大数据、基因工程等前沿科技不断取得突破，催生大量新产业、新业态、新模式，科学技术从来没有像今天这样深刻影响着各国前途命运，从来没有像今天这样深刻改变人类社会生产生活方式和思维方式。第三，国际体系和国际秩序深度调整。第二次世界大战后建立的国际秩序和全球治理体系不适应的地方越来越多，西方发达国家主导的国际政治经济秩序越来越难以为继，发展中国家在国际事务中的代表性和发言权不断扩大。推动全球治理体系朝着更加公正合理方向发展的呼声越来越高，国际关系民主化不可阻挡。第四，当前，世界之变、时代之变、历史之变正以前所未有的方式展开，世界百年未有之大变局加速演进，世界进入新的动荡变革期。世纪疫情影响深远，局部冲突硝烟又起，冷战思维和集团政治回潮，单边主义、保护主义抬头，经济全球化遭遇逆流，人类社会面临前所未有的挑战。",
+ m:"四变化「力·科·序·变」＝国际力量对比深刻变化／科技革命产业变革深入发展／国际体系国际秩序深度调整／“三个之变”（世界之变、时代之变、历史之变）；总说四化「多·经·信·文」＝世界多极化、经济全球化、社会信息化、文化多样化",
+ e:"①总→放眼世界，我们面对的是百年未有之大变局。一方面，世界多极化、经济全球化、社会信息化、文化多样化深入发展（口诀「多经信文」）②力→国际力量对比深刻变化。新兴市场国家和发展中国家群体性崛起，自身实力、自主发展能力、国际影响力不断增强③科→新一轮科技革命和产业变革深入发展。人工智能、大数据、基因工程等前沿科技不断取得突破，催生大量新产业新业态新模式④序→国际体系和国际秩序深度调整。第二次世界大战后建立的国际秩序和全球治理体系不适应的地方越来越多，变革呼声越来越高⑤变→当前，世界之变、时代之变、历史之变正以前所未有的方式展开，世界百年未有之大变局加速演进，世界进入新的动荡变革期",
+ h:"口诀：四变化「力·科·序·变」＝国际力量对比深刻变化／科技革命产业变革深入发展／国际体系国际秩序深度调整／“三个之变”（世界之变、时代之变、历史之变）；总说四化「多·经·信·文」＝世界多极化、经济全球化、社会信息化、文化多样化　｜　由点及面：①总→放眼世界，我们面对的是百年未有之大变局。一方面，世界多极化、经济全球化、社会信息化、文化多样化深入发展（口诀「多经信文」）②力→国际力量对比深刻变化。新兴市场国家和发展中国家群体性崛起，自身实力、自主发展能力、国际影响力不断增强③科→新一轮科技革命和产业变革深入发展。人工智能、大数据、基因工程等前沿科技不断取得突破，催生大量新产业新业态新模式④序→国际体系和国际秩序深度调整。第二次世界大战后建立的国际秩序和全球治理体系不适应的地方越来越多，变革呼声越来越高⑤变→当前，世界之变、时代之变、历史之变正以前所未有的方式展开，世界百年未有之大变局加速演进，世界进入新的动荡变革期",
+ k:["国际力量对比深刻变化","一方面，世界多极化","风险日益增多的时代","自主发展能力","经济全球化","社会信息化","东升西降","中治西乱"]},
+
+{p:"16 第十六章",t:"考点145、中国必须有自己特色的大国外交",star:0,
+ q:"考点145、中国必须有自己特色的大国外交",
+ a:"面对动荡变革的世界大局，面对复杂严峻的外部环境，中国始终为世界注入稳定性和正能量。要在总结实践经验的基础上，丰富和发展对外工作理念，使我国对外工作有鲜明的中国特色、中国风格、中国气派。第一，中国特色大国外交建立在正确的历史观、大局观、角色观基础之上。（1）树立正确的历史观，就是不仅要看现在国际形势什么样，而且要端起历史望远镜回顾过去、总结历史规律，展望未来、把握历史前进大势；（2）树立正确的大局观，就是不仅要看到现象和细节怎么样，而且要把握本质和全局，抓住主要矛盾和矛盾的主要方面；（3）树立正确的角色观，就是不仅要冷静分析各种国际现象，而且要把自己摆进去，弄清楚在世界格局演变中中国的地位和作用，科学制定我国对外方针政策。第二，中国特色大国外交牢牢把握服务民族复兴、促进人类进步这条主线。中国共产党致力于为中国人民谋幸福、为中华民族谋复兴，同时也致力于为人类谋进步、为世界谋大同。中国特色大国外交紧紧围绕中华民族伟大复兴的历史任务，中国特色大国外交以推动构建人类命运共同体为总目标。第三，中国特色大国外交坚持正确的原则要求。（1）坚持和加强党对对外工作的集中统一领导；（2）坚持以中国特色社会主义为根本增强战略自信；（3）坚持以相互尊重、合作共赢为基础走和平发展道路；（4）坚持以公平正义为理念引领全球治理体系改革；（5）坚持以国家核心利益为底线维护国家主权、安全、发展利益第四，中国特色大国外交展现独特风范。（1）坚持马克思主义立场观点方法，从中华优秀传统文化中汲取智慧启示，开创中国特色大国外交新境界，展现出守正创新的大国气派。（2）坚持爱国主义同国际主义相结合，坚持中国人民利益同各国人民共同利益相结合，政治上坚持主持公道、伸张正义，经济上坚持合作共赢、共同发展，安全上坚持守望相助、相互支持，始终致力于维护世界和平、促进共同发展，展现出立己达人的世界情怀。",
+ m:"四内涵「三观·主线·五原则·风范」；三观「历史观·大局观·角色观」；五原则「党·信·和·治·益」＝党的领导、战略自信、和平发展、全球治理、核心利益",
+ e:"①总→面对动荡变革的世界大局，面对复杂严峻的外部环境，中国始终为世界注入稳定性和正能量，必须有自己特色的大国外交②三观→中国特色大国外交建立在正确的历史观、大局观、角色观基础之上：（1）树立正确的历史观，就是不仅要看现在国际形势什么样，而且要端起历史望远镜回顾过去、总结历史规律（2）树立正确的大局观，就是不仅要看到现象和细节怎么样，而且要把握本质和全局，抓住主要矛盾和矛盾的主要方面（3）树立正确的角色观，就是不仅要冷静分析各种国际现象，而且要把自己摆进去，弄清楚在世界格局演变中中国的地位和作用③主线→牢牢把握服务民族复兴、促进人类进步这条主线。中国共产党致力于为中国人民谋幸福、为中华民族谋复兴，也为人类谋进步、为世界谋大同④五原则→坚持正确的原则要求（口诀「党信和治益」）：（1）坚持和加强党对对外工作的集中统一领导（2）坚持以中国特色社会主义为根本增强战略自信（3）坚持以相互尊重、合作共赢为基础走和平发展道路（4）坚持以公平正义为理念引领全球治理体系改革（5）坚持以国家核心利益为底线维护国家主权、安全、发展利益⑤风范→中国特色大国外交展现独特风范，为世界和平与发展作出新的重大贡献",
+ h:"口诀：四内涵「三观·主线·五原则·风范」；三观「历史观·大局观·角色观」；五原则「党·信·和·治·益」＝党的领导、战略自信、和平发展、全球治理、核心利益　｜　由点及面：①总→面对动荡变革的世界大局，面对复杂严峻的外部环境，中国始终为世界注入稳定性和正能量，必须有自己特色的大国外交②三观→中国特色大国外交建立在正确的历史观、大局观、角色观基础之上：（1）树立正确的历史观，就是不仅要看现在国际形势什么样，而且要端起历史望远镜回顾过去、总结历史规律（2）树立正确的大局观，就是不仅要看到现象和细节怎么样，而且要把握本质和全局，抓住主要矛盾和矛盾的主要方面（3）树立正确的角色观，就是不仅要冷静分析各种国际现象，而且要把自己摆进去，弄清楚在世界格局演变中中国的地位和作用③主线→牢牢把握服务民族复兴、促进人类进步这条主线。中国共产党致力于为中国人民谋幸福、为中华民族谋复兴，也为人类谋进步、为世界谋大同④五原则→坚持正确的原则要求（口诀「党信和治益」）：（1）坚持和加强党对对外工作的集中统一领导（2）坚持以中国特色社会主义为根本增强战略自信（3）坚持以相互尊重、合作共赢为基础走和平发展道路（4）坚持以公平正义为理念引领全球治理体系改革（5）坚持以国家核心利益为底线维护国家主权、安全、发展利益⑤风范→中国特色大国外交展现独特风范，为世界和平与发展作出新的重大贡献",
+ k:["面对动荡变革的世界大局","促进人类进步这条主线","把握历史前进大势","树立正确的历史观","树立正确的大局观","树立正确的角色观","角色观基础之上","坚持以相互尊重"]},
+
+{p:"16 第十六章",t:"考点146、我国国际影响力、感召力、塑造力显著提升",star:0,
+ q:"考点146、我国国际影响力、感召力、塑造力显著提升",
+ a:"新时代中国特色大国外交，是在国际局势风云变幻、各种严峻考验接踵而至的形势下进行的。以习近平同志为核心的党中央统筹国内国际两个大局，领导我国对外工作攻坚克难、砥砺前行，有效应对前所未有的变局乱局，推动外交工作取得全方位、开创性历史成就。第一，中国始终高举和平、发展、合作、共赢旗帜，在快速变革的世界中牢牢把握大变局的发展方向。（1）成立中央外事工作委员会，巩固党总揽全局、协调各方的对外工作大协同局面;（2）提出构建人类命运共同体重大理念，提出共建“一带一路”倡议，提出全球发展倡议、全球安全倡议、全球文明倡议，深刻回答“世界怎么了、我们怎么办”的时代课题。第二，经过持续努力，中国特色大国外交全面推进，构建人类命运共同体成为引领时代潮流和人类前进方向的鲜明旗帜，我国国际影响力、感召力、塑造力显著提升。（1）构建人类命运共同体倡议已被多次写入联合国文件，正在从理念转化为行动，产生日益广泛而深远的国际影响；（2）中国在联合国、世界贸易组织、二十国集团、金砖国家、亚太经济合作组织、上海合作组织等多边机制中发挥越来越重要的作用，在国际舞台上发出更多中国声音、注入更多中国元素、提供更多中国方案。",
+ m:"「举·做·成」＝高举和平发展合作共赢旗帜／成立中央外事工作委员会并提出系列倡议／成就；三大倡议「发·安·文」＝全球发展倡议、全球安全倡议、全球文明倡议",
+ e:"①总→新时代中国特色大国外交，是在国际局势风云变幻、各种严峻考验接踵而至的形势下进行的②举→中国始终高举和平、发展、合作、共赢旗帜，在快速变革的世界中牢牢把握大变局的发展方向③做→（1）成立中央外事工作委员会，巩固党总揽全局、协调各方的对外工作大协同局面（2）提出构建人类命运共同体重大理念，提出共建“一带一路”倡议，提出全球发展倡议、全球安全倡议、全球文明倡议（口诀「发安文」）④成→经过持续努力，中国特色大国外交全面推进：（1）构建人类命运共同体成为引领时代潮流和人类前进方向的鲜明旗帜，倡议已被多次写入联合国文件，正在从理念转化为行动（2）中国在联合国、世界贸易组织、二十国集团、金砖国家、亚太经济合作组织、上海合作组织等多边机制中发挥着越来越重要的作用",
+ h:"口诀：「举·做·成」＝高举和平发展合作共赢旗帜／成立中央外事工作委员会并提出系列倡议／成就；三大倡议「发·安·文」＝全球发展倡议、全球安全倡议、全球文明倡议　｜　由点及面：①总→新时代中国特色大国外交，是在国际局势风云变幻、各种严峻考验接踵而至的形势下进行的②举→中国始终高举和平、发展、合作、共赢旗帜，在快速变革的世界中牢牢把握大变局的发展方向③做→（1）成立中央外事工作委员会，巩固党总揽全局、协调各方的对外工作大协同局面（2）提出构建人类命运共同体重大理念，提出共建“一带一路”倡议，提出全球发展倡议、全球安全倡议、全球文明倡议（口诀「发安文」）④成→经过持续努力，中国特色大国外交全面推进：（1）构建人类命运共同体成为引领时代潮流和人类前进方向的鲜明旗帜，倡议已被多次写入联合国文件，正在从理念转化为行动（2）中国在联合国、世界贸易组织、二十国集团、金砖国家、亚太经济合作组织、上海合作组织等多边机制中发挥着越来越重要的作用",
+ k:["世界怎么了、我们怎么办","新时代中国特色大国外交","成立中央外事工作委员会","亚太经济合作组织","注入更多中国元素","提供更多中国方案","中国始终高举和平","我国国际影响力"]},
+
+{p:"16 第十六章",t:"考点147、坚持走和平发展道路",star:0,
+ q:"考点147、坚持走和平发展道路",
+ a:"坚持走和平发展道路，是我们党根据时代发展潮流和我国根本利益作出的战略抉择，是新时代中国外交的基本原则。党的十八大以来，我们党对和平发展道路理念展开新探索、新思考，赋予这一理念新的时代意义和思想内涵。第一，走和平发展道路，是对国际社会关注中国发展走向的回应，更是中国人民对实现自身发展目标的自信和自觉。（1）走和平发展道路是由中国共产党性质宗旨和我国社会主义制度决定的；（2）走和平发展道路是基于中国历史文化传统作出的必然选择；（3）走和平发展道路符合历史潮流、顺应世界大势。第二，走和平发展道路，就要坚定奉行独立自主的和平外交政策。（1）中国始终根据事情本身的是非曲直决定自己的立场和政策，维护国际关系基本准则，维护国际公平正义；（2）中国尊重各国主权和领土完整，决反对一切形式的霸权主义和强权政治，反对冷战思维，反对干涉别国内政，反对搞双重标准；（3）中国奉行防御性的国防政策，中国的发展是世界和平力量的增长，无论发展到什么程度，中国永远不称霸、永远不搞扩张。第三，走和平发展道路，既要通过维护世界和平发展自己，又要通过自身发展维护世界和平。（1）中国坚持走和平发展道路，集中力量办好自己的事，本身就是对世界和平发展的重大贡献。（2）中国坚持以相互尊重、合作共赢为基础同世界各国交往，把本国利益同各国共同利益结合起来，努力扩大同各国利益的汇合点，既让中国更好利用世界的机遇，又让世界更好分享中国的机遇。",
+ m:"「由·策·互」＝走和平发展道路的原因／坚定奉行独立自主的和平外交政策／维护世界和平与自身发展相互促进；三原因「制·史·势」＝性质宗旨和制度决定、历史文化传统必然选择、符合历史潮流世界大势；政策三要点「是·尊·防」＝根据是非曲直决定立场、尊重各国主权领土完整、奉行防御性国防政策",
+ e:"①总→坚持走和平发展道路，是我们党根据时代发展潮流和我国根本利益作出的战略抉择，是新时代中国外交的基本原则②由→走和平发展道路，是对国际社会关注中国发展走向的回应，更是中国人民对实现自身发展目标的自信和自觉（口诀「制史势」）：（1）走和平发展道路是由中国共产党性质宗旨和我国社会主义制度决定的（2）走和平发展道路是基于中国历史文化传统作出的必然选择（3）走和平发展道路符合历史潮流、顺应世界大势③策→坚定奉行独立自主的和平外交政策（口诀「是尊防」）：（1）中国始终根据事情本身的是非曲直决定自己的立场和政策，维护国际关系基本准则，维护国际公平正义（2）中国尊重各国主权和领土完整，坚决反对一切形式的霸权主义和强权政治，反对冷战思维，反对干涉别国内政（3）中国奉行防御性的国防政策，中国的发展是世界和平力量的增长，无论发展到什么程度，中国永远不称霸、永远不搞扩张④互→既要通过维护世界和平发展自己，又要通过自身发展维护世界和平：（1）中国集中力量办好自己的事，本身就是对世界和平发展的重大贡献（2）中国坚持以相互尊重、合作共赢为基础同世界各国交往，把本国利益同各国共同利益结合起来",
+ h:"口诀：「由·策·互」＝走和平发展道路的原因／坚定奉行独立自主的和平外交政策／维护世界和平与自身发展相互促进；三原因「制·史·势」＝性质宗旨和制度决定、历史文化传统必然选择、符合历史潮流世界大势；政策三要点「是·尊·防」＝根据是非曲直决定立场、尊重各国主权领土完整、奉行防御性国防政策　｜　由点及面：①总→坚持走和平发展道路，是我们党根据时代发展潮流和我国根本利益作出的战略抉择，是新时代中国外交的基本原则②由→走和平发展道路，是对国际社会关注中国发展走向的回应，更是中国人民对实现自身发展目标的自信和自觉（口诀「制史势」）：（1）走和平发展道路是由中国共产党性质宗旨和我国社会主义制度决定的（2）走和平发展道路是基于中国历史文化传统作出的必然选择（3）走和平发展道路符合历史潮流、顺应世界大势③策→坚定奉行独立自主的和平外交政策（口诀「是尊防」）：（1）中国始终根据事情本身的是非曲直决定自己的立场和政策，维护国际关系基本准则，维护国际公平正义（2）中国尊重各国主权和领土完整，坚决反对一切形式的霸权主义和强权政治，反对冷战思维，反对干涉别国内政（3）中国奉行防御性的国防政策，中国的发展是世界和平力量的增长，无论发展到什么程度，中国永远不称霸、永远不搞扩张④互→既要通过维护世界和平发展自己，又要通过自身发展维护世界和平：（1）中国集中力量办好自己的事，本身就是对世界和平发展的重大贡献（2）中国坚持以相互尊重、合作共赢为基础同世界各国交往，把本国利益同各国共同利益结合起来",
+ k:["中国奉行防御性的国防政策","坚持走和平发展道路","走和平发展道路","顺应世界大势","永远不搞扩张"]},
+
+{p:"16 第十六章",t:"考点148、推动构建新型国际关系",star:0,
+ q:"考点148、推动构建新型国际关系",
+ a:"推动构建新型国际关系，就是要秉持相互尊重、公平正义、合作共赢原则，走出一条对话而不对抗、结伴而不结盟的国与国交往新路；中国坚持在和平共处五项原则基础上同各国发展友好合作，深化拓展平等、开放、合作的全球伙伴关系。第一，推进大国协调合作，构建和平共处、总体稳定、均衡发展的大国关系格局，是中国对外关系的重要内容。大国拥有更多的资源，具备更强的能力，有责任也有义务为维护国际和平与安全发挥更大作用，为人类发展与进步作出更多贡献。第二，坚持亲诚惠容和与邻为善、以邻为伴周边外交方针，深化同周边国家友好互信和利益融合。周边是我国安身立命之所、发展繁荣之基。第三，秉持真实亲诚理念和正确义利观，加强同发展中国家团结合作。中国是世界上最大的发展中国家，广大发展中国家是我国在国际事务中的天然同盟军。第四，秉持求同存异、相互尊重、互学互鉴理念，构建新型政党关系。政党在各国政治生活中发挥着重要的作用，在国际事务中也发挥着特殊作用，政党外交是外交工作的重要方面。",
+ m:"四要求「大·周·发·党」＝推进大国协调合作／坚持亲诚惠容的周边外交方针／秉持真实亲诚理念和正确义利观加强同发展中国家团结合作／构建新型政党关系；原则「相互尊重·公平正义·合作共赢」；新路「对话而不对抗、结伴而不结盟」",
+ e:"①内→推动构建新型国际关系，就是要秉持相互尊重、公平正义、合作共赢原则，走出一条对话而不对抗、结伴而不结盟的国与国交往新路②大→推进大国协调合作，构建和平共处、总体稳定、均衡发展的大国关系格局，是中国对外关系的重要内容③周→坚持亲诚惠容和与邻为善、以邻为伴周边外交方针，深化同周边国家友好互信和利益融合。周边是我国安身立命之所、发展繁荣之基④发→秉持真实亲诚理念和正确义利观，加强同发展中国家团结合作。中国是世界上最大的发展中国家，广大发展中国家是天然的同盟军⑤党→秉持求同存异、相互尊重、互学互鉴理念，构建新型政党关系。政党在各国政治生活中发挥着重要的作用",
+ h:"口诀：四要求「大·周·发·党」＝推进大国协调合作／坚持亲诚惠容的周边外交方针／秉持真实亲诚理念和正确义利观加强同发展中国家团结合作／构建新型政党关系；原则「相互尊重·公平正义·合作共赢」；新路「对话而不对抗、结伴而不结盟」　｜　由点及面：①内→推动构建新型国际关系，就是要秉持相互尊重、公平正义、合作共赢原则，走出一条对话而不对抗、结伴而不结盟的国与国交往新路②大→推进大国协调合作，构建和平共处、总体稳定、均衡发展的大国关系格局，是中国对外关系的重要内容③周→坚持亲诚惠容和与邻为善、以邻为伴周边外交方针，深化同周边国家友好互信和利益融合。周边是我国安身立命之所、发展繁荣之基④发→秉持真实亲诚理念和正确义利观，加强同发展中国家团结合作。中国是世界上最大的发展中国家，广大发展中国家是天然的同盟军⑤党→秉持求同存异、相互尊重、互学互鉴理念，构建新型政党关系。政党在各国政治生活中发挥着重要的作用",
+ k:["坚持亲诚惠容和与邻为善","推动构建新型国际关系","合作的全球伙伴关系","推进大国协调合作","发展繁荣之基","秉持求同存异","公平正义","总体稳定"]},
+
+{p:"16 第十六章",t:"考点149、坚决维护国家主权、安全、发展利益",star:0,
+ q:"考点149、坚决维护国家主权、安全、发展利益",
+ a:"维护国家主权、安全、发展利益是我国对外工作的出发点和落脚点，是中国外交的神圣使命。第一，我国外交工作始终站在维护国家利益和民族尊严的前线。（1）要坚决维护国家主权和领土完整，决不允许任何人任何势力侵犯和分裂祖国的神圣领土（2）要在涉及国家核心利益的问题上亮明原则立场、划出红线、捍卫底线，充分展示中国政府和人民维护国家利益的决心和意志；（3）要加强重大外交活动规划，积极向国际社会阐明我们的原则立场和正义要求，善于凝聚各方共识，赢得更多的理解和支持。第二，维护国家主权、安全、发展利益，必须敢于斗争、善于斗争。（1）在涉及中国共产党的领导地位、社会主义制度、国家根本利益和重大关切问题上，要敢于亮剑，坚决斗争；（2）要把斗争精神和斗争艺术结合起来，不回避矛盾和问题，团结一切可以团结的力量，调动一切积极因素，在斗争中争取团结，在斗争中谋求合作，在斗争中争取共赢。",
+ m:"「立·斗」＝始终站在维护国家利益和民族尊严的前线／必须敢于斗争善于斗争；三条做法「土·线·宣」＝维护主权领土完整、亮明红线捍卫底线、阐明立场凝聚共识",
+ e:"①总→维护国家主权、安全、发展利益是我国对外工作的出发点和落脚点，是中国外交的神圣使命②立→我国外交工作始终站在维护国家利益和民族尊严的前线（口诀「土线宣」）：（1）要坚决维护国家主权和领土完整，决不允许任何人任何势力侵犯和分裂祖国的神圣领土（2）要在涉及国家核心利益的问题上亮明原则立场、划出红线、捍卫底线，充分展示中国政府和人民维护国家利益的坚定决心（3）要加强重大外交活动规划，积极向国际社会阐明我们的原则立场和正义要求，善于凝聚各方共识、赢得更多理解支持③斗→维护国家主权、安全、发展利益，必须敢于斗争、善于斗争：（1）在涉及中国共产党的领导地位、社会主义制度、国家根本利益和重大关切问题上，要敢于亮剑、坚决斗争（2）要把斗争精神和斗争艺术结合起来，不回避矛盾和问题，团结一切可以团结的力量，调动一切积极因素",
+ h:"口诀：「立·斗」＝始终站在维护国家利益和民族尊严的前线／必须敢于斗争善于斗争；三条做法「土·线·宣」＝维护主权领土完整、亮明红线捍卫底线、阐明立场凝聚共识　｜　由点及面：①总→维护国家主权、安全、发展利益是我国对外工作的出发点和落脚点，是中国外交的神圣使命②立→我国外交工作始终站在维护国家利益和民族尊严的前线（口诀「土线宣」）：（1）要坚决维护国家主权和领土完整，决不允许任何人任何势力侵犯和分裂祖国的神圣领土（2）要在涉及国家核心利益的问题上亮明原则立场、划出红线、捍卫底线，充分展示中国政府和人民维护国家利益的坚定决心（3）要加强重大外交活动规划，积极向国际社会阐明我们的原则立场和正义要求，善于凝聚各方共识、赢得更多理解支持③斗→维护国家主权、安全、发展利益，必须敢于斗争、善于斗争：（1）在涉及中国共产党的领导地位、社会主义制度、国家根本利益和重大关切问题上，要敢于亮剑、坚决斗争（2）要把斗争精神和斗争艺术结合起来，不回避矛盾和问题，团结一切可以团结的力量，调动一切积极因素",
+ k:["要加强重大外交活动规划","坚决维护国家主权","维护国家主权","社会主义制度","发展利益","划出红线","善于斗争","安全"]},
+
+{p:"16 第十六章",t:"考点150、坚持外交为民",star:0,
+ q:"考点150、坚持外交为民",
+ a:"中国外交是人民的外交，始终坚定维护人民利益，坚持为了人民、服务人民。人民外交是中国共产党的一个创举，也是中国外交的力量源泉。（1）坚持外交为民，就要坚定维护我国海外公民和法人正当权益。随着经济全球化的深化和对外开放的扩大，中国公民和企业走向海外的数量快速增长，保护海外公民、法人安全和合法权益的任务越来越繁重。（2）积极开展民间外交，是中国外交的优良传统和鲜明特色。人民友好是促进国家友好和世界和平与发展的基础，是实现合作共赢的基本前提，相互信任、平等相待是开展合作、实现互利互惠的先决条件。",
+ m:"「民·海·间」＝中国外交是人民的外交／坚定维护我国海外公民和法人正当权益／积极开展民间外交",
+ e:"①民→中国外交是人民的外交，始终坚定维护人民利益，坚持为了人民、服务人民。人民外交是中国共产党的一个创举②海→坚持外交为民，就要坚定维护我国海外公民和法人正当权益。随着经济全球化的深化和对外开放的扩大，中国公民和企业走向世界的脚步越来越快③间→积极开展民间外交，是中国外交的优良传统和鲜明特色。人民友好是促进国家友好和世界和平与发展的基础",
+ h:"口诀：「民·海·间」＝中国外交是人民的外交／坚定维护我国海外公民和法人正当权益／积极开展民间外交　｜　由点及面：①民→中国外交是人民的外交，始终坚定维护人民利益，坚持为了人民、服务人民。人民外交是中国共产党的一个创举②海→坚持外交为民，就要坚定维护我国海外公民和法人正当权益。随着经济全球化的深化和对外开放的扩大，中国公民和企业走向世界的脚步越来越快③间→积极开展民间外交，是中国外交的优良传统和鲜明特色。人民友好是促进国家友好和世界和平与发展的基础",
+ k:["中国外交是人民的外交","平等相待是开展合作","积极开展民间外交","坚持外交为民","服务人民"]},
+
+{p:"16 第十六章",t:"考点151、如何理解构建人类命运共同体是世界人民前途所在",star:1,
+ q:"考点151、如何理解构建人类命运共同体是世界人民前途所在",
+ a:"人类只有一个地球，各国共处一个世界。世界各国要顺应时代发展潮流，作出 正确选择，齐心协力应对挑战，开展全球性协作，构建人类命运共同体。第一，构建人类命运共同体是我们党审视当今世界发展趋势、针对当今世界面临的重大问题提出的重要理念。（1）随着近代以来资本主义大工业的发展，特别是人类经济社会交往的不断深化，各国相互联系和彼此依存的程度日益加深；（2）当今世界，经济全球化深入发展，正日益形成利益交融、安危与共的利益共同体和命运共同体；（3）人类交往的世界性比过去任何时候都更深入、更广泛，各国相互联系和彼此依存比过去任何时候都更频繁、更紧密。第二，人类命运共同体，顾名思义，就是每个民族、每个国家的前途命运都紧紧联系在一起，应该风雨同舟、荣辱与共，努力把我们生于斯、长于斯的这个星球建成一个和睦的大家庭，把世界各国人民对美好生活的向往变成现实。构建人类命运共同体，就是要携手世界各国人民共同建设持久和平、普遍安全、共同繁荣、开放包容、清洁美丽的世界。（1）建设持久和平的世界，就要坚持国家之间的对话协商，坚持大国小国一律平等，构建对话不对抗、结伴不结盟的伙伴关系，努力形成相互尊重、公平正义、合作共赢的新型国际关系；（2）建设普遍安全的世界，就要树立共同、综合、合作、可持续的安全观，统筹应对传统和非传统安全威胁，营造公道正义、共建共享的安全格局；（3）建设共同繁荣的世界，就要坚持你好我好大家好的理念，创造全人类共同发展的良好条件，共同推动世界各国发展繁荣，让发展成果惠及世界各国；（4）建设开放包容的世界，就要坚持交流互鉴，促进和而不同、兼收并蓄的文明交流，推动人类文明实现创造性发展；（4）建设清洁美丽的世界，就要倡导绿色、低碳、循环、可持续的生产生活方式，促进人与自然和谐共生，共建地球生命共同体第三，构建人类命运共同体理念顺应了历史潮流，回应了时代要求，凝聚了各国共识，为人类社会实现共同发展、持续繁荣、长治久安绘制了蓝图，对中国的和平发展、世界的繁荣进步都具有重大而深远的意义。世界命运握在各国人民手中，人类前途系于各国人民的抉择。中国人民同世界各国人民一起，在构建人类命运共同体这条人间正道上携手前行，共同创造更加繁荣美好的世界。",
+ m:"五个世界「和·安·繁·包·洁」＝持久和平、普遍安全、共同繁荣、开放包容、清洁美丽的世界；背景三条「依存加深·利益交融·交往广泛」",
+ e:"①总→人类只有一个地球，各国共处一个世界。世界各国要顺应时代发展潮流，作出正确选择，齐心协力应对挑战②背→构建人类命运共同体是我们党审视当今世界发展趋势、针对当今世界面临的重大问题提出的重要理念：（1）随着近代以来资本主义大工业的发展，各国相互联系和彼此依存的程度空前加深（2）当今世界，经济全球化深入发展，正日益形成利益交融、安危与共的利益共同体和命运共同体（3）人类交往的世界性比过去任何时候都更深入、更广泛，各国相互联系和彼此依存比过去任何时候都更频繁、更紧密③内→人类命运共同体，就是每个民族、每个国家的前途命运都紧紧联系在一起，应该风雨同舟、荣辱与共。五个世界的目标（口诀「和安繁包洁」）：（1）建设持久和平的世界，就要坚持国家之间的对话协商，坚持大国小国一律平等，构建对话不对抗、结伴不结盟的国与国关系（2）建设普遍安全的世界，就要树立共同、综合、合作、可持续的安全观，统筹应对传统和非传统安全威胁（3）建设共同繁荣的世界，就要坚持你好我好大家好的理念，创造全人类共同发展的良好条件（4）建设开放包容的世界，就要坚持交流互鉴，促进和而不同、兼收并蓄的文明交流（5）建设清洁美丽的世界，就要倡导绿色、低碳、循环、可持续的生产生活方式④结→构建人类命运共同体理念顺应了历史潮流，回应了时代要求，凝聚了各国共识，为人类社会实现共同发展、持续繁荣、长治久安绘制了蓝图",
+ h:"口诀：五个世界「和·安·繁·包·洁」＝持久和平、普遍安全、共同繁荣、开放包容、清洁美丽的世界；背景三条「依存加深·利益交融·交往广泛」　｜　由点及面：①总→人类只有一个地球，各国共处一个世界。世界各国要顺应时代发展潮流，作出正确选择，齐心协力应对挑战②背→构建人类命运共同体是我们党审视当今世界发展趋势、针对当今世界面临的重大问题提出的重要理念：（1）随着近代以来资本主义大工业的发展，各国相互联系和彼此依存的程度空前加深（2）当今世界，经济全球化深入发展，正日益形成利益交融、安危与共的利益共同体和命运共同体（3）人类交往的世界性比过去任何时候都更深入、更广泛，各国相互联系和彼此依存比过去任何时候都更频繁、更紧密③内→人类命运共同体，就是每个民族、每个国家的前途命运都紧紧联系在一起，应该风雨同舟、荣辱与共。五个世界的目标（口诀「和安繁包洁」）：（1）建设持久和平的世界，就要坚持国家之间的对话协商，坚持大国小国一律平等，构建对话不对抗、结伴不结盟的国与国关系（2）建设普遍安全的世界，就要树立共同、综合、合作、可持续的安全观，统筹应对传统和非传统安全威胁（3）建设共同繁荣的世界，就要坚持你好我好大家好的理念，创造全人类共同发展的良好条件（4）建设开放包容的世界，就要坚持交流互鉴，促进和而不同、兼收并蓄的文明交流（5）建设清洁美丽的世界，就要倡导绿色、低碳、循环、可持续的生产生活方式④结→构建人类命运共同体理念顺应了历史潮流，回应了时代要求，凝聚了各国共识，为人类社会实现共同发展、持续繁荣、长治久安绘制了蓝图",
+ k:["共建共享的安全格局","建设持久和平的世界","建设普遍安全的世界","建设共同繁荣的世界","建设开放包容的世界","人类只有一个地球","清洁美丽的世界","人类命运共同体"]},
+
+{p:"16 第十六章",t:"考点152、推动构建人类命运共同体的价值基础和重要依托",star:1,
+ q:"考点152、推动构建人类命运共同体的价值基础和重要依托",
+ a:"理念引领行动，方向决定出路。推动构建人类命运共同体，要弘扬全人类共同价值，落实全球发展倡议、全球安全倡议、全球文明倡议，广泛凝聚共识、汇聚力量，携手建设合作共赢的美好世界。第一，推动构建人类命运共同体，必须弘扬全人类共同价值。2015年9月，习近平在出席第七十届联合国大会一般性辩论时明确指出：“和平、发展、公平、正义、民主、自由，是全人类的共同价值，也是联合国的崇高目标。”全人类共同价值包含当今时代人类价值观优秀成果，和平与发展是人类的共同事业，公平正义是人类的共同理想，民主自由是人类的共同追求。第二，发展是人类社会的永恒主题，各国人民热切期盼通过发展实现对美好生活的向往。2021年9月，习近平在第七十六届联合国大会上提出全球发展倡议。全球发展倡议，倡导各国坚持发展优先，坚持以人民为中心，坚持普惠包容，坚持创新驱动，坚持人与自然和谐共生，坚持行动导向，共同推动全球发展迈向平衡协调包容新阶段。第三，安全是发展的前提，是人类最基本最普遍的愿望，是各国人民根本利益所在。2022年4月，习近平在博鳌亚洲论坛年会上提出全球安全倡议。全球安全倡议，倡导各国坚持共同、综合、合作、可持续的安全观，坚持尊重各国主权和领土完整、不干涉别国内政，坚持遵守联合国宪章宗旨和原则，坚持通过对话协商以和平方式解决国家间的分歧和争端，坚持统筹维护传统领域和非传统领域安全。第四，文明多样性是世界的基本特征，也是人类进步的源泉。2023年3月，习近平在中国共产党与世界政党高层对话会上提出全球文明倡议。全球文明倡议，倡导尊重世界文明多样性，倡导弘扬全人类共同价值，倡导重视文明传承和创新，倡导加强国际人文交流合作。",
+ m:"四条「价·发·安·文」＝弘扬全人类共同价值／落实全球发展倡议／落实全球安全倡议／落实全球文明倡议；时间线「2015.9 联合国大会（共同价值）／2021.9 全球发展倡议／2022.4 博鳌 全球安全倡议／2023.3 政党高层对话会 全球文明倡议」",
+ e:"①总→理念引领行动，方向决定出路。推动构建人类命运共同体，要弘扬全人类共同价值，落实全球发展倡议、全球安全倡议、全球文明倡议②价→推动构建人类命运共同体，必须弘扬全人类共同价值。2015年9月，习近平在出席第七十届联合国大会时提出，和平、发展、公平、正义、民主、自由是人类的共同价值③发→发展是人类社会的永恒主题，各国人民热切期盼通过发展实现对美好生活的向往。2021年9月，习近平提出全球发展倡议④安→安全是发展的前提，是人类最基本最普遍的愿望，是各国人民根本利益所在。2022年4月，习近平在博鳌亚洲论坛年会上提出全球安全倡议⑤文→文明多样性是世界的基本特征，也是人类进步的源泉。2023年3月，习近平在中国共产党与世界政党高层对话会上提出全球文明倡议",
+ h:"口诀：四条「价·发·安·文」＝弘扬全人类共同价值／落实全球发展倡议／落实全球安全倡议／落实全球文明倡议；时间线「2015.9 联合国大会（共同价值）／2021.9 全球发展倡议／2022.4 博鳌 全球安全倡议／2023.3 政党高层对话会 全球文明倡议」　｜　由点及面：①总→理念引领行动，方向决定出路。推动构建人类命运共同体，要弘扬全人类共同价值，落实全球发展倡议、全球安全倡议、全球文明倡议②价→推动构建人类命运共同体，必须弘扬全人类共同价值。2015年9月，习近平在出席第七十届联合国大会时提出，和平、发展、公平、正义、民主、自由是人类的共同价值③发→发展是人类社会的永恒主题，各国人民热切期盼通过发展实现对美好生活的向往。2021年9月，习近平提出全球发展倡议④安→安全是发展的前提，是人类最基本最普遍的愿望，是各国人民根本利益所在。2022年4月，习近平在博鳌亚洲论坛年会上提出全球安全倡议⑤文→文明多样性是世界的基本特征，也是人类进步的源泉。2023年3月，习近平在中国共产党与世界政党高层对话会上提出全球文明倡议",
+ k:["发展是人类社会的永恒主题","推动构建人类命运共同体","安全是发展的前提","全球安全倡议","理念引领行动","2015年","2021年","2022年"]},
+
+{p:"16 第十六章",t:"考点153、为什么要积极参与全球治理体系改革和建设",star:1,
+ q:"考点153、为什么要积极参与全球治理体系改革和建设",
+ a:"推进全球治理体系改革和建设，是完善全球治理、增进世界各国人民福祉的客观要求，也是构建人类命运共同体的内在要求。当前，全球治理经历深刻变革，治理滞后问题突出，国际秩序面临严峻挑战。第一，全球治理事关应对各种全球性挑战，事关给国际秩序和国际体系定规则、定方向，需要世界各国共同参与。秉持什么样的全球治理观，对世界的未来和人类的前途至关重要。第二，多边主义符合各国人民利益，是维护和平、促进发展的有效路径。多边主义最基本的道理，就是国际上的事情，要由各国商量着办，要按大家同意的规矩办，要兼顾各国利益和关切。第三，随着世界经济政治格局的变化和全球性挑战日益增多，加强全球治理、完善全球治理体系的呼声越来越高。要坚定维护以联合国为核心的国际体系、以国际法为基础的国际秩序，维护和巩固第二次世界大战胜利成果，积极维护开放型世界经济体制，加强国际社会应对全球性挑战的能力。",
+ m:"三原因「挑·多·变」＝事关应对各种全球性挑战／多边主义是维护和平促进发展的有效路径／世界格局变化和全球性挑战增多呼唤完善全球治理",
+ e:"①总→推进全球治理体系改革和建设，是完善全球治理、增进世界各国人民福祉的客观要求，也是构建人类命运共同体的重要内容②挑→全球治理事关应对各种全球性挑战，事关给国际秩序和国际体系定规则、定方向，需要世界各国共同参与③多→多边主义符合各国人民利益，是维护和平、促进发展的有效路径。多边主义最基本的道理，就是国际上的事应由各国商量着办，不能由一家说了算④变→随着世界经济政治格局的变化和全球性挑战日益增多，加强全球治理、完善全球治理体系的呼声越来越高",
+ h:"口诀：三原因「挑·多·变」＝事关应对各种全球性挑战／多边主义是维护和平促进发展的有效路径／世界格局变化和全球性挑战增多呼唤完善全球治理　｜　由点及面：①总→推进全球治理体系改革和建设，是完善全球治理、增进世界各国人民福祉的客观要求，也是构建人类命运共同体的重要内容②挑→全球治理事关应对各种全球性挑战，事关给国际秩序和国际体系定规则、定方向，需要世界各国共同参与③多→多边主义符合各国人民利益，是维护和平、促进发展的有效路径。多边主义最基本的道理，就是国际上的事应由各国商量着办，不能由一家说了算④变→随着世界经济政治格局的变化和全球性挑战日益增多，加强全球治理、完善全球治理体系的呼声越来越高",
+ k:["多边主义符合各国人民利益","促进发展的有效路径"]},
+
+{p:"16 第十六章",t:"考点154、高质量共建“一带一路”",star:1,
+ q:"考点154、高质量共建“一带一路”",
+ a:"构建人类命运共同体，就是为了造福各国人民，促进世界和平，实现共同繁荣和发展。共建“一带一路”是对中国与世界实现开放共赢路径的顶层设计，是推动构建人类命运共同体的实践平台。要顺应时代要求和各国加快发展的愿望，积极推动高质量共建“一带一路”,使各国人民共享世界发展成果。第一，“一带一路”倡议根植历史、更面向未来，源于中国、更属于世界。（1）这一倡议的核心内涵，是促进基础设施建设和互联互通，加强经济政策协调和发展战略对接，促进协同联动发展，实现共同繁荣；（2）这一倡议的最高目标，是在“一带一路”建设国际合作框架内，各方携手应对世界经济面临的挑战，实现优势互补、互利共赢，不断朝着人类命运共同体方向迈进。第二，共建“一带一路”追求的是发展，崇尚的是共赢，传递的是希望。（1）共建“一带一路”,是经济合作倡议，是开放包容进程，是中国同世界共享机遇、共谋发展的阳光大道；（2）“一带一路”建设跨越不同地域、不同发展阶段、不同文明，是各方共同打造的国际公共产品，是世界各国人民携手迈向人类命运共同体的康庄大道。第三，共建“一带一路”是造福沿线各国人民的大事业。（1）我们推动把基础设施“硬联通”作为重要方向，把规则标准“软联通”作为重要支撑，把同共建国家人民“心联通”作为重要基础，取得实打实、沉甸甸的成就；（2）通过共建“一带一路”,提高了国内各区域开放水平，拓展了对外开放领域，推动了制度型开放，构建了广泛的朋友圈，探索了促进共同发展的新路子，实现了共建国家的互利共赢。",
+ m:"三内涵「源·追·福」＝根植历史面向未来、源于中国属于世界／追求发展崇尚共赢传递希望／是造福沿线各国人民的大事业；三个联通「硬·软·心」＝基础设施硬联通、规则标准软联通、共建国家人民心联通",
+ e:"①总→构建人类命运共同体，就是为了造福各国人民，促进世界和平，实现共同繁荣和发展。共建“一带一路”是对中国与世界关系的生动诠释②源→“一带一路”倡议根植历史、更面向未来，源于中国、更属于世界：（1）这一倡议的核心内涵，是促进基础设施建设和互联互通，加强经济政策协调和发展战略对接，促进协同联动发展（2）这一倡议的最高目标，是在“一带一路”建设国际合作框架内，各方携手应对世界经济面临的挑战，实现优势互补、互利共赢③追→共建“一带一路”追求的是发展，崇尚的是共赢，传递的是希望：（1）是经济合作倡议，是开放包容进程，是中国同世界共享机遇、共谋发展的阳光大道（2）跨越不同地域、不同发展阶段、不同文明，是各方共同打造的国际公共产品④福→共建“一带一路”是造福沿线各国人民的大事业（口诀「硬软心」）：（1）我们推动把基础设施“硬联通”作为重要方向，把规则标准“软联通”作为重要支撑，把同共建国家人民“心联通”作为重要基础（2）提高了国内各区域开放水平，拓展了对外开放领域，推动了制度型开放",
+ h:"口诀：三内涵「源·追·福」＝根植历史面向未来、源于中国属于世界／追求发展崇尚共赢传递希望／是造福沿线各国人民的大事业；三个联通「硬·软·心」＝基础设施硬联通、规则标准软联通、共建国家人民心联通　｜　由点及面：①总→构建人类命运共同体，就是为了造福各国人民，促进世界和平，实现共同繁荣和发展。共建“一带一路”是对中国与世界关系的生动诠释②源→“一带一路”倡议根植历史、更面向未来，源于中国、更属于世界：（1）这一倡议的核心内涵，是促进基础设施建设和互联互通，加强经济政策协调和发展战略对接，促进协同联动发展（2）这一倡议的最高目标，是在“一带一路”建设国际合作框架内，各方携手应对世界经济面临的挑战，实现优势互补、互利共赢③追→共建“一带一路”追求的是发展，崇尚的是共赢，传递的是希望：（1）是经济合作倡议，是开放包容进程，是中国同世界共享机遇、共谋发展的阳光大道（2）跨越不同地域、不同发展阶段、不同文明，是各方共同打造的国际公共产品④福→共建“一带一路”是造福沿线各国人民的大事业（口诀「硬软心」）：（1）我们推动把基础设施“硬联通”作为重要方向，把规则标准“软联通”作为重要支撑，把同共建国家人民“心联通”作为重要基础（2）提高了国内各区域开放水平，拓展了对外开放领域，推动了制度型开放",
+ k:["“一带一路”倡议根植历史","高质量共建“一带一路”","更面向未来，源于中国","通过共建“一带一路”","共谋发展的阳光大道","构建人类命运共同体","这一倡议的核心内涵","这一倡议的最高目标"]}
+];
+
+const KEY_STORE='bs-mn-16_第十六章-v1';
+let state=JSON.parse(localStorage.getItem(KEY_STORE)||'{}');
+let filter='all', mode='seg', order=DECK.map((_,i)=>i), idx=0, flipped=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function deck(){
+  let list=order.filter(i=>{
+    const c=DECK[i], st=state[i]||{};
+    if(filter==='star') return c.star===1;
+    if(filter==='learning') return (st.streak||0)<2;
+    if(filter==='mastered') return (st.streak||0)>=2;
+    return true;
+  });
+  return list.length?list:[0];
+}
+
+function segsOf(text){
+  const raw=text.match(/[^。，；、？！]+[。，；、？！]?/g)||[text];
+  return raw.map(s=>s.trim()).filter(Boolean);
+}
+function renderSeg(text){
+  return segsOf(text).map(s=>
+    s.replace(/\s/g,'').length>=2?`<span class="cloze">${esc(s)}</span>`:esc(s)
+  ).join('');
+}
+function renderKey(text,terms){
+  const ts=[...new Set(terms||[])].sort((a,b)=>b.length-a.length);
+  let out=esc(text);
+  ts.forEach(t=>{
+    const re=new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+    out=out.replace(re,m=>`<span class="cloze">${m}</span>`);
+  });
+  return out;
+}
+
+function render(){
+  const list=deck();
+  if(idx>=list.length) idx=0;
+  if(idx<0) idx=list.length-1;
+  const i=list[idx], c=DECK[i], st=state[i]||{streak:0};
+  const star=c.star?'★★★':'';
+  const no=`卡 ${i+1} / ${DECK.length}`;
+
+  ['f','b'].forEach(f=>{
+    $(f+'-part').textContent=c.p;
+    $(f+'-no').textContent=no;
+    $(f+'-star').textContent=star;
+  });
+  $('f-q').textContent=c.q;
+  $('b-q').textContent=c.q;
+  $('b-mnem').textContent=c.m||'';
+  const ex=(c.e||'').split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).filter(s=>s.trim());
+  $('b-expand').innerHTML=ex.length?('<ol>'+ex.map(function(s){
+    const t=s.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]/,'').trim();
+    const k=t.indexOf('→');
+    return '<li>'+(k>0?'<b>'+esc(t.slice(0,k))+'</b>　'+esc(t.slice(k+1)):esc(t))+'</li>';
+  }).join('')+'</ol>'):'';
+  $('b-a').innerHTML=esc(c.a);
+  $('f-a').innerHTML = mode==='seg' ? renderSeg(c.a) : renderKey(c.a,c.k);
+
+  const days=['第 1 天','第 3 天','第 7 天','第 15 天'];
+  const s=st.streak||0;
+  $('f-due').textContent = s>=2 ? '已毕业' : '下次复习 '+(days[Math.min(s,3)]||'第 15 天');
+
+  $('toggleAll').textContent='全部显示';
+  $('toggleAll').classList.remove('on');
+
+  const done=DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  $('prog').style.width=(done/DECK.length*100)+'%';
+  $('card').classList.toggle('flip',flipped);
+  updateToc(done);
+}
+
+function buildToc(){
+  const groups=[];
+  DECK.forEach((c,i)=>{
+    let g=groups.find(x=>x.p===c.p);
+    if(!g){ g={p:c.p,items:[]}; groups.push(g); }
+    g.items.push(i);
+  });
+  $('toc-body').innerHTML=groups.map(g=>`
+    <div class="toc-g">
+      <h6>${esc(g.p)}<span class="cnt"></span></h6>
+      <ul>${g.items.map(i=>`
+        <li data-i="${i}">
+          <span class="tn">${i+1}</span>
+          <span class="tt">${esc(DECK[i].t)}</span>
+          ${DECK[i].star?'<span class="ts">★★★</span>':''}
+          <span class="td"></span>
+        </li>`).join('')}</ul>
+    </div>`).join('');
+  $('toc-body').addEventListener('click',e=>{
+    const li=e.target.closest('li');
+    if(li) jumpTo(+li.dataset.i);
+  });
+}
+
+function updateToc(done){
+  if(!$('toc-body').children.length) return;
+  const cur=deck()[idx];
+  document.querySelectorAll('#toc-body li').forEach(li=>{
+    const i=+li.dataset.i, s=(state[i]||{streak:0}).streak||0;
+    li.classList.toggle('cur', i===cur);
+    li.classList.toggle('done', s>=2);
+    li.classList.toggle('half', s>0&&s<2);
+    li.querySelector('.td').textContent = s>=2?'✓':(s>0?'◐':'');
+  });
+  document.querySelectorAll('#toc-body .toc-g').forEach(g=>{
+    const lis=[...g.querySelectorAll('li')];
+    g.querySelector('.cnt').textContent = lis.filter(l=>l.classList.contains('done')).length+' / '+lis.length;
+  });
+  const total=DECK.length, d=(done!==undefined)?done:DECK.filter((_,j)=>(state[j]||{streak:0}).streak>=2).length;
+  const half=DECK.filter((_,j)=>{const s=(state[j]||{streak:0}).streak||0;return s>0&&s<2;}).length;
+  $('tocSum').textContent=`已掌握 ${d} / ${total}　记住过一次 ${half}　未背 ${total-d-half}`;
+}
+
+function openToc(){ $('toc').classList.add('on'); $('tocMask').classList.add('on'); $('tocBtn').classList.add('on'); }
+function closeToc(){ $('toc').classList.remove('on'); $('tocMask').classList.remove('on'); $('tocBtn').classList.remove('on'); }
+function toggleToc(){ $('toc').classList.contains('on')?closeToc():openToc(); }
+
+function jumpTo(i){
+  if(filter!=='all'){
+    filter='all';
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  }
+  const p=deck().indexOf(i);
+  if(p>=0){ idx=p; flipped=false; render(); closeToc(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+function flip(){ flipped=!flipped; $('card').classList.toggle('flip',flipped); }
+function go(d){ const l=deck(); idx=(idx+d+l.length)%l.length; flipped=false; render(); }
+function mark(ok){
+  const list=deck(), i=list[idx], st=state[i]||{streak:0,last:0};
+  st.streak = ok ? Math.min((st.streak||0)+1,4) : 0;
+  st.last=Date.now();
+  state[i]=st; localStorage.setItem(KEY_STORE,JSON.stringify(state));
+  if(filter==='learning'||filter==='mastered'){ idx=0; render(); }
+  else { go(1); }
+}
+
+$('f-a').addEventListener('click',e=>{
+  const el=e.target.closest('.cloze');
+  if(el) el.classList.toggle('on');
+});
+$('toggleAll').addEventListener('click',()=>{
+  const cs=[...document.querySelectorAll('#f-a .cloze')];
+  const allOn=cs.length&&cs.every(c=>c.classList.contains('on'));
+  cs.forEach(c=>c.classList.toggle('on',!allOn));
+  $('toggleAll').textContent=allOn?'全部显示':'全部隐藏';
+  $('toggleAll').classList.toggle('on',!allOn);
+});
+document.querySelectorAll('[data-m]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    mode=b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+document.querySelectorAll('[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f; idx=0;
+    document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+});
+$('tocBtn').addEventListener('click',toggleToc);
+$('tocBtn2').addEventListener('click',toggleToc);
+$('tocX').addEventListener('click',closeToc);
+$('tocMask').addEventListener('click',closeToc);
+$('shuffle').addEventListener('click',()=>{
+  order=DECK.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  idx=0; render();
+});
+$('reset').addEventListener('click',()=>{
+  if(confirm('清空全部掌握进度？')){ state={}; localStorage.removeItem(KEY_STORE); idx=0; render(); }
+});
+$('prev').addEventListener('click',()=>go(-1));
+$('next').addEventListener('click',()=>go(1));
+$('flip').addEventListener('click',flip);
+$('got').addEventListener('click',()=>mark(true));
+$('again').addEventListener('click',()=>mark(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowLeft'){go(-1);e.preventDefault();}
+  else if(e.key==='ArrowRight'){go(1);e.preventDefault();}
+  else if(e.key===' '){flip();e.preventDefault();}
+  else if(k==='f'){$('toggleAll').click();}
+  else if(k==='m'){mode = mode==='seg'?'key':'seg';document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===mode));render();}
+  else if(k==='g'){mark(true);}
+  else if(k==='r'){mark(false);}
+  else if(k==='s'){$('shuffle').click();}
+  else if(k==='t'){toggleToc();}
+  else if(e.key==='Escape'){closeToc();}
+});
+
+buildToc();
+render();
+</script>
+</body>
+</html>
